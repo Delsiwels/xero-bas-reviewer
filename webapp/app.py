@@ -1228,6 +1228,13 @@ def upload_review():
         flagged_items = []
         rule_flagged = []
 
+        # Infer business context from all transactions to understand industry/income sources
+        try:
+            business_context = set_business_context(transactions)
+            print(f"Inferred business context: {business_context['industry']} (confidence: {business_context['confidence']:.1%})")
+        except Exception as e:
+            print(f"Error setting business context: {e}")
+
         # First pass: fast rule-based checks per ATO GST rules
         for transaction in transactions:
             try:
@@ -1852,6 +1859,13 @@ def run_review():
         # Run BAS review on transactions - rule-based first, then AI only for flagged items
         flagged_items = []
         rule_flagged = []
+
+        # Infer business context from all transactions to understand industry/income sources
+        try:
+            business_context = set_business_context(transactions)
+            print(f"Inferred business context: {business_context['industry']} (confidence: {business_context['confidence']:.1%})")
+        except Exception as e:
+            print(f"Error setting business context: {e}")
 
         # First pass: fast rule-based checks per ATO GST rules
         for transaction in transactions:
@@ -4239,10 +4253,119 @@ def check_residential_premises_gst(transaction):
     return False
 
 
+def infer_business_context(all_transactions):
+    """
+    Analyze all transactions to infer the client's business type/industry.
+    This helps validate that sales transactions make sense for the business.
+
+    Returns a dict with:
+    - industry: The inferred industry type
+    - likely_income_sources: List of expected income types for this business
+    - confidence: How confident we are in the inference
+    """
+    if not all_transactions:
+        return {'industry': 'unknown', 'likely_income_sources': [], 'confidence': 0}
+
+    # Collect all descriptions and accounts
+    all_text = ' '.join([
+        (t.get('description', '') + ' ' + t.get('account', '')).lower()
+        for t in all_transactions
+    ])
+
+    # Industry detection patterns based on expenses and accounts
+    industry_patterns = {
+        'it_services': {
+            'keywords': ['software', 'microsoft', 'adobe', 'it support', 'tech', 'computer',
+                        'server', 'network', 'cloud', 'aws', 'azure', 'hosting', 'domain',
+                        'website', 'development', 'programming', 'database', 'cybersecurity'],
+            'income_sources': ['training', 'support', 'consulting', 'implementation', 'project',
+                              'development', 'maintenance', 'software', 'services', 'hourly',
+                              'rate as agreed', 'fixed fee', 'retainer', 'technical']
+        },
+        'professional_services': {
+            'keywords': ['consulting', 'advisory', 'professional', 'project management',
+                        'strategy', 'business', 'management', 'coaching', 'mentoring'],
+            'income_sources': ['consulting', 'advisory', 'coaching', 'mentoring', 'training',
+                              'project', 'engagement', 'retainer', 'hourly', 'fee']
+        },
+        'trades': {
+            'keywords': ['bunnings', 'hardware', 'tools', 'materials', 'building', 'construction',
+                        'plumbing', 'electrical', 'carpentry', 'painting', 'renovation'],
+            'income_sources': ['labour', 'materials', 'installation', 'repair', 'maintenance',
+                              'quote', 'job', 'project', 'contract', 'site work']
+        },
+        'health_medical': {
+            'keywords': ['medical supplies', 'clinic', 'patient', 'health', 'therapy',
+                        'physio', 'chiro', 'dental', 'psychology', 'ndis', 'medicare'],
+            'income_sources': ['consultation', 'treatment', 'therapy', 'session', 'appointment',
+                              'ndis', 'medicare', 'patient', 'health service']
+        },
+        'retail': {
+            'keywords': ['inventory', 'stock', 'merchandise', 'cost of goods', 'wholesale',
+                        'supplier', 'products', 'retail'],
+            'income_sources': ['sales', 'product', 'merchandise', 'goods', 'order']
+        },
+        'hospitality': {
+            'keywords': ['food', 'beverage', 'restaurant', 'cafe', 'catering', 'kitchen',
+                        'ingredients', 'menu'],
+            'income_sources': ['catering', 'function', 'event', 'meal', 'food', 'beverage']
+        },
+        'education_training': {
+            'keywords': ['training', 'course', 'curriculum', 'education', 'student', 'workshop',
+                        'seminar', 'learning', 'materials', 'instructor'],
+            'income_sources': ['training', 'course', 'workshop', 'seminar', 'tuition',
+                              'instruction', 'session', 'program', 'per hour', 'rate as agreed']
+        }
+    }
+
+    # Score each industry
+    industry_scores = {}
+    for industry, patterns in industry_patterns.items():
+        score = sum(1 for kw in patterns['keywords'] if kw in all_text)
+        industry_scores[industry] = score
+
+    # Get the best match
+    if not industry_scores or max(industry_scores.values()) == 0:
+        return {'industry': 'general_business', 'likely_income_sources': [
+            'services', 'fee', 'invoice', 'hourly', 'project', 'consulting'
+        ], 'confidence': 0.3}
+
+    best_industry = max(industry_scores, key=industry_scores.get)
+    confidence = min(1.0, industry_scores[best_industry] / 10)  # Cap at 1.0
+
+    return {
+        'industry': best_industry,
+        'likely_income_sources': industry_patterns[best_industry]['income_sources'],
+        'confidence': confidence
+    }
+
+
+# Global variable to store inferred business context (set during review)
+_business_context = None
+
+
+def set_business_context(all_transactions):
+    """Set the business context based on all transactions."""
+    global _business_context
+    _business_context = infer_business_context(all_transactions)
+    return _business_context
+
+
+def get_business_context():
+    """Get the current business context."""
+    global _business_context
+    if _business_context is None:
+        return {'industry': 'unknown', 'likely_income_sources': [], 'confidence': 0}
+    return _business_context
+
+
 def check_sales_gst_error(transaction):
     """
     Check if Sales has incorrect GST coding.
     Sales can ONLY be GST on Income or GST Free Income - NEVER BAS Excluded.
+
+    Uses business context to validate that sales transactions make sense
+    for the inferred industry type.
 
     Per ATO rules, most sales are GST inclusive (10%) EXCEPT (GST-FREE categories):
     - Medical/health services (doctors, physiotherapy, chiropractic, psychology, etc.)
@@ -4256,6 +4379,9 @@ def check_sales_gst_error(transaction):
     - Cars for people with disability
     - Community care for elderly/disabled
     - Farmland sales
+
+    IMPORTANT: Commercial/professional training (IT, software, business training) is NOT GST-free.
+    Only accredited educational courses (schools, universities, TAFE) are GST-free.
 
     Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/gst-free-sales
     """
@@ -4275,8 +4401,46 @@ def check_sales_gst_error(transaction):
     if is_bas_excluded:
         return True
 
+    # Get business context to understand what income sources are expected
+    business_context = get_business_context()
+    likely_income_sources = business_context.get('likely_income_sources', [])
+
+    # Check if this sale matches the expected income sources for this business
+    is_expected_income = any(source in description for source in likely_income_sources)
+
+    # Commercial/professional service revenue - these should have GST (not GST-free)
+    # Don't flag these as errors - they are correctly coded with GST on Income
+    commercial_service_keywords = [
+        # IT/Software services
+        'training', 'microsoft', 'ms office', 'office 365', 'excel', 'word', 'powerpoint',
+        'software', 'it support', 'tech support', 'technical support', 'computer',
+        'website', 'web development', 'app development', 'programming', 'coding',
+        'network', 'server', 'cloud', 'database', 'cybersecurity', 'data',
+        # Professional services
+        'consulting', 'consultancy', 'advisory', 'advice', 'strategy',
+        'project management', 'business', 'management', 'coaching', 'mentoring',
+        # Service delivery terms
+        'hourly', 'per hour', 'rate as agreed', 'as agreed', 'fixed fee',
+        'retainer', 'monthly fee', 'service fee', 'support', 'maintenance',
+        'implementation', 'setup', 'installation', 'configuration', 'migration',
+        # General service terms
+        'invoice', 'services', 'professional', 'billable', 'engagement',
+    ]
+
+    # Check if this is commercial service revenue (should have GST, not GST-free)
+    is_commercial_service = any(keyword in description for keyword in commercial_service_keywords)
+
+    # If it has GST (GST on Income), and it's either:
+    # 1. A commercial service, OR
+    # 2. An expected income source for this business type
+    # Then it's CORRECT - don't flag
+    has_gst = gst_amount > 0 and 'free' not in gst_rate_name and 'exempt' not in gst_rate_name
+    if has_gst and (is_commercial_service or is_expected_income):
+        return False  # Correctly coded with GST - matches business type
+
     # GST-free sales categories per ATO rules
     # These are the ONLY valid reasons for sales to be GST Free
+    # NOTE: Only ACCREDITED education is GST-free, not commercial training
     gst_free_sales_keywords = [
         # Medical/Health services (s38-7 and s38-10 GST Act)
         'medical', 'doctor', 'gp ', 'specialist', 'hospital', 'surgery',
@@ -4292,11 +4456,11 @@ def check_sales_gst_error(transaction):
         'therapy', 'therapeutic', 'treatment', 'consultation',
         'health service', 'allied health', 'ndis', 'medicare',
         'aged care', 'disability', 'community care',
-        # Education (s38-85 GST Act)
-        'tuition', 'course fee', 'education', 'training course',
-        'university', 'tafe', 'school fee', 'accredited course',
+        # ACCREDITED Education only (s38-85 GST Act) - NOT commercial training
+        'tuition', 'course fee', 'accredited course', 'accredited education',
+        'university', 'tafe', 'school fee', 'vocational education',
         'pre-school', 'preschool', 'primary school', 'secondary school',
-        'curriculum', 'instruction',
+        'curriculum', 'rto course', 'registered training organisation',
         # Childcare (s38-145 GST Act)
         'childcare', 'child care', 'daycare', 'day care', 'kindergarten',
         'early learning', 'after school care', 'vacation care',
@@ -4315,11 +4479,9 @@ def check_sales_gst_error(transaction):
         # Farmland (s38-475 GST Act)
         'farmland', 'farm sale',
         # Insurance settlements (GST-free if insurer notified of GST status)
-        # Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/insurance-settlements
         'insurance settlement', 'insurance payout', 'insurance claim',
         'insurance recovery', 'claim settlement', 'insurance proceeds',
-        # Grants (GST-free if no supply in return - just meeting eligibility criteria)
-        # Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/grants-and-sponsorship
+        # Grants (GST-free if no supply in return)
         'government grant', 'grant income', 'subsidy', 'jobkeeper',
         'cash flow boost', 'stimulus payment', 'covid support',
         'business support grant', 'wage subsidy', 'apprentice subsidy',
@@ -4334,6 +4496,10 @@ def check_sales_gst_error(transaction):
 
     # If GST Free, check if it's a valid GST-free category
     if is_gst_free:
+        # Commercial services coded as GST-free is an ERROR (should have GST)
+        if is_commercial_service:
+            return True  # Error: commercial service should have GST
+
         is_valid_gst_free = any(keyword in description for keyword in gst_free_sales_keywords)
         if not is_valid_gst_free:
             # GST Free sales without valid reason - flag for review
