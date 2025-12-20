@@ -4310,6 +4310,15 @@ def infer_business_context(all_transactions):
                         'ingredients', 'menu'],
             'income_sources': ['catering', 'function', 'event', 'meal', 'food', 'beverage']
         },
+        'agricultural': {
+            'keywords': ['farm', 'livestock', 'cattle', 'sheep', 'crop', 'harvest', 'tractor',
+                        'fertiliser', 'fertilizer', 'seed', 'feed', 'hay', 'grain', 'wool',
+                        'dairy', 'elders', 'landmark', 'agri', 'rural', 'paddock', 'irrigation',
+                        'stockfeed', 'veterinary', 'vet', 'shearing', 'fencing', 'silo'],
+            'income_sources': ['livestock', 'cattle', 'sheep', 'wool', 'grain', 'crop', 'harvest',
+                              'produce', 'dairy', 'milk', 'sale yards', 'auction', 'agistment',
+                              'farm produce', 'hay', 'fodder', 'breeding', 'stud']
+        },
         'education_training': {
             'keywords': ['training', 'course', 'curriculum', 'education', 'student', 'workshop',
                         'seminar', 'learning', 'materials', 'instructor'],
