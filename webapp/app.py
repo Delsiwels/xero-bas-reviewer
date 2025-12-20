@@ -755,8 +755,8 @@ def upload_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review only for rule-flagged items (max 100 with batch processing)
-        ai_review_limit = min(len(rule_flagged), 100)
+        # Second pass: AI review for all rule-flagged items (batch processing)
+        ai_review_limit = len(rule_flagged)
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
@@ -1354,8 +1354,8 @@ def run_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review only for rule-flagged items (max 100 with batch processing)
-        ai_review_limit = min(len(rule_flagged), 100)
+        # Second pass: AI review for all rule-flagged items (batch processing)
+        ai_review_limit = len(rule_flagged)
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
