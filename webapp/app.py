@@ -429,15 +429,16 @@ def push_manual_journal_to_xero(journal_data):
             "Narration": journal_data.get('narration', 'BAS Review Correcting Entry'),
             "Status": "DRAFT",
             "Date": journal_data.get('date', datetime.now().strftime('%Y-%m-%d')),
-            "LineAmountTypes": "Exclusive",
+            "LineAmountTypes": "Inclusive",
             "JournalLines": journal_data.get('entries', [])
         }]
     }
 
     try:
+        print(f"DEBUG push_manual_journal: Sending payload: {json.dumps(payload, indent=2)}")
         response = requests.post(url, headers=headers, json=payload)
         print(f"DEBUG push_manual_journal: Response status={response.status_code}")
-        print(f"DEBUG push_manual_journal: Response body={response.text[:500]}")
+        print(f"DEBUG push_manual_journal: Full response body={response.text}")
 
         if response.status_code in [200, 201]:
             result = response.json()
@@ -451,19 +452,29 @@ def push_manual_journal_to_xero(journal_data):
                 }
             return {'success': True, 'message': 'Journal created'}
         else:
-            error_msg = response.text
+            error_msg = f"Status {response.status_code}: "
             try:
                 error_json = response.json()
-                if 'Message' in error_json:
-                    error_msg = error_json['Message']
-                elif 'Elements' in error_json and error_json['Elements']:
-                    validation_errors = error_json['Elements'][0].get('ValidationErrors', [])
-                    if validation_errors:
-                        error_msg = '; '.join([e.get('Message', '') for e in validation_errors])
-            except:
-                pass
+                print(f"DEBUG push_manual_journal: Error JSON: {json.dumps(error_json, indent=2)}")
+                # Try to get validation errors from Elements
+                if 'Elements' in error_json and error_json['Elements']:
+                    for element in error_json['Elements']:
+                        validation_errors = element.get('ValidationErrors', [])
+                        if validation_errors:
+                            error_msg += '; '.join([e.get('Message', str(e)) for e in validation_errors])
+                            break
+                # Fall back to Message field
+                if error_msg == f"Status {response.status_code}: " and 'Message' in error_json:
+                    error_msg += error_json['Message']
+                # Fall back to raw response
+                if error_msg == f"Status {response.status_code}: ":
+                    error_msg += response.text[:500]
+            except Exception as parse_err:
+                print(f"DEBUG push_manual_journal: Error parsing response: {parse_err}")
+                error_msg += response.text[:500]
             return {'success': False, 'error': error_msg}
     except Exception as e:
+        print(f"DEBUG push_manual_journal: Exception: {str(e)}")
         return {'success': False, 'error': str(e)}
 
 
