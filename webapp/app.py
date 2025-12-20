@@ -300,9 +300,9 @@ def xero_disconnect():
 
 
 def parse_xero_date(raw_date):
-    """Parse Xero date format to YYYY-MM-DD string"""
+    """Parse Xero date format to datetime object"""
     if not raw_date:
-        return ''
+        return None
 
     raw_date_str = str(raw_date)
 
@@ -311,10 +311,14 @@ def parse_xero_date(raw_date):
         match = re.search(r'/Date\((\d+)', raw_date_str)
         if match:
             timestamp = int(match.group(1)) / 1000
-            return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d')
+            return datetime.fromtimestamp(timestamp)
 
-    # ISO format or string - just take first 10 chars
-    return raw_date_str[:10]
+    # ISO format or string - try to parse as date
+    try:
+        date_str = raw_date_str[:10]
+        return datetime.strptime(date_str, '%Y-%m-%d')
+    except:
+        return None
 
 
 def get_xero_connections():
