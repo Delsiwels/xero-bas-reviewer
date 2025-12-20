@@ -103,7 +103,7 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 XERO_CLIENT_ID = os.environ.get('XERO_CLIENT_ID')
 XERO_CLIENT_SECRET = os.environ.get('XERO_CLIENT_SECRET')
 XERO_REDIRECT_URI = os.environ.get('XERO_REDIRECT_URI', 'https://bas-reviewer.up.railway.app/callback')
-XERO_SCOPES = 'openid profile email accounting.transactions.read accounting.journals.read accounting.reports.read accounting.settings.read offline_access'
+XERO_SCOPES = 'openid profile email accounting.transactions accounting.transactions.read accounting.journals.read accounting.reports.read accounting.settings.read offline_access'
 
 # DeepSeek API
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
@@ -397,6 +397,114 @@ def xero_api_request(endpoint, params=None):
     else:
         print(f"DEBUG xero_api_request: Error response: {response.text[:500]}")
     return None
+
+
+def push_manual_journal_to_xero(journal_data):
+    """Push a manual journal to Xero as DRAFT status"""
+    if not refresh_token_if_needed():
+        return {'success': False, 'error': 'Token refresh failed'}
+
+    headers = {
+        'Authorization': f"Bearer {session['access_token']}",
+        'Xero-tenant-id': session['tenant_id'],
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    }
+
+    url = f"{XERO_API_URL}/ManualJournals"
+
+    # Format journal for Xero API
+    # Xero ManualJournal format:
+    # {
+    #   "Narration": "Description",
+    #   "Status": "DRAFT",
+    #   "JournalLines": [
+    #     {"AccountCode": "200", "Description": "...", "LineAmount": 100.00},
+    #     {"AccountCode": "800", "Description": "...", "LineAmount": -100.00}
+    #   ]
+    # }
+
+    payload = {
+        "ManualJournals": [{
+            "Narration": journal_data.get('narration', 'BAS Review Correcting Entry'),
+            "Status": "DRAFT",
+            "Date": journal_data.get('date', datetime.now().strftime('%Y-%m-%d')),
+            "JournalLines": journal_data.get('entries', [])
+        }]
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        print(f"DEBUG push_manual_journal: Response status={response.status_code}")
+        print(f"DEBUG push_manual_journal: Response body={response.text[:500]}")
+
+        if response.status_code in [200, 201]:
+            result = response.json()
+            journals = result.get('ManualJournals', [])
+            if journals:
+                return {
+                    'success': True,
+                    'journal_id': journals[0].get('ManualJournalID'),
+                    'journal_number': journals[0].get('JournalNumber'),
+                    'status': journals[0].get('Status')
+                }
+            return {'success': True, 'message': 'Journal created'}
+        else:
+            error_msg = response.text
+            try:
+                error_json = response.json()
+                if 'Message' in error_json:
+                    error_msg = error_json['Message']
+                elif 'Elements' in error_json and error_json['Elements']:
+                    validation_errors = error_json['Elements'][0].get('ValidationErrors', [])
+                    if validation_errors:
+                        error_msg = '; '.join([e.get('Message', '') for e in validation_errors])
+            except:
+                pass
+            return {'success': False, 'error': error_msg}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
+@app.route('/api/push-journal', methods=['POST'])
+@login_required
+def push_journal():
+    """API endpoint to push a correcting journal to Xero as DRAFT"""
+    try:
+        if 'access_token' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated with Xero'}), 401
+
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No journal data provided'}), 400
+
+        # Validate journal data
+        narration = data.get('narration', '')
+        entries = data.get('entries', [])
+
+        if not entries or len(entries) < 2:
+            return jsonify({'success': False, 'error': 'Journal must have at least 2 line items'}), 400
+
+        # Check that debits equal credits
+        total = sum(float(e.get('LineAmount', 0)) for e in entries)
+        if abs(total) > 0.01:  # Allow small rounding differences
+            return jsonify({'success': False, 'error': f'Journal does not balance. Difference: {total}'}), 400
+
+        # Push to Xero
+        result = push_manual_journal_to_xero({
+            'narration': narration,
+            'date': data.get('date', datetime.now().strftime('%Y-%m-%d')),
+            'entries': entries
+        })
+
+        if result.get('success'):
+            return jsonify(result)
+        else:
+            return jsonify(result), 400
+
+    except Exception as e:
+        import traceback
+        return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
 
 
 @app.route('/review')

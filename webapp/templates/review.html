@@ -660,6 +660,19 @@
                             journalHtml += '</tr>';
                         });
                         journalHtml += '</tbody></table>';
+                        // Add Push to Xero button - store journal data as base64 encoded JSON
+                        const journalData = {
+                            narration: item.correcting_journal.narration || `BAS Correction: ${item.description}`,
+                            date: item.date,
+                            entries: item.correcting_journal.entries.map(e => ({
+                                AccountCode: e.account_code,
+                                Description: e.account_name,
+                                LineAmount: e.debit > 0 ? e.debit : -e.credit,
+                                TaxType: e.tax_code || 'NONE'
+                            }))
+                        };
+                        const journalDataStr = btoa(JSON.stringify(journalData));
+                        journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-top:8px; padding:4px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero (Draft)</button>`;
                     } else {
                         journalHtml = '<em style="color:#999;">No correction needed</em>';
                     }
@@ -723,6 +736,49 @@
                 }
             } catch (error) {
                 alert('Download error: ' + error.message);
+            }
+        }
+
+        async function pushJournalToXero(journalDataBase64, buttonElement) {
+            try {
+                // Decode the journal data
+                const journalData = JSON.parse(atob(journalDataBase64));
+
+                // Disable the button and show loading state
+                buttonElement.disabled = true;
+                buttonElement.textContent = 'Pushing...';
+                buttonElement.style.background = '#999';
+
+                const response = await fetch('/api/push-journal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(journalData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    buttonElement.textContent = '✓ Pushed to Xero';
+                    buttonElement.style.background = '#28a745';
+                    buttonElement.style.cursor = 'default';
+                    // Show success message
+                    const msg = result.journal_number
+                        ? `Draft journal #${result.journal_number} created in Xero!`
+                        : 'Draft journal created in Xero!';
+                    alert(msg);
+                } else {
+                    buttonElement.textContent = 'Push to Xero (Draft)';
+                    buttonElement.style.background = '#13B5EA';
+                    buttonElement.disabled = false;
+                    alert('Failed to push journal: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                buttonElement.textContent = 'Push to Xero (Draft)';
+                buttonElement.style.background = '#13B5EA';
+                buttonElement.disabled = false;
+                alert('Error pushing journal: ' + error.message);
             }
         }
     </script>
