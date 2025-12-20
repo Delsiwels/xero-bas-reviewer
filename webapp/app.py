@@ -2335,6 +2335,10 @@ def generate_correcting_journal(transaction):
 
             # Only suggest recoding if we have a specific account (not generic "General Expenses")
             if suggested_account and suggested_account['name'] != 'General Expenses':
+                # Standardized description format: "[Wrong] to [Correct] - [Details]"
+                trans_desc = transaction.get('description', '')[:50] or 'No description'
+                std_desc = f"{account_name} to {suggested_account['name']} - {trans_desc}"
+
                 # Debit to correct account first, then credit to reverse wrong account
                 journal_entries.append({
                     'line': 1,
@@ -2343,7 +2347,7 @@ def generate_correcting_journal(transaction):
                     'debit': gross if gross > 0 else 0,
                     'credit': 0 if gross > 0 else gross,
                     'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
-                    'description': f"Correct coding for {transaction.get('description', '')[:30]}"
+                    'description': std_desc
                 })
                 journal_entries.append({
                     'line': 2,
@@ -2352,12 +2356,15 @@ def generate_correcting_journal(transaction):
                     'debit': 0 if gross > 0 else gross,
                     'credit': gross if gross > 0 else 0,
                     'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
-                    'description': f"Reverse incorrect coding"
+                    'description': std_desc
                 })
 
     if transaction.get('alcohol_gst_error'):
         # Entertainment alcohol - reverse original GST on Expenses coding to GST Free Expenses
         # Same account, just changing the tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST on Expenses to GST Free - {trans_desc}"
+
         if gross > 0:
             # Debit first: re-enter with GST Free Expenses (correct treatment for entertainment)
             journal_entries.append({
@@ -2367,7 +2374,7 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': 'GST Free Expenses',
-                'description': f"Re-enter as GST Free Expenses - entertainment/alcohol"
+                'description': std_desc
             })
             # Credit: reverse the original GST on Expenses entry
             journal_entries.append({
@@ -2377,18 +2384,19 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse original entry coded as GST on Expenses"
+                'description': std_desc
             })
 
     if not transaction.get('gst_calculation_correct', True) and not transaction.get('alcohol_gst_error'):
         # GST calculation error - need to adjust using same account with different tax codes
         expected_gst = round(net * 0.10, 2)
         gst_diff = round(expected_gst - gst, 2)
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
 
         if abs(gst_diff) > 0.02:
+            std_desc = f"GST adjustment - {trans_desc}"
             if gst_diff > 0:
                 # Under-claimed GST - need to increase GST claimed
-                # Debit: account with GST on Expenses (increases GST claimed)
                 journal_entries.append({
                     'line': len(journal_entries) + 1,
                     'account_code': account_code,
@@ -2396,9 +2404,8 @@ def generate_correcting_journal(transaction):
                     'debit': gst_diff,
                     'credit': 0,
                     'tax_code': 'GST on Expenses',
-                    'description': f"GST adjustment - add under-claimed GST ${gst_diff:.2f}"
+                    'description': std_desc
                 })
-                # Credit: account with BAS Excluded (no GST impact, balances journal)
                 journal_entries.append({
                     'line': len(journal_entries) + 1,
                     'account_code': account_code,
@@ -2406,11 +2413,10 @@ def generate_correcting_journal(transaction):
                     'debit': 0,
                     'credit': gst_diff,
                     'tax_code': 'BAS Excluded',
-                    'description': f"Balancing entry for GST adjustment"
+                    'description': std_desc
                 })
             else:
                 # Over-claimed GST - need to reduce GST claimed
-                # Debit: account with BAS Excluded (no GST impact)
                 journal_entries.append({
                     'line': len(journal_entries) + 1,
                     'account_code': account_code,
@@ -2418,9 +2424,8 @@ def generate_correcting_journal(transaction):
                     'debit': abs(gst_diff),
                     'credit': 0,
                     'tax_code': 'BAS Excluded',
-                    'description': f"GST adjustment - reduce over-claimed GST ${abs(gst_diff):.2f}"
+                    'description': std_desc
                 })
-                # Credit: account with GST on Expenses (reduces GST claimed via tax code)
                 journal_entries.append({
                     'line': len(journal_entries) + 1,
                     'account_code': account_code,
@@ -2428,7 +2433,7 @@ def generate_correcting_journal(transaction):
                     'debit': 0,
                     'credit': abs(gst_diff),
                     'tax_code': 'GST on Expenses',
-                    'description': f"Reverse over-claimed GST via tax code"
+                    'description': std_desc
                 })
 
     if transaction.get('missing_gst_error'):
@@ -2436,6 +2441,8 @@ def generate_correcting_journal(transaction):
         # Correcting journal: reverse GST Free entry and re-enter with GST on Expenses
         # Same account, just changing the tax code
         original_tax_code = transaction.get('gst_rate_name', 'GST Free') or 'GST Free'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if gross > 0:
             # Debit first: re-enter with correct GST on Expenses tax code
@@ -2446,7 +2453,7 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': 'GST on Expenses',
-                'description': f"Re-enter with GST on Expenses - GST will be auto-calculated"
+                'description': std_desc
             })
             # Credit: reverse the original GST Free entry
             journal_entries.append({
@@ -2456,13 +2463,15 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': original_tax_code,
-                'description': f"Reverse original entry coded as {original_tax_code}"
+                'description': std_desc
             })
 
     if transaction.get('input_taxed_gst_error'):
         # GST incorrectly claimed on input-taxed supply (e.g., bank fees)
         # Per ATO: Input-taxed supplies have NO GST and you CANNOT claim GST credits
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
+
         if gst > 0:
             # Debit: Same account with GST Free (add GST back to expense cost)
             journal_entries.append({
@@ -2472,7 +2481,7 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free',
-                'description': f"Adjust expense - GST not applicable to financial supplies"
+                'description': std_desc
             })
             # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
@@ -2482,13 +2491,15 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on input-taxed supply via tax code"
+                'description': std_desc
             })
 
     if transaction.get('drawings_loan_error'):
         # Personal expense coded to Drawings/Loan with GST claimed
         # Drawings should be BAS Excluded - reverse the incorrect GST claim
-        # User specified: Debit Drawings (BAS Excluded), Credit Drawings (GST on Expenses)
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
+
         if gross > 0:
             # Debit first: re-enter as BAS Excluded (correct treatment for drawings)
             journal_entries.append({
@@ -2498,7 +2509,7 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': 'BAS Excluded',
-                'description': f"Re-enter as BAS Excluded - personal expense (drawings)"
+                'description': std_desc
             })
             # Credit: reverse the original GST on Expenses entry
             journal_entries.append({
@@ -2508,17 +2519,17 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse original entry coded as GST on Expenses"
+                'description': std_desc
             })
 
     if transaction.get('interest_gst_error'):
         # Interest incorrectly coded - should be GST Free Income or Input Taxed
-        # Use same account with different tax codes - GST adjusts automatically via tax code
         original_tax_code = transaction.get('gst_rate_name', '') or 'Unknown'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if gst > 0:
-            # GST was claimed - need to reverse it using same account with different tax codes
-            # Debit: Same account with GST Free (add GST back to account)
+            # GST was claimed - need to reverse it
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2526,9 +2537,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free',
-                'description': f"Adjust interest - GST not applicable (input-taxed)"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2536,12 +2546,10 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on interest via tax code"
+                'description': std_desc
             })
         elif gross > 0:
             # BAS Excluded or wrong coding - reverse and re-enter as GST Free Income
-            # For INCOME accounts: Debit reverses (reduces income), Credit re-enters correctly
-            # Debit first: reverse original entry (reduces income)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2549,9 +2557,8 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': original_tax_code,
-                'description': f"Reverse original entry coded as {original_tax_code}"
+                'description': std_desc
             })
-            # Credit: re-enter with correct GST Free Income
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2559,16 +2566,16 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST Free Income',
-                'description': f"Re-enter as GST Free Income - interest is input-taxed"
+                'description': std_desc
             })
 
     if transaction.get('sales_gst_error'):
         # Sales incorrectly coded - should be GST on Income or valid GST Free Income
         original_tax_code = transaction.get('gst_rate_name', '') or 'Unknown'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if gross > 0:
-            # For INCOME accounts: Debit reverses (reduces income), Credit re-enters correctly
-            # Debit first: reverse original entry (reduces sales)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2576,9 +2583,8 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': original_tax_code,
-                'description': f"Reverse original entry coded as {original_tax_code}"
+                'description': std_desc
             })
-            # Credit: re-enter with correct GST on Income
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2586,16 +2592,16 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST on Income',
-                'description': f"Re-enter with GST on Income - sales should include GST"
+                'description': std_desc
             })
 
     if transaction.get('other_income_error'):
         # Other Income incorrectly coded as BAS Excluded
         original_tax_code = transaction.get('gst_rate_name', '') or 'BAS Excluded'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if gross > 0:
-            # For INCOME accounts: Debit reverses (reduces income), Credit re-enters correctly
-            # Debit first: reverse original entry (reduces other income)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2603,9 +2609,8 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': original_tax_code,
-                'description': f"Reverse original entry coded as {original_tax_code}"
+                'description': std_desc
             })
-            # Credit: re-enter with correct GST on Income
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2613,17 +2618,17 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST on Income',
-                'description': f"Re-enter with GST on Income - other income should have GST treatment"
+                'description': std_desc
             })
 
     if transaction.get('export_gst_error'):
         # Export sale incorrectly charged GST - exports should be GST-FREE
         # Per ATO: Exports are GST-free (no GST charged, but CAN claim input credits)
         original_tax_code = transaction.get('gst_rate_name', '') or 'GST on Income'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if gross > 0:
-            # For INCOME accounts: Debit reverses (reduces income), Credit re-enters correctly
-            # Debit first: reverse original entry with GST on Income
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2631,9 +2636,8 @@ def generate_correcting_journal(transaction):
                 'debit': gross,
                 'credit': 0,
                 'tax_code': original_tax_code,
-                'description': f"Reverse original entry coded as {original_tax_code}"
+                'description': std_desc
             })
-            # Credit: re-enter with GST Free Income (export tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2641,18 +2645,17 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gross,
                 'tax_code': 'GST Free Income',
-                'description': f"Re-enter as GST Free Income - exports are GST-free per ATO"
+                'description': std_desc
             })
 
     if transaction.get('motor_vehicle_gst_limit'):
         # Motor vehicle GST exceeds ATO car limit - need to reverse excess GST claimed
-        # ATO 2025-26: Car limit $69,674, max GST credit $6,334 (1/11 of car limit)
-        # Entry should use GROSS amount above car limit - Xero calculates GST via tax code
         car_limit = 69674
         amount_over_limit = gross - car_limit if gross > car_limit else 0
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
 
         if amount_over_limit > 0:
-            # Debit: Motor Vehicle with BAS Excluded (no GST on amount over limit)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2660,9 +2663,8 @@ def generate_correcting_journal(transaction):
                 'debit': amount_over_limit,
                 'credit': 0,
                 'tax_code': 'BAS Excluded',
-                'description': f"Amount over car limit $69,674 - no GST claimable"
+                'description': std_desc
             })
-            # Credit: Motor Vehicle with GST on Expenses (reverse original coding)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2670,15 +2672,15 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': amount_over_limit,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST on amount over car limit via tax code"
+                'description': std_desc
             })
 
     if transaction.get('overseas_subscription_gst'):
         # Overseas subscription - GST should not be claimed
-        # Business should provide ABN to overseas supplier to avoid being charged GST
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
+
         if gst > 0:
-            # Debit: Same account with GST Free (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2686,9 +2688,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free',
-                'description': f"Adjust for overseas supplier - GST not claimable"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2696,14 +2697,15 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on overseas subscription via tax code"
+                'description': std_desc
             })
 
     if transaction.get('government_charges_gst'):
         # Government charges - NO GST applies
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
+
         if gst > 0:
-            # Debit: Same account with GST Free (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2711,9 +2713,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free',
-                'description': f"Adjust government charge - no GST applicable"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2721,14 +2722,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on government charge via tax code"
+                'description': std_desc
             })
 
     if transaction.get('client_entertainment_gst'):
         # Client entertainment - NO GST credit claimable per ATO
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with GST Free Expenses (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2736,9 +2737,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free Expenses',
-                'description': f"Adjust client entertainment - GST not claimable"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2746,14 +2746,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on client entertainment via tax code"
+                'description': std_desc
             })
 
     if transaction.get('staff_entertainment_gst'):
         # Staff entertainment - NO GST credit unless FBT is paid
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with GST Free Expenses (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2761,9 +2761,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'GST Free Expenses',
-                'description': f"Adjust staff entertainment - GST not claimable unless FBT paid"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2771,14 +2770,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on staff entertainment via tax code"
+                'description': std_desc
             })
 
     if transaction.get('residential_premises_gst'):
         # Residential property expense - GST not claimable (input-taxed supply)
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with Input Taxed (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2786,9 +2785,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'Input Taxed',
-                'description': f"Adjust residential property expense - GST not claimable (input-taxed)"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reverse GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2796,14 +2794,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on residential property expense"
+                'description': std_desc
             })
 
     if transaction.get('insurance_gst_error'):
         # Life/income protection insurance - GST not claimable (input-taxed)
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with Input Taxed (add GST back to expense cost)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2811,9 +2809,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'Input Taxed',
-                'description': f"Adjust life/income protection insurance - GST not claimable (input-taxed)"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reverse GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2821,15 +2818,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on life/income protection insurance"
+                'description': std_desc
             })
 
     if transaction.get('allowance_gst_error'):
         # Employee allowance - GST not claimable (not a purchase from supplier)
-        # Allowances are payments to employees, not acquisitions with GST
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with BAS Excluded (allowances have no GST)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2837,9 +2833,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'BAS Excluded',
-                'description': f"Adjust allowance - GST not claimable (payment to employee, not supplier)"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reverse GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2847,14 +2842,14 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on employee allowance"
+                'description': std_desc
             })
 
     if transaction.get('fines_penalties_gst'):
         # Fines/penalties - NO GST applies (non-reportable)
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
-            # Debit: Same account with BAS Excluded (fines have no GST)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2862,9 +2857,8 @@ def generate_correcting_journal(transaction):
                 'debit': gst,
                 'credit': 0,
                 'tax_code': 'BAS Excluded',
-                'description': f"Adjust fine/penalty - no GST applies (non-reportable)"
+                'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reverse GST claimed via tax code)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -2872,7 +2866,7 @@ def generate_correcting_journal(transaction):
                 'debit': 0,
                 'credit': gst,
                 'tax_code': 'GST on Expenses',
-                'description': f"Reverse GST claimed on fine/penalty"
+                'description': std_desc
             })
 
     if transaction.get('donations_gst'):
