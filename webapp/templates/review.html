@@ -398,15 +398,29 @@
             return div.innerHTML;
         }
 
-        // Set default dates for Xero review (last quarter)
+        // Set default dates for Xero review (current Australian financial year)
+        // Australian FY runs July 1 to June 30
+        // FY2026 = July 1, 2025 to June 30, 2026
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
         if (startDateInput && endDateInput) {
             const today = new Date();
-            const threeMonthsAgo = new Date(today);
-            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-            startDateInput.value = threeMonthsAgo.toISOString().split('T')[0];
-            endDateInput.value = today.toISOString().split('T')[0];
+            const month = today.getMonth(); // 0-11
+            const year = today.getFullYear();
+
+            // Determine FY start year (July onwards = current year, Jan-June = previous year)
+            const fyStartYear = month >= 6 ? year : year - 1; // month 6 = July
+
+            const fyStart = new Date(fyStartYear, 6, 1); // July 1
+            let fyEnd = new Date(fyStartYear + 1, 5, 30); // June 30
+
+            // If we're in the current FY, only go up to today
+            if (fyEnd > today) {
+                fyEnd = today;
+            }
+
+            startDateInput.value = fyStart.toISOString().split('T')[0];
+            endDateInput.value = fyEnd.toISOString().split('T')[0];
         }
 
         // Xero review function
@@ -449,7 +463,11 @@
                 const data = await response.json();
 
                 if (data.error) {
-                    statusText.textContent = 'Error: ' + data.error;
+                    let errorMsg = 'Error: ' + data.error;
+                    if (data.debug && Array.isArray(data.debug)) {
+                        errorMsg += '\n\nDebug Info:\n' + data.debug.join('\n');
+                    }
+                    statusText.innerHTML = '<pre style="text-align: left; white-space: pre-wrap; font-size: 12px;">' + escapeHtml(errorMsg) + '</pre>';
                     document.getElementById('xero-review-btn').disabled = false;
                     return;
                 }

@@ -103,7 +103,7 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 XERO_CLIENT_ID = os.environ.get('XERO_CLIENT_ID')
 XERO_CLIENT_SECRET = os.environ.get('XERO_CLIENT_SECRET')
 XERO_REDIRECT_URI = os.environ.get('XERO_REDIRECT_URI', 'https://bas-reviewer.up.railway.app/callback')
-XERO_SCOPES = 'openid profile email accounting.transactions.read accounting.settings.read offline_access'
+XERO_SCOPES = 'openid profile email accounting.transactions.read accounting.journals.read accounting.reports.read accounting.settings.read offline_access'
 
 # DeepSeek API
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
@@ -373,6 +373,7 @@ def refresh_token_if_needed():
 def xero_api_request(endpoint, params=None):
     """Make authenticated request to Xero API"""
     if not refresh_token_if_needed():
+        print(f"DEBUG xero_api_request: Token refresh failed for {endpoint}")
         return None
 
     headers = {
@@ -383,10 +384,14 @@ def xero_api_request(endpoint, params=None):
     }
 
     url = f"{XERO_API_URL}/{endpoint}"
+    print(f"DEBUG xero_api_request: Calling {url} with params={params}")
     response = requests.get(url, headers=headers, params=params)
+    print(f"DEBUG xero_api_request: Response status={response.status_code}")
 
     if response.status_code == 200:
         return response.json()
+    else:
+        print(f"DEBUG xero_api_request: Error response: {response.text[:500]}")
     return None
 
 
@@ -407,10 +412,441 @@ def upload_page():
     return render_template('review.html', tenant_name='', logged_in=False)
 
 
+def parse_activity_statement(raw_data):
+    """Parse Activity Statement (Transactions by Tax Rate) Excel format"""
+    transactions = []
+
+    # Activity Statement format:
+    # Row 0: "Transactions by Tax Rate"
+    # Row 1: Company name
+    # Row 2: Period
+    # Row 4: Headers (Date, Account, Reference, Details, Gross, GST, Net)
+    # Row 6+: Data grouped by tax type sections
+
+    company_name = str(raw_data.iloc[1, 0]) if len(raw_data) > 1 and not pd.isna(raw_data.iloc[1, 0]) else 'Unknown'
+    period = str(raw_data.iloc[2, 0]) if len(raw_data) > 2 and not pd.isna(raw_data.iloc[2, 0]) else ''
+
+    current_tax_type = ''
+
+    def parse_amount(val):
+        if pd.isna(val):
+            return 0.0
+        if isinstance(val, (int, float)):
+            return float(val)
+        val_str = str(val).replace('$', '').replace(',', '').replace('(', '-').replace(')', '').strip()
+        try:
+            return float(val_str)
+        except:
+            return 0.0
+
+    def parse_account(account_str):
+        """Parse account string like 'Sales (200)' into name and code"""
+        if pd.isna(account_str) or not account_str:
+            return '', ''
+        account_str = str(account_str).strip()
+        # Look for pattern: "Account Name (CODE)"
+        import re
+        match = re.match(r'^(.+?)\s*\((\d+)\)$', account_str)
+        if match:
+            return match.group(1).strip(), match.group(2)
+        return account_str, ''
+
+    for idx in range(5, len(raw_data)):
+        row = raw_data.iloc[idx]
+        first_cell = row.iloc[0] if not pd.isna(row.iloc[0]) else ''
+        first_cell_str = str(first_cell).strip()
+
+        # Detect section headers (tax types)
+        if first_cell_str in ['GST on Income', 'GST on Expenses', 'GST Free Expenses', 'GST Free Income',
+                              'BAS Excluded', 'GST Free', 'Input Taxed', 'Export']:
+            current_tax_type = first_cell_str
+            continue
+
+        # Skip total rows and empty rows
+        if first_cell_str.startswith('Total') or not first_cell_str:
+            continue
+
+        # Try to parse as date (DD/MM/YYYY format)
+        try:
+            date_val = pd.to_datetime(first_cell, dayfirst=True)
+            date_str = date_val.strftime('%Y-%m-%d')
+        except:
+            continue  # Not a transaction row
+
+        # Parse the row: Date, Account, Reference, Details, Gross, GST, Net
+        account_str = str(row.iloc[1]) if not pd.isna(row.iloc[1]) else ''
+        account_name, account_code = parse_account(account_str)
+        reference = str(row.iloc[2]) if len(row) > 2 and not pd.isna(row.iloc[2]) else ''
+        details = str(row.iloc[3]) if len(row) > 3 and not pd.isna(row.iloc[3]) else ''
+        gross = parse_amount(row.iloc[4] if len(row) > 4 else 0)
+        gst = parse_amount(row.iloc[5] if len(row) > 5 else 0)
+        net = parse_amount(row.iloc[6] if len(row) > 6 else 0)
+
+        # Skip zero transactions
+        if gross == 0 and gst == 0 and net == 0:
+            continue
+
+        # Determine transaction type from tax type section
+        if 'Income' in current_tax_type:
+            tx_type = 'income'
+        elif 'Expense' in current_tax_type:
+            tx_type = 'expense'
+        else:
+            tx_type = 'other'
+
+        # Map tax type to GST rate name
+        gst_rate_name = ''
+        if current_tax_type == 'GST on Income':
+            gst_rate_name = 'GST on Income'
+        elif current_tax_type == 'GST on Expenses':
+            gst_rate_name = 'GST on Expenses'
+        elif 'GST Free' in current_tax_type:
+            gst_rate_name = 'GST Free'
+        elif current_tax_type == 'BAS Excluded':
+            gst_rate_name = 'BAS Excluded'
+
+        transaction = {
+            'row_number': idx + 1,
+            'account_code': account_code,
+            'account': account_name,
+            'date': date_str,
+            'source': '',
+            'description': details,
+            'invoice_number': '',
+            'reference': reference,
+            'gross': abs(gross),
+            'gst': abs(gst),
+            'net': abs(net),
+            'gst_rate': 10 if 'GST on' in current_tax_type else 0,
+            'gst_rate_name': gst_rate_name,
+            'type': tx_type,
+            'tax_type_section': current_tax_type
+        }
+
+        transactions.append(transaction)
+
+    return transactions, company_name, period
+
+
+def fetch_xero_bank_transactions(from_date_str, to_date_str):
+    """Fetch bank transactions from Xero API with tax information"""
+    transactions = []
+
+    # Format dates for Xero Where clause: DateTime(year, month, day)
+    from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+    to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+
+    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day})'
+
+    page = 1
+    while True:
+        data = xero_api_request('BankTransactions', params={
+            'where': where_clause,
+            'page': page
+        })
+
+        if not data or 'BankTransactions' not in data:
+            break
+
+        bank_txns = data.get('BankTransactions', [])
+        if not bank_txns:
+            break
+
+        for txn in bank_txns:
+            txn_date = parse_xero_date(txn.get('Date', ''))
+            date_str = txn_date.strftime('%Y-%m-%d') if txn_date else 'NO DATE'
+
+            # Each bank transaction can have multiple line items
+            for line in txn.get('LineItems', []):
+                account_code = line.get('AccountCode', '')
+                # Get account name from chart of accounts if needed
+                description = line.get('Description', '') or txn.get('Reference', '') or 'No description'
+
+                # Amounts
+                line_amount = float(line.get('LineAmount', 0) or 0)
+                tax_amount = float(line.get('TaxAmount', 0) or 0)
+                unit_amount = float(line.get('UnitAmount', 0) or 0)
+                quantity = float(line.get('Quantity', 1) or 1)
+
+                gross = line_amount + tax_amount
+
+                # Determine transaction type
+                is_expense = txn.get('Type', '') == 'SPEND'
+
+                # Get tax type
+                tax_type = line.get('TaxType', '')
+                gst_rate_name = ''
+                if 'OUTPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Income'
+                elif 'INPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Expenses'
+                elif 'NONE' in tax_type.upper() or 'EXEMPT' in tax_type.upper():
+                    gst_rate_name = 'GST Free'
+                elif 'BASEXCLUDED' in tax_type.upper():
+                    gst_rate_name = 'BAS Excluded'
+                else:
+                    gst_rate_name = tax_type
+
+                transactions.append({
+                    'row_number': len(transactions) + 1,
+                    'date': date_str,
+                    'type': 'expense' if is_expense else 'income',
+                    'account_code': account_code,
+                    'account': line.get('AccountCode', ''),  # Will be enriched later
+                    'description': description,
+                    'gross': abs(gross),
+                    'gst': abs(tax_amount),
+                    'net': abs(line_amount),
+                    'gst_rate_name': gst_rate_name,
+                    'source': 'BankTransaction',
+                    'reference': txn.get('Reference', ''),
+                    'contact': txn.get('Contact', {}).get('Name', '') if txn.get('Contact') else ''
+                })
+
+        page += 1
+        # Xero returns max 100 per page
+        if len(bank_txns) < 100:
+            break
+
+    return transactions
+
+
+def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
+    """Fetch invoices from Xero API (ACCREC for sales, ACCPAY for bills)"""
+    transactions = []
+
+    from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+    to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+
+    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day}) AND Type == "{invoice_type}"'
+
+    page = 1
+    while True:
+        data = xero_api_request('Invoices', params={
+            'where': where_clause,
+            'page': page
+        })
+
+        if not data or 'Invoices' not in data:
+            break
+
+        invoices = data.get('Invoices', [])
+        if not invoices:
+            break
+
+        for inv in invoices:
+            inv_date = parse_xero_date(inv.get('Date', ''))
+            date_str = inv_date.strftime('%Y-%m-%d') if inv_date else 'NO DATE'
+            contact_name = inv.get('Contact', {}).get('Name', '') if inv.get('Contact') else ''
+            inv_number = inv.get('InvoiceNumber', '')
+
+            # Each invoice can have multiple line items
+            for line in inv.get('LineItems', []):
+                account_code = line.get('AccountCode', '')
+                description = line.get('Description', '') or f'Invoice {inv_number}'
+
+                line_amount = float(line.get('LineAmount', 0) or 0)
+                tax_amount = float(line.get('TaxAmount', 0) or 0)
+                gross = line_amount + tax_amount
+
+                is_expense = invoice_type == 'ACCPAY'
+
+                tax_type = line.get('TaxType', '')
+                gst_rate_name = ''
+                if 'OUTPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Income'
+                elif 'INPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Expenses'
+                elif 'NONE' in tax_type.upper() or 'EXEMPT' in tax_type.upper():
+                    gst_rate_name = 'GST Free'
+                elif 'BASEXCLUDED' in tax_type.upper():
+                    gst_rate_name = 'BAS Excluded'
+                else:
+                    gst_rate_name = tax_type
+
+                transactions.append({
+                    'row_number': len(transactions) + 1,
+                    'date': date_str,
+                    'type': 'expense' if is_expense else 'income',
+                    'account_code': account_code,
+                    'account': account_code,
+                    'description': description,
+                    'gross': abs(gross),
+                    'gst': abs(tax_amount),
+                    'net': abs(line_amount),
+                    'gst_rate_name': gst_rate_name,
+                    'source': 'Invoice' if invoice_type == 'ACCREC' else 'Bill',
+                    'reference': inv_number,
+                    'contact': contact_name
+                })
+
+        page += 1
+        if len(invoices) < 100:
+            break
+
+    return transactions
+
+
+def fetch_xero_bills(from_date_str, to_date_str):
+    """Fetch bills (accounts payable invoices) from Xero API"""
+    return fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCPAY')
+
+
+def fetch_xero_journals_debug(from_date_str, to_date_str):
+    """Fetch all journal entries from Xero API with debug info"""
+    transactions = []
+    debug_info = []
+
+    from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+    to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+
+    # Xero Journals API uses offset-based pagination
+    offset = 0
+    last_journal_number = 0
+    total_journals_fetched = 0
+
+    while True:
+        params = {'offset': offset}
+        debug_info.append(f"Calling Journals API with offset={offset}")
+        data = xero_api_request('Journals', params=params)
+        debug_info.append(f"API returned data={data is not None}")
+
+        if not data or 'Journals' not in data:
+            debug_info.append(f"No data or no Journals key. Data keys: {list(data.keys()) if data else 'None'}")
+            if data and 'Message' in data:
+                debug_info.append(f"API Error Message: {data.get('Message')}")
+            break
+
+        journals = data.get('Journals', [])
+        debug_info.append(f"Got {len(journals)} journals in this batch")
+        if not journals:
+            break
+
+        total_journals_fetched += len(journals)
+        journals_in_range = 0
+
+        for journal in journals:
+            raw_date = journal.get('JournalDate', '')
+            journal_date = parse_xero_date(raw_date)
+
+            # Track the highest journal number for proper pagination
+            current_journal_number = journal.get('JournalNumber', 0)
+            if isinstance(current_journal_number, (int, float)):
+                last_journal_number = max(last_journal_number, int(current_journal_number))
+
+            # Filter by date range
+            if journal_date:
+                if journal_date < from_date or journal_date > to_date:
+                    continue
+                journals_in_range += 1
+
+            journal_number = journal.get('JournalNumber', '')
+            source_type = journal.get('SourceType', '')
+            reference = journal.get('Reference', '')
+
+            # Process each journal line (GL entry)
+            for line in journal.get('JournalLines', []):
+                account_code = line.get('AccountCode', '')
+                account_name = line.get('AccountName', '')
+                description = line.get('Description', '') or reference or 'No description'
+
+                # Skip lines without account codes
+                if not account_code:
+                    continue
+
+                # Get amounts
+                gross = float(line.get('GrossAmount', 0) or 0)
+                net = float(line.get('NetAmount', 0) or 0)
+                gst = float(line.get('TaxAmount', 0) or 0)
+
+                # Skip zero-value lines
+                if gross == 0 and net == 0 and gst == 0:
+                    continue
+
+                # Determine transaction type
+                account_type = line.get('AccountType', '')
+                is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
+
+                date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
+
+                # Map tax type to GST rate name
+                tax_type = line.get('TaxType', '')
+                gst_rate_name = ''
+                if 'OUTPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Income'
+                elif 'INPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Expenses'
+                elif 'NONE' in tax_type.upper() or 'EXEMPT' in tax_type.upper():
+                    gst_rate_name = 'GST Free'
+                elif 'BASEXCLUDED' in tax_type.upper():
+                    gst_rate_name = 'BAS Excluded'
+                else:
+                    gst_rate_name = tax_type
+
+                transactions.append({
+                    'row_number': len(transactions) + 1,
+                    'date': date_str,
+                    'type': 'expense' if is_expense else 'income',
+                    'account_code': account_code,
+                    'account': account_name,
+                    'description': description,
+                    'gross': abs(gross),
+                    'gst': abs(gst),
+                    'net': abs(net),
+                    'gst_rate_name': gst_rate_name,
+                    'source': source_type,
+                    'reference': reference,
+                    'journal_number': journal_number,
+                    'account_type': account_type
+                })
+
+        # Pagination: if we got fewer than 100 journals, we've reached the end
+        if len(journals) < 100:
+            debug_info.append(f"Less than 100 journals, stopping pagination")
+            break
+
+        # Use the last journal number + 1 as the next offset
+        if last_journal_number > 0:
+            offset = last_journal_number + 1
+        else:
+            offset += len(journals)
+
+        debug_info.append(f"{journals_in_range} journals in date range from this batch")
+
+    debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions: {len(transactions)}")
+    return transactions, debug_info
+
+
+def enrich_transactions_with_accounts(transactions):
+    """Add account names to transactions using Chart of Accounts"""
+    # Fetch chart of accounts
+    data = xero_api_request('Accounts')
+    if not data or 'Accounts' not in data:
+        return transactions
+
+    # Build account code to name mapping
+    account_map = {}
+    for acc in data.get('Accounts', []):
+        code = acc.get('Code', '')
+        name = acc.get('Name', '')
+        acc_type = acc.get('Type', '')
+        if code:
+            account_map[code] = {'name': name, 'type': acc_type}
+
+    # Enrich transactions
+    for txn in transactions:
+        code = txn.get('account_code', '')
+        if code in account_map:
+            txn['account'] = account_map[code]['name']
+            txn['account_type'] = account_map[code]['type']
+
+    return transactions
+
+
 @app.route('/api/upload-review', methods=['POST'])
 @login_required
 def upload_review():
-    """Process uploaded General Ledger Detail Excel file"""
+    """Process uploaded General Ledger Detail or Activity Statement Excel file"""
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -442,6 +878,34 @@ def upload_review():
         if len(raw_data) < 5:
             return jsonify({'error': f'File appears too small. Found only {len(raw_data)} rows.'}), 400
 
+        # Detect file format: Activity Statement vs General Ledger Detail
+        first_cell = str(raw_data.iloc[0, 0]).strip().lower() if not pd.isna(raw_data.iloc[0, 0]) else ''
+
+        if 'transactions by tax rate' in first_cell or 'activity statement' in first_cell:
+            # Parse as Activity Statement format
+            transactions, company_name, period = parse_activity_statement(raw_data)
+            if not transactions:
+                return jsonify({'error': 'No transactions found in Activity Statement file.'}), 404
+
+            # Run BAS review on Activity Statement transactions
+            results = run_bas_review(transactions)
+
+            ai_reviewed = 0
+            for item in results:
+                if item.get('ai_review'):
+                    ai_reviewed += 1
+
+            return jsonify({
+                'company': company_name,
+                'period': period,
+                'total': len(transactions),
+                'flagged': len(results),
+                'ai_reviewed': ai_reviewed,
+                'results': results,
+                'format': 'activity_statement'
+            })
+
+        # Otherwise, parse as General Ledger Detail format
         # Extract metadata
         company_name = str(raw_data.iloc[0, 0]) if len(raw_data) > 0 and not pd.isna(raw_data.iloc[0, 0]) else 'Unknown'
         period = str(raw_data.iloc[1, 0]) if len(raw_data) > 1 and not pd.isna(raw_data.iloc[1, 0]) else ''
@@ -450,7 +914,7 @@ def upload_review():
         header_row_idx = None
         for idx, row in raw_data.iterrows():
             first_cell = str(row[0]).strip().lower() if not pd.isna(row[0]) else ''
-            if first_cell in ['account code', 'account', 'acc code', 'code']:
+            if first_cell in ['account code', 'account', 'acc code', 'code', 'date']:
                 header_row_idx = idx
                 break
 
@@ -460,7 +924,7 @@ def upload_review():
                 if idx > 10:  # Don't look too far
                     break
                 first_cell = str(row[0]).strip().lower() if not pd.isna(row[0]) else ''
-                if 'account' in first_cell or 'code' in first_cell:
+                if 'account' in first_cell or 'code' in first_cell or 'date' in first_cell:
                     header_row_idx = idx
                     break
 
@@ -468,8 +932,8 @@ def upload_review():
             # Show first few rows to help debug
             first_rows = raw_data.head(10).to_string()
             return jsonify({
-                'error': 'Could not find header row. Looking for "Account Code" column.',
-                'hint': 'Make sure this is a General Ledger Detail report from Xero.',
+                'error': 'Could not find header row. Looking for "Account Code" or "Date" column.',
+                'hint': 'Make sure this is a General Ledger Detail report or Activity Statement from Xero.',
                 'first_rows': first_rows[:500]
             }), 400
 
@@ -1116,126 +1580,150 @@ def get_accounts():
     return jsonify({'error': 'Failed to fetch accounts'}), 500
 
 
+@app.route('/api/health')
+def health_check():
+    """Simple health check - no auth required"""
+    return jsonify({
+        'status': 'ok',
+        'version': '2.0',
+        'scopes': XERO_SCOPES
+    })
+
+
+@app.route('/api/test-journals')
+@login_required
+def test_journals():
+    """Test endpoint to debug Journals API"""
+    try:
+        if 'access_token' not in session:
+            return jsonify({'error': 'Not authenticated - no access_token in session'}), 401
+
+        if 'tenant_id' not in session:
+            return jsonify({'error': 'Not authenticated - no tenant_id in session'}), 401
+
+        result = {
+            'tenant_id': session.get('tenant_id'),
+            'tenant_name': session.get('tenant_name'),
+            'has_access_token': 'access_token' in session,
+        }
+
+        # Test Journals API directly
+        headers = {
+            'Authorization': f"Bearer {session['access_token']}",
+            'Xero-tenant-id': session['tenant_id'],
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+
+        # Try Journals endpoint
+        try:
+            url = f"{XERO_API_URL}/Journals"
+            response = requests.get(url, headers=headers, params={'offset': 0})
+            result['journals_status'] = response.status_code
+            result['journals_response'] = response.text[:1000] if response.text else 'Empty'
+        except Exception as e:
+            result['journals_error'] = str(e)
+
+        # Try BankTransactions endpoint
+        try:
+            url2 = f"{XERO_API_URL}/BankTransactions"
+            response2 = requests.get(url2, headers=headers)
+            result['bank_txn_status'] = response2.status_code
+            if response2.status_code == 200:
+                result['bank_txn_count'] = len(response2.json().get('BankTransactions', []))
+            else:
+                result['bank_txn_response'] = response2.text[:500]
+        except Exception as e:
+            result['bank_txn_error'] = str(e)
+
+        # Try Invoices endpoint
+        try:
+            url3 = f"{XERO_API_URL}/Invoices"
+            response3 = requests.get(url3, headers=headers)
+            result['invoices_status'] = response3.status_code
+            if response3.status_code == 200:
+                result['invoices_count'] = len(response3.json().get('Invoices', []))
+            else:
+                result['invoices_response'] = response3.text[:500]
+        except Exception as e:
+            result['invoices_error'] = str(e)
+
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
 @app.route('/api/run-review', methods=['POST'])
 @login_required
 def run_review():
-    """Run BAS review on transactions from General Ledger (Journals)"""
+    """Run BAS review on Activity Statement transactions from Xero"""
     try:
         if 'access_token' not in session:
             return jsonify({'error': 'Not authenticated'}), 401
 
-        # Get parameters
+        # Get parameters - use provided dates or default to current quarter
         data = request.json or {}
-        from_date_str = data.get('from_date', (datetime.now() - timedelta(days=90)).strftime('%Y-%m-%d'))
-        to_date_str = data.get('to_date', datetime.now().strftime('%Y-%m-%d'))
+        from_date_str = data.get('start_date') or data.get('from_date')
+        to_date_str = data.get('end_date') or data.get('to_date')
 
-        # Convert date strings to datetime objects for comparison
+        # Default to current Australian financial year if no dates provided
+        # Australian FY runs July 1 to June 30
+        # FY2026 = July 1, 2025 to June 30, 2026
+        if not from_date_str or not to_date_str:
+            today = datetime.now()
+            # Determine current financial year
+            if today.month >= 7:
+                # July onwards = current year's FY
+                fy_start_year = today.year
+            else:
+                # Jan-June = previous year's FY
+                fy_start_year = today.year - 1
+
+            from_date = datetime(fy_start_year, 7, 1)  # July 1
+            to_date = datetime(fy_start_year + 1, 6, 30)  # June 30
+
+            # If we're in the current FY, only go up to today
+            if to_date > today:
+                to_date = today
+
+            from_date_str = from_date.strftime('%Y-%m-%d')
+            to_date_str = to_date.strftime('%Y-%m-%d')
+
+        # Convert date strings to datetime objects
         try:
             from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
             to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
         except ValueError:
             return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
-        # Fetch General Ledger data via Journals endpoint
+        # Fetch transactions from Xero using Journals endpoint
+        # This is the most comprehensive as it captures ALL GL entries (same as Activity Statement)
         transactions = []
-        offset = 0
-        max_iterations = 200  # Safety limit (200 * 100 = 20,000 journals max)
-        iteration = 0
+        debug_info = []
 
-        # Fetch all journals with pagination
-        while iteration < max_iterations:
-            iteration += 1
+        # Primary method: Use Journals endpoint - captures ALL transactions in GL
+        # This matches what appears in the Activity Statement (Transactions by Tax Rate)
+        debug_info.append(f"Fetching journals from {from_date_str} to {to_date_str}")
+        journal_transactions, journal_debug = fetch_xero_journals_debug(from_date_str, to_date_str)
+        debug_info.extend(journal_debug)
+        debug_info.append(f"Got {len(journal_transactions) if journal_transactions else 0} journal transactions")
 
-            journals_data = xero_api_request('Journals', {
-                'offset': offset,
-                'paymentsOnly': 'false'
-            })
+        if journal_transactions:
+            transactions.extend(journal_transactions)
 
-            if not journals_data or not journals_data.get('Journals'):
-                break
-
-            journals = journals_data.get('Journals', [])
-            if not journals:
-                break
-
-            last_journal_number = 0
-
-            for journal in journals:
-                raw_date = journal.get('JournalDate', '')
-                journal_date = parse_xero_date(raw_date)
-
-                # Track the highest journal number for proper pagination
-                current_journal_number = journal.get('JournalNumber', 0)
-                if isinstance(current_journal_number, (int, float)):
-                    last_journal_number = max(last_journal_number, int(current_journal_number))
-
-                # Filter by date range - but still process if date is missing (edge case)
-                if journal_date:
-                    if journal_date < from_date or journal_date > to_date:
-                        continue
-                # If no date, include the transaction but flag it for review
-
-                journal_number = journal.get('JournalNumber', '')
-                source_type = journal.get('SourceType', '')
-                reference = journal.get('Reference', '')
-
-                # Process each journal line (GL entry)
-                for line in journal.get('JournalLines', []):
-                    account_code = line.get('AccountCode', '')
-                    account_name = line.get('AccountName', '')
-                    description = line.get('Description', '') or reference or 'No description'
-
-                    # Skip lines without account codes (e.g., tracking categories)
-                    if not account_code:
-                        continue
-
-                    # Get amounts - Xero journals have GrossAmount, NetAmount, TaxAmount
-                    gross = float(line.get('GrossAmount', 0) or 0)
-                    net = float(line.get('NetAmount', 0) or 0)
-                    gst = float(line.get('TaxAmount', 0) or 0)
-
-                    # Skip zero-value lines (often just balance entries)
-                    if gross == 0 and net == 0 and gst == 0:
-                        continue
-
-                    # Determine transaction type based on amount sign and account type
-                    account_type = line.get('AccountType', '')
-                    is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
-
-                    # Convert date to string for JSON serialization
-                    date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
-
-                    transactions.append({
-                        'row_number': len(transactions) + 1,
-                        'date': date_str,
-                        'type': 'expense' if is_expense else 'income',
-                        'account_code': account_code,
-                        'account': account_name,
-                        'description': description,
-                        'gross': abs(gross),
-                        'gst': abs(gst),
-                        'net': abs(net),
-                        'gst_rate_name': line.get('TaxType', ''),
-                        'source': source_type,
-                        'reference': reference,
-                        'journal_number': journal_number,
-                        'account_type': account_type
-                    })
-
-            # Proper Xero pagination: offset should be the next JournalNumber to fetch
-            # If we got fewer than 100 journals, we've reached the end
-            if len(journals) < 100:
-                break
-
-            # Use the last journal number + 1 as the next offset
-            if last_journal_number > 0:
-                offset = last_journal_number + 1
-            else:
-                # Fallback if journal numbers not available
-                offset += len(journals)
+        # Enrich transactions with account names from Chart of Accounts
+        if transactions:
+            transactions = enrich_transactions_with_accounts(transactions)
 
         if not transactions:
-            return jsonify({'error': 'No transactions found for the selected period', 'from_date': from_date_str, 'to_date': to_date_str}), 404
+            # Return more detailed error with debug info
+            return jsonify({
+                'error': 'No transactions found for the selected period',
+                'from_date': from_date_str,
+                'to_date': to_date_str,
+                'debug': debug_info
+            }), 404
 
         # Run BAS review on transactions - rule-based first, then AI only for flagged items
         flagged_items = []
