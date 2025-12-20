@@ -39,10 +39,14 @@ class User(UserMixin, db.Model):
     password_reset_expires = db.Column(db.DateTime)
 
     # Relationships
-    team_memberships = db.relationship('TeamMember', back_populates='user', lazy='dynamic', primaryjoin='User.id==TeamMember.user_id')
     owned_teams = db.relationship('Team', back_populates='owner', lazy='dynamic')
     xero_connections = db.relationship('XeroConnection', back_populates='user', lazy='dynamic')
     reviews = db.relationship('Review', back_populates='user', lazy='dynamic')
+
+    def get_team_memberships(self):
+        """Get team memberships for this user"""
+        from models import TeamMember
+        return TeamMember.query.filter_by(user_id=self.id).all()
 
     def set_password(self, password):
         """Hash and set password"""
@@ -186,7 +190,7 @@ class TeamMember(db.Model):
 
     # Relationships
     team = db.relationship('Team', back_populates='members')
-    user = db.relationship('User', back_populates='team_memberships', foreign_keys=[user_id])
+    user = db.relationship('User', foreign_keys=[user_id])
 
     # Unique constraint
     __table_args__ = (db.UniqueConstraint('team_id', 'user_id', name='unique_team_member'),)

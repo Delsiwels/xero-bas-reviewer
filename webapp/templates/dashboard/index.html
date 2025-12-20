@@ -253,7 +253,7 @@
             {% if xero_connected %}
                 <p class="xero-info">Connected to: <strong>{{ tenant_name }}</strong></p>
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <a href="{{ url_for('review') }}" class="btn btn-xero">Start Review from Xero</a>
+                    <a href="{{ url_for('review_page') }}" class="btn btn-xero">Start Review from Xero</a>
                     <a href="{{ url_for('xero_disconnect') }}" class="btn btn-outline">Disconnect</a>
                 </div>
             {% else %}
@@ -266,14 +266,14 @@
             <div class="card">
                 <h3>📁 Upload File</h3>
                 <p>Export your "General Ledger Detail" report from Xero as an Excel file, then upload it here for review.</p>
-                <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload Excel File</a>
+                <a href="{{ url_for('upload_page') }}" class="btn btn-primary">Upload Excel File</a>
             </div>
 
             {% if xero_connected %}
             <div class="card">
                 <h3>🔗 Review from Xero</h3>
                 <p>Pull transactions directly from your connected Xero account and review them for GST compliance.</p>
-                <a href="{{ url_for('review') }}" class="btn btn-xero">Start Review</a>
+                <a href="{{ url_for('review_page') }}" class="btn btn-xero">Start Review</a>
             </div>
             {% else %}
             <div class="card">
