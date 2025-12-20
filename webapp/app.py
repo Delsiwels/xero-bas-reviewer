@@ -754,14 +754,18 @@ def upload_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review only for rule-flagged items (max 50 to avoid timeout)
-        ai_review_limit = min(len(rule_flagged), 50)
+        # Second pass: AI review only for rule-flagged items (max 100 with batch processing)
+        ai_review_limit = min(len(rule_flagged), 100)
+
+        # Use batch AI review for faster processing (5 transactions per API call)
+        try:
+            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=5)
+        except Exception as e:
+            print(f"Error in batch AI review: {e}")
+            ai_results = [{'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []} for _ in range(ai_review_limit)]
+
         for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
-            try:
-                ai_result = review_with_ai(transaction)
-            except Exception as e:
-                print(f"Error in review_with_ai: {e}")
-                ai_result = {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
+            ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
             # Build comment based on what was flagged (with ATO rule references)
             comments = []
@@ -1349,10 +1353,18 @@ def run_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review only for rule-flagged items (max 50 to avoid timeout)
-        ai_review_limit = min(len(rule_flagged), 50)
-        for transaction in rule_flagged[:ai_review_limit]:
-            ai_result = review_with_ai(transaction)
+        # Second pass: AI review only for rule-flagged items (max 100 with batch processing)
+        ai_review_limit = min(len(rule_flagged), 100)
+
+        # Use batch AI review for faster processing (5 transactions per API call)
+        try:
+            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=5)
+        except Exception as e:
+            print(f"Error in batch AI review: {e}")
+            ai_results = [{'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []} for _ in range(ai_review_limit)]
+
+        for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
+            ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
             # Build comment based on what was flagged (with ATO rule references)
             comments = []
@@ -4994,6 +5006,175 @@ If issues found, respond with specific problems and ATO rule reference. If OK, r
         'comments': 'AI review unavailable - rule-based check performed',
         'issues': []
     }
+
+
+def review_batch_with_ai(transactions, batch_size=5):
+    """Review multiple transactions in batches with DeepSeek AI for faster processing"""
+    if not DEEPSEEK_API_KEY or not transactions:
+        # Return basic review without AI for all transactions
+        results = []
+        for transaction in transactions:
+            has_issues = (
+                transaction.get('account_coding_suspicious') or
+                transaction.get('alcohol_gst_error') or
+                transaction.get('input_taxed_gst_error') or
+                transaction.get('missing_gst_error') or
+                not transaction.get('gst_calculation_correct', True)
+            )
+            results.append({
+                'has_issues': has_issues,
+                'severity': 'high' if has_issues else 'low',
+                'comments': 'Manual review required - AI not configured' if has_issues else '',
+                'issues': []
+            })
+        return results
+
+    all_results = []
+
+    # Process in batches
+    for batch_start in range(0, len(transactions), batch_size):
+        batch = transactions[batch_start:batch_start + batch_size]
+
+        # Build batch prompt
+        batch_prompt = """Review these Australian transactions for BAS compliance per ATO rules.
+For EACH transaction, provide a brief assessment.
+
+ATO GST Rules:
+1. GST-FREE (no GST, CAN claim input credits): Basic food, health/medical, education, exports
+2. INPUT-TAXED (no GST, CANNOT claim credits): Bank fees, interest, residential rent, life insurance
+3. TAXABLE (10% GST): Office supplies, utilities, parking, fuel, professional services
+4. ENTERTAINMENT: Non-deductible, NO GST credits
+5. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit
+
+TRANSACTIONS TO REVIEW:
+"""
+        for idx, t in enumerate(batch, 1):
+            flags = []
+            if t.get('account_coding_suspicious'): flags.append('suspicious coding')
+            if t.get('alcohol_gst_error'): flags.append('entertainment GST')
+            if t.get('input_taxed_gst_error'): flags.append('input-taxed error')
+            if t.get('missing_gst_error'): flags.append('missing GST')
+            if t.get('overseas_subscription_gst'): flags.append('overseas subscription')
+            if t.get('reimbursement_gst'): flags.append('reimbursement >$82.50')
+            if t.get('general_expenses'): flags.append('general expenses')
+            if t.get('travel_gst'): flags.append('travel GST')
+            if t.get('payment_processor_fees'): flags.append('payment processor fees')
+
+            batch_prompt += f"""
+---
+Transaction {idx}:
+Account: {t.get('account_code')} - {t.get('account')}
+Description: {t.get('description', '')[:100]}
+Gross: ${t.get('gross', 0):,.2f} | GST: ${t.get('gst', 0):,.2f} | Rate: {t.get('gst_rate_name')}
+Flags: {', '.join(flags) if flags else 'None'}
+"""
+
+        batch_prompt += """
+---
+For each transaction, respond in this format:
+Transaction 1: [OK or ISSUE: brief description]
+Transaction 2: [OK or ISSUE: brief description]
+...etc
+"""
+
+        try:
+            response = requests.post(
+                'https://api.deepseek.com/v1/chat/completions',
+                headers={
+                    'Authorization': f'Bearer {DEEPSEEK_API_KEY}',
+                    'Content-Type': 'application/json'
+                },
+                json={
+                    'model': 'deepseek-chat',
+                    'messages': [
+                        {'role': 'system', 'content': 'You are an Australian tax accountant reviewing BAS transactions. Be concise. For each transaction, respond with OK or ISSUE followed by a brief explanation.'},
+                        {'role': 'user', 'content': batch_prompt}
+                    ],
+                    'temperature': 0.3,
+                    'max_tokens': 1000
+                },
+                timeout=60
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                ai_response = result['choices'][0]['message']['content']
+
+                # Parse batch response
+                lines = ai_response.strip().split('\n')
+                batch_results = []
+                current_result = None
+
+                for line in lines:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    # Check if this is a new transaction line
+                    for i in range(1, len(batch) + 1):
+                        if line.lower().startswith(f'transaction {i}:') or line.startswith(f'{i}:') or line.startswith(f'{i}.'):
+                            if current_result:
+                                batch_results.append(current_result)
+
+                            response_text = line.split(':', 1)[-1].strip() if ':' in line else line
+                            response_lower = response_text.lower()
+                            has_issues = not ('ok' in response_lower[:10] and 'issue' not in response_lower[:20])
+
+                            if has_issues:
+                                if any(word in response_lower for word in ['critical', 'must', 'incorrect', 'error']):
+                                    severity = 'high'
+                                elif any(word in response_lower for word in ['should', 'review', 'check']):
+                                    severity = 'medium'
+                                else:
+                                    severity = 'low'
+                            else:
+                                severity = 'low'
+
+                            current_result = {
+                                'has_issues': has_issues,
+                                'severity': severity,
+                                'comments': response_text,
+                                'issues': []
+                            }
+                            break
+
+                if current_result:
+                    batch_results.append(current_result)
+
+                # Fill in any missing results
+                while len(batch_results) < len(batch):
+                    batch_results.append({
+                        'has_issues': True,
+                        'severity': 'medium',
+                        'comments': 'AI batch response incomplete - manual review required',
+                        'issues': []
+                    })
+
+                all_results.extend(batch_results[:len(batch)])
+            else:
+                # API error - fall back to basic results
+                for t in batch:
+                    has_issues = t.get('account_coding_suspicious') or t.get('input_taxed_gst_error')
+                    all_results.append({
+                        'has_issues': has_issues,
+                        'severity': 'high' if has_issues else 'low',
+                        'comments': 'AI batch review failed - rule-based check performed',
+                        'issues': []
+                    })
+
+        except Exception as e:
+            print(f"Batch AI review error: {e}")
+            # Fall back to basic results for this batch
+            for t in batch:
+                has_issues = t.get('account_coding_suspicious') or t.get('input_taxed_gst_error')
+                all_results.append({
+                    'has_issues': has_issues,
+                    'severity': 'high' if has_issues else 'low',
+                    'comments': 'AI batch review error - rule-based check performed',
+                    'issues': []
+                })
+
+    return all_results
 
 
 @app.route('/download-report', methods=['GET', 'POST'])
