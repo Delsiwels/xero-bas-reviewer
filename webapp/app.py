@@ -1581,29 +1581,40 @@ def generate_correcting_journal(transaction):
 
     # Check what type of error this is
     if transaction.get('account_coding_suspicious'):
-        # Determine suggested correct account based on description
-        suggested_account = suggest_correct_account(description)
+        # Skip recoding suggestion if already in a valid travel account
+        # Employee reimbursements for travel are normal and shouldn't be recoded
+        travel_accounts = ['travel', 'travel national', 'travel - national', 'domestic travel',
+                          'travel international', 'accommodation', 'airfare', 'motor vehicle']
+        is_travel_account = any(keyword in account_name.lower() for keyword in travel_accounts)
 
-        if suggested_account:
-            # Debit to correct account first, then credit to reverse wrong account
-            journal_entries.append({
-                'line': 1,
-                'account_code': suggested_account['code'],
-                'account_name': suggested_account['name'],
-                'debit': gross if gross > 0 else 0,
-                'credit': 0 if gross > 0 else gross,
-                'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
-                'description': f"Correct coding for {transaction.get('description', '')[:30]}"
-            })
-            journal_entries.append({
-                'line': 2,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0 if gross > 0 else gross,
-                'credit': gross if gross > 0 else 0,
-                'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
-                'description': f"Reverse incorrect coding"
-            })
+        if is_travel_account:
+            # Don't suggest recoding travel accounts - they're fine
+            pass
+        else:
+            # Determine suggested correct account based on description
+            suggested_account = suggest_correct_account(description)
+
+            # Only suggest recoding if we have a specific account (not generic "General Expenses")
+            if suggested_account and suggested_account['name'] != 'General Expenses':
+                # Debit to correct account first, then credit to reverse wrong account
+                journal_entries.append({
+                    'line': 1,
+                    'account_code': suggested_account['code'],
+                    'account_name': suggested_account['name'],
+                    'debit': gross if gross > 0 else 0,
+                    'credit': 0 if gross > 0 else gross,
+                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
+                    'description': f"Correct coding for {transaction.get('description', '')[:30]}"
+                })
+                journal_entries.append({
+                    'line': 2,
+                    'account_code': account_code,
+                    'account_name': account_name,
+                    'debit': 0 if gross > 0 else gross,
+                    'credit': gross if gross > 0 else 0,
+                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
+                    'description': f"Reverse incorrect coding"
+                })
 
     if transaction.get('alcohol_gst_error'):
         # Entertainment alcohol - reverse original GST on Expenses coding to GST Free Expenses
