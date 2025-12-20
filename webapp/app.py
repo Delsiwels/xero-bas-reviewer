@@ -4307,8 +4307,14 @@ def infer_business_context(all_transactions):
         },
         'hospitality': {
             'keywords': ['food', 'beverage', 'restaurant', 'cafe', 'catering', 'kitchen',
-                        'ingredients', 'menu'],
-            'income_sources': ['catering', 'function', 'event', 'meal', 'food', 'beverage']
+                        'ingredients', 'menu', 'bar', 'pub', 'bistro', 'takeaway', 'coffee',
+                        'chef', 'waitstaff', 'front of house', 'food cost', 'liquor',
+                        'pos system', 'uber eats', 'deliveroo', 'menulog', 'doordash',
+                        'foodworks', 'bidfood', 'pfd', 'countrywide', 'bakery', 'patisserie'],
+            'income_sources': ['catering', 'function', 'event', 'meal', 'food', 'beverage',
+                              'dine in', 'takeaway', 'delivery', 'coffee', 'drinks', 'bar',
+                              'breakfast', 'lunch', 'dinner', 'functions', 'private event',
+                              'sales', 'daily takings', 'cash sales', 'card sales']
         },
         'agricultural': {
             'keywords': ['farm', 'livestock', 'cattle', 'sheep', 'crop', 'harvest', 'tractor',
