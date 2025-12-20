@@ -3953,9 +3953,10 @@ def check_overseas_subscription_gst(transaction):
         'vehicle', 'motor vehicle', 'computer equipment', 'office equipment',
         'leasehold improvement', 'building', 'land', 'property',
         # Office and operational expenses
-        'printing', 'stationery', 'office supplies', 'office expense',
+        'printing', 'stationery', 'office supplies', 'office expense', 'office expenses',
         'wages', 'salary', 'superannuation', 'payroll', 'rent', 'utilities',
-        'telephone', 'electricity', 'gas', 'water', 'insurance', 'repairs',
+        'telephone', 'electricity', 'gas', 'water', 'light', 'power', 'heating',
+        'insurance', 'repairs',
         'maintenance', 'cleaning', 'postage', 'freight', 'courier',
         # Other physical goods/services
         'advertising', 'marketing', 'promotion', 'bank fee', 'bank charge',
