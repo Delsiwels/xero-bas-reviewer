@@ -275,12 +275,6 @@
                 <p>Pull transactions directly from your connected Xero account and review them for GST compliance.</p>
                 <a href="{{ url_for('review_page') }}" class="btn btn-xero">Start Review</a>
             </div>
-            {% else %}
-            <div class="card">
-                <h3>🔗 Connect to Xero</h3>
-                <p>Connect your Xero account to pull transactions directly without needing to export files.</p>
-                <a href="{{ url_for('xero_login') }}" class="btn btn-xero">Connect Now</a>
-            </div>
             {% endif %}
         </div>
     </div>
