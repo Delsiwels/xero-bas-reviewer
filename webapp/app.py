@@ -3950,6 +3950,17 @@ def check_reimbursement_gst(transaction):
     gst_amount = abs(transaction.get('gst', 0))
     gross = abs(transaction.get('gross', 0))
 
+    # Skip travel accounts - employee reimbursements for travel are normal business practice
+    # Employees commonly pay for travel expenses first and get reimbursed later
+    travel_account_keywords = [
+        'travel', 'travel national', 'travel - national', 'domestic travel',
+        'travel international', 'travel - international',
+        'accommodation', 'airfare', 'flights', 'transport',
+        'motor vehicle', 'fuel', 'parking', 'tolls', 'uber', 'taxi'
+    ]
+    if any(keyword in account for keyword in travel_account_keywords):
+        return False
+
     # Reimbursement keywords (actual expenses paid by employee and reimbursed)
     reimbursement_keywords = [
         # Direct reimbursement terms
