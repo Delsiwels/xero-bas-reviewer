@@ -3960,78 +3960,20 @@ def check_overseas_subscription_gst(transaction):
         return False
 
     # Overseas subscription/software/digital product keywords
-    # Per ATO: Digital content, online games, apps, software, booking services from overseas
-    overseas_keywords = [
-        # Streaming services
-        'netflix', 'spotify', 'apple music', 'itunes', 'youtube premium',
-        'youtube music', 'disney+', 'disney plus', 'hulu', 'hbo max',
-        'paramount+', 'amazon prime', 'prime video', 'audible',
-        # Major tech companies (digital products/services)
-        'google', 'google ads', 'google workspace', 'google cloud',
-        'amazon', 'aws', 'amazon web services',
-        'microsoft', 'office 365', 'microsoft 365', 'azure', 'github',
-        'apple', 'icloud', 'app store',
-        # Software/SaaS (overseas)
-        'adobe', 'creative cloud', 'photoshop', 'illustrator',
-        'dropbox', 'zoom', 'slack', 'notion', 'asana', 'trello',
-        'salesforce', 'hubspot', 'mailchimp', 'sendinblue', 'klaviyo',
-        'canva', 'figma', 'sketch', 'invision', 'miro', 'lucidchart',
-        'shopify', 'squarespace', 'wix', 'webflow', 'bigcommerce',
-        'godaddy', 'namecheap', 'cloudflare', 'hostinger', 'bluehost',
-        # Automation/Integration platforms (overseas)
-        'zapier', 'make.com', 'make ', 'integromat', 'workato', 'n8n',
-        'ifttt', 'tray.io', 'automate.io', 'pabbly', 'integrately',
-        # Project management/Productivity (overseas)
-        'monday.com', 'monday ', 'airtable', 'clickup', 'basecamp',
-        'todoist', 'evernote', 'coda', 'quip', 'teamwork',
-        # Communication/Collaboration (overseas)
-        'loom', 'calendly', 'doodle', 'acuity', 'cal.com',
-        'intercom', 'zendesk', 'freshdesk', 'helpscout', 'drift',
-        'typeform', 'surveymonkey', 'jotform', 'google forms',
-        # Social media/advertising
-        'facebook', 'facebook ads', 'meta', 'instagram ads',
-        'linkedin', 'linkedin ads', 'twitter', 'x ads', 'tiktok',
-        'pinterest', 'snapchat',
-        # AI services (overseas)
-        'openai', 'chatgpt', 'anthropic', 'claude', 'midjourney',
-        'jasper', 'grammarly', 'perplexity', 'gemini', 'copilot',
-        'descript', 'otter.ai', 'fireflies', 'copy.ai', 'writesonic',
-        'runway', 'pika', 'elevenlabs', 'murf', 'synthesia',
-        # Gaming platforms (digital downloads)
-        'steam', 'epic games', 'playstation network', 'psn', 'xbox live',
-        'nintendo eshop', 'blizzard', 'battle.net', 'ea play', 'ubisoft',
-        # E-books and digital publications
-        'kindle', 'kobo', 'scribd', 'medium', 'substack',
-        # Online education/courses
-        'coursera', 'udemy', 'skillshare', 'linkedin learning', 'masterclass',
-        'pluralsight', 'datacamp', 'codecademy', 'udacity',
-        # News/media subscriptions (overseas)
-        'new york times', 'washington post', 'wall street journal', 'wsj',
-        'the economist', 'financial times', 'ft.com', 'bloomberg',
-        # Other overseas services
-        'fiverr', 'upwork', 'freelancer', 'toptal', '99designs',
-        'envato', 'shutterstock', 'getty images', 'istock', 'unsplash',
-        # Overseas booking platforms
-        'booking.com', 'expedia', 'hotels.com', 'agoda', 'trivago',
-        # Analytics/Marketing tools (overseas)
-        'hotjar', 'mixpanel', 'amplitude', 'heap', 'segment',
-        'semrush', 'ahrefs', 'moz', 'spyfu', 'similarweb',
-        # Developer tools (overseas)
-        'heroku', 'digitalocean', 'linode', 'vultr', 'render',
-        'vercel', 'netlify', 'railway', 'supabase', 'planetscale',
-        'datadog', 'newrelic', 'sentry', 'logrocket', 'bugsnag',
-        'postman', 'insomnia', 'ngrok', 'auth0', 'okta',
-        # HR/Payroll overseas (for overseas contractors)
-        'deel', 'remote.com', 'oyster', 'papaya global', 'rippling',
-        # Generic overseas indicators
-        'overseas subscription', 'international subscription', 'foreign subscription',
-        'overseas service', 'international service', 'imported service',
-        'usd', 'us$', 'eur', 'gbp', '£', 'foreign currency',
+    # Only flag as overseas if description EXPLICITLY indicates overseas origin
+    # Many SaaS companies (Xero, Canva, Atlassian) are Australian - don't flag these!
+
+    # Explicit overseas indicators in the description
+    explicit_overseas_indicators = [
+        'overseas', 'international', 'foreign', 'offshore',
+        'usd', 'us$', 'us dollar', 'eur', 'euro', 'gbp', '£', 'pound',
+        'usa', 'united states', 'uk ', 'u.k.', 'europe',
+        'imported service', 'non-resident', 'reverse charge',
     ]
 
-    is_overseas_subscription = any(keyword in description for keyword in overseas_keywords)
+    has_explicit_overseas_indicator = any(indicator in description for indicator in explicit_overseas_indicators)
 
-    if not is_overseas_subscription:
+    if not has_explicit_overseas_indicator:
         return False
 
     # Flag if GST is claimed on overseas subscription/digital product
