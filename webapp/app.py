@@ -13,13 +13,63 @@ import secrets
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
-app.config['SESSION_COOKIE_SECURE'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Enable debug mode for better error messages
+# Security Configuration
+app.secret_key = os.environ.get('SECRET_KEY')
+if not app.secret_key:
+    raise RuntimeError("SECRET_KEY environment variable must be set")
+
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file upload
+
+# Enable debug mode only in development
 app.config['DEBUG'] = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
-app.config['PROPAGATE_EXCEPTIONS'] = True
+app.config['PROPAGATE_EXCEPTIONS'] = app.config['DEBUG']
+
+# Initialize Flask-Limiter for rate limiting
+try:
+    from flask_limiter import Limiter
+    from flask_limiter.util import get_remote_address
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri="memory://",
+    )
+except ImportError:
+    limiter = None
+    print("Warning: flask-limiter not installed, rate limiting disabled")
+
+# Security headers middleware
+@app.after_request
+def add_security_headers(response):
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:; "
+        "font-src 'self'; "
+        "connect-src 'self' https://api.deepseek.com"
+    )
+    # Other security headers
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if not app.config['DEBUG']:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    return response
+
+# Global error handler - sanitize error responses in production
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(f"Unhandled exception: {e}", exc_info=True)
+    if app.config['DEBUG']:
+        raise e
+    return render_template('error.html', error="An unexpected error occurred. Please try again."), 500
 
 # Xero OAuth2 Configuration
 XERO_CLIENT_ID = os.environ.get('XERO_CLIENT_ID')
@@ -123,44 +173,7 @@ def login():
     return redirect(auth_url)
 
 
-@app.route('/debug')
-def debug():
-    """Debug endpoint to check configuration"""
-    return jsonify({
-        'client_id_set': bool(XERO_CLIENT_ID),
-        'client_id_length': len(XERO_CLIENT_ID) if XERO_CLIENT_ID else 0,
-        'client_id_preview': XERO_CLIENT_ID[:8] + '...' if XERO_CLIENT_ID and len(XERO_CLIENT_ID) > 8 else 'NOT SET',
-        'client_secret_set': bool(XERO_CLIENT_SECRET),
-        'redirect_uri': XERO_REDIRECT_URI,
-        'deepseek_set': bool(DEEPSEEK_API_KEY)
-    })
-
-
-@app.route('/test-login')
-def test_login():
-    """Test the OAuth URL generation without redirecting"""
-    try:
-        if not XERO_CLIENT_ID:
-            return jsonify({'error': 'XERO_CLIENT_ID not set'})
-
-        state = secrets.token_hex(16)
-
-        auth_url = (
-            f"{XERO_AUTH_URL}?"
-            f"response_type=code&"
-            f"client_id={XERO_CLIENT_ID}&"
-            f"redirect_uri={XERO_REDIRECT_URI}&"
-            f"scope={XERO_SCOPES}&"
-            f"state={state}"
-        )
-        return jsonify({
-            'auth_url': auth_url,
-            'client_id': XERO_CLIENT_ID,
-            'redirect_uri': XERO_REDIRECT_URI,
-            'scopes': XERO_SCOPES
-        })
-    except Exception as e:
-        return jsonify({'error': str(e)})
+# Debug endpoints removed for security - use environment variables to check config
 
 
 @app.route('/callback')
@@ -178,7 +191,11 @@ def callback():
         if not code:
             return render_template('error.html', error="No authorization code received from Xero")
 
-        # Skip state verification - session persistence issues
+        # Validate OAuth state to prevent CSRF attacks
+        stored_state = session.pop('oauth_state', None)
+        if not stored_state or stored_state != state:
+            return render_template('error.html', error="Invalid OAuth state. Please try logging in again.")
+
         # Exchange code for tokens
         token_data = {
             'grant_type': 'authorization_code',

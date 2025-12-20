@@ -369,6 +369,14 @@
         let selectedFile = null;
         let reviewResults = null;  // Store results for download
 
+        // XSS Protection - escape HTML entities in user-controlled data
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
         // File upload handling
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
@@ -520,15 +528,16 @@
                 `;
 
                 flaggedItems.forEach(item => {
-                    const desc = item.description || '';
-                    const comments = item.comments || '';
-                    // Split comments by pipe and format as list
+                    // Escape all user-controlled data to prevent XSS
+                    const desc = escapeHtml(item.description);
+                    const comments = escapeHtml(item.comments || '');
+                    // Split comments by pipe and format as list (already escaped)
                     const commentParts = comments.split(' | ').filter(c => c.trim());
                     const formattedComments = commentParts.length > 1
                         ? '<ul style="margin:0; padding-left:18px;">' + commentParts.map(c => '<li>' + c + '</li>').join('') + '</ul>'
                         : comments;
 
-                    // Format correcting journal
+                    // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
                         journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
@@ -536,10 +545,10 @@
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             journalHtml += '<tr>';
-                            journalHtml += '<td><strong>' + entry.account_code + '</strong><br><small>' + entry.account_name + '</small></td>';
+                            journalHtml += '<td><strong>' + escapeHtml(entry.account_code) + '</strong><br><small>' + escapeHtml(entry.account_name) + '</small></td>';
                             journalHtml += '<td style="text-align:right;">' + dr + '</td>';
                             journalHtml += '<td style="text-align:right;">' + cr + '</td>';
-                            journalHtml += '<td><small>' + entry.tax_code + '</small></td>';
+                            journalHtml += '<td><small>' + escapeHtml(entry.tax_code) + '</small></td>';
                             journalHtml += '</tr>';
                         });
                         journalHtml += '</tbody></table>';
@@ -547,12 +556,15 @@
                         journalHtml = '<em style="color:#999;">No correction needed</em>';
                     }
 
+                    // Sanitize severity to only allow known values
+                    const safeSeverity = ['low', 'medium', 'high'].includes(item.severity) ? item.severity : 'medium';
+
                     tableHtml += `
-                        <tr class="severity-${item.severity || 'medium'}">
-                            <td>${item.row_number || ''}</td>
-                            <td><span class="severity-badge ${item.severity || 'medium'}">${(item.severity || 'MEDIUM').toUpperCase()}</span></td>
-                            <td>${item.date || ''}</td>
-                            <td><strong>${item.account_code || ''}</strong><br><small>${item.account || ''}</small></td>
+                        <tr class="severity-${safeSeverity}">
+                            <td>${escapeHtml(item.row_number)}</td>
+                            <td><span class="severity-badge ${safeSeverity}">${safeSeverity.toUpperCase()}</span></td>
+                            <td>${escapeHtml(item.date)}</td>
+                            <td><strong>${escapeHtml(item.account_code)}</strong><br><small>${escapeHtml(item.account)}</small></td>
                             <td>${desc}</td>
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
