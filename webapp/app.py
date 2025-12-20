@@ -3952,10 +3952,14 @@ def check_overseas_subscription_gst(transaction):
         'fixed asset', 'asset', 'equipment', 'furniture', 'plant', 'machinery',
         'vehicle', 'motor vehicle', 'computer equipment', 'office equipment',
         'leasehold improvement', 'building', 'land', 'property',
-        # Other non-subscription expenses
+        # Office and operational expenses
+        'printing', 'stationery', 'office supplies', 'office expense',
         'wages', 'salary', 'superannuation', 'payroll', 'rent', 'utilities',
         'telephone', 'electricity', 'gas', 'water', 'insurance', 'repairs',
-        'maintenance', 'cleaning', 'postage', 'freight', 'courier'
+        'maintenance', 'cleaning', 'postage', 'freight', 'courier',
+        # Other physical goods/services
+        'advertising', 'marketing', 'promotion', 'bank fee', 'bank charge',
+        'interest', 'legal', 'accounting', 'audit', 'consulting', 'professional'
     ]
     if any(keyword in account_name for keyword in excluded_account_keywords):
         return False
