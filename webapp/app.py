@@ -3165,7 +3165,18 @@ def check_overseas_subscription_gst(transaction):
     Source: https://www.ato.gov.au/businesses-and-organisations/international-tax-for-business/gst-for-non-resident-businesses/gst-on-imported-services-and-digital-products
     """
     description = transaction.get('description', '').lower()
+    account_name = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
+
+    # Skip depreciation, fixed assets, and equipment accounts - these are NOT overseas subscriptions
+    excluded_account_keywords = [
+        'depreciation', 'accumulated depreciation', 'amortisation', 'amortization',
+        'fixed asset', 'asset', 'equipment', 'furniture', 'plant', 'machinery',
+        'vehicle', 'motor vehicle', 'computer equipment', 'office equipment',
+        'leasehold improvement', 'building', 'land', 'property'
+    ]
+    if any(keyword in account_name for keyword in excluded_account_keywords):
+        return False
 
     # Overseas subscription/software/digital product keywords
     # Per ATO: Digital content, online games, apps, software, booking services from overseas
