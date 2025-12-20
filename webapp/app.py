@@ -429,7 +429,7 @@ def push_manual_journal_to_xero(journal_data):
             "Narration": journal_data.get('narration', 'BAS Review Correcting Entry'),
             "Status": "DRAFT",
             "Date": journal_data.get('date', datetime.now().strftime('%Y-%m-%d')),
-            "LineAmountTypes": "Inclusive",
+            "LineAmountTypes": "Exclusive",
             "JournalLines": journal_data.get('entries', [])
         }]
     }
