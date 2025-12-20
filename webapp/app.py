@@ -3927,11 +3927,20 @@ def check_overseas_subscription_gst(transaction):
     - Overseas booking services
     - Online consulting/professional services from overseas
 
+    NOTE: This check only applies to EXPENSE accounts (claiming GST credits).
+    Income/Sales accounts are excluded as they don't claim GST credits.
+
     Source: https://www.ato.gov.au/businesses-and-organisations/international-tax-for-business/gst-for-non-resident-businesses/gst-on-imported-services-and-digital-products
     """
     description = transaction.get('description', '').lower()
     account_name = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
+
+    # This check is for EXPENSES only (claiming GST credits on overseas purchases)
+    # Skip income/sales/revenue accounts - they don't claim GST credits
+    income_account_keywords = ['sales', 'income', 'revenue', 'fees earned', 'interest received']
+    if any(keyword in account_name for keyword in income_account_keywords):
+        return False
 
     # Skip depreciation, fixed assets, and equipment accounts - these are NOT overseas subscriptions
     excluded_account_keywords = [
