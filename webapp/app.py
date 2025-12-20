@@ -3293,7 +3293,9 @@ def check_account_coding(transaction):
         # Don't flag legitimate service revenue
         service_revenue_keywords = ['fixed fee', 'monthly fee', 'service fee', 'consulting fee',
                                     'professional fee', 'retainer', 'project fee', 'hourly rate',
-                                    'management fee', 'advisory fee']
+                                    'rate as agreed', 'as agreed', 'as per agreement', 'per hour',
+                                    'management fee', 'advisory fee', 'invoice', 'services rendered',
+                                    'billable hours', 'professional services', 'fee for service']
         is_service_revenue = any(keyword in description for keyword in service_revenue_keywords)
         if is_service_revenue:
             return False  # This is legitimate service income
