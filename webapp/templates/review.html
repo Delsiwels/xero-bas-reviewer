@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAS Review{% if tenant_name %} - {{ tenant_name }}{% endif %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.5em;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .tenant-name {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+        .header a {
+            color: white;
+            text-decoration: none;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            max-width: 200px;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        .form-group input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+        .form-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .progress-section {
+            display: none;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .status-text {
+            color: #666;
+            font-size: 0.95em;
+        }
+        .results-section {
+            display: none;
+        }
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .summary-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .summary-card .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+        }
+        .summary-card .label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .summary-card.flagged .number {
+            color: #dc3545;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+        tr:hover {
+            background: #f8f9fa;
+        }
+        .severity-high {
+            background: #ffcccc;
+        }
+        .severity-medium {
+            background: #fff3cd;
+        }
+        .severity-low {
+            background: #d4edda;
+        }
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .severity-badge.high {
+            background: #dc3545;
+            color: white;
+        }
+        .severity-badge.medium {
+            background: #ffc107;
+            color: #333;
+        }
+        .severity-badge.low {
+            background: #28a745;
+            color: white;
+        }
+        .comment-cell {
+            min-width: 250px;
+            font-size: 0.9em;
+            color: #555;
+            line-height: 1.4;
+        }
+        .comment-cell ul {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .comment-cell li {
+            margin-bottom: 4px;
+        }
+        .flagged-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .flagged-table th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 1;
+        }
+        .flagged-table td {
+            vertical-align: top;
+            padding: 10px 8px;
+        }
+        .flagged-table small {
+            color: #666;
+        }
+        .journal-cell {
+            min-width: 250px;
+            padding: 8px !important;
+        }
+        .journal-table {
+            width: 100%;
+            font-size: 0.85em;
+            border-collapse: collapse;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .journal-table th {
+            background: #e9ecef;
+            padding: 4px 6px;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-align: left;
+        }
+        .journal-table td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        .journal-table tr:last-child td {
+            border-bottom: none;
+        }
+        .no-issues {
+            text-align: center;
+            padding: 40px;
+            color: #28a745;
+        }
+        .no-issues .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .download-section {
+            margin-top: 20px;
+            text-align: right;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #667eea;
+            background: #f8f9ff;
+        }
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+        .upload-area p {
+            color: #666;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 BAS Reviewer</h1>
+        <div class="header-right">
+            {% if logged_in %}
+            <span class="tenant-name">{{ tenant_name }}</span>
+            {% endif %}
+            <a href="/">Home</a>
+            {% if logged_in %}
+            <a href="/logout">Logout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- File Upload Section -->
+        <div class="card" id="upload-card">
+            <h2>Upload General Ledger Detail Report</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+                Export the "General Ledger Detail" report from Xero (Reports → All Reports → General Ledger Detail) as an Excel file, then upload it here.
+            </p>
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📁</div>
+                <p>Drag and drop your Excel file here, or click to browse</p>
+                <input type="file" id="file-input" accept=".xlsx,.xls" style="display: none;">
+            </div>
+            <div id="file-name" style="margin-top: 15px; color: #667eea; display: none;"></div>
+            <button class="btn btn-primary" id="upload-btn" onclick="uploadFile()" style="margin-top: 20px;" disabled>
+                Review Uploaded File
+            </button>
+        </div>
+
+        <!-- Progress Section -->
+        <div class="card progress-section" id="progress-section">
+            <h2>Review Progress</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p class="status-text" id="status-text">Connecting to Xero...</p>
+        </div>
+
+        <!-- Results Section -->
+        <div class="card results-section" id="results-section">
+            <h2>Review Results</h2>
+
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="number" id="total-count">0</div>
+                    <div class="label">Total Transactions</div>
+                </div>
+                <div class="summary-card flagged">
+                    <div class="number" id="flagged-count">0</div>
+                    <div class="label">Flagged Items</div>
+                </div>
+            </div>
+
+            <div id="flagged-table-container">
+                <!-- Table will be inserted here -->
+            </div>
+
+            <div class="download-section">
+                <button class="btn btn-success" id="download-btn" onclick="downloadReport()" style="display:none;">
+                    Download Excel Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let reviewResults = null;  // Store results for download
+
+        // File upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileInput = document.getElementById('file-input');
+        const fileNameDiv = document.getElementById('file-name');
+        const uploadBtn = document.getElementById('upload-btn');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+                alert('Please select an Excel file (.xlsx or .xls)');
+                return;
+            }
+            selectedFile = file;
+            fileNameDiv.textContent = 'Selected: ' + file.name;
+            fileNameDiv.style.display = 'block';
+            uploadBtn.disabled = false;
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) {
+                alert('Please select a file first');
+                return;
+            }
+
+            // Show progress
+            uploadBtn.disabled = true;
+            document.getElementById('progress-section').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+
+            let progress = 0;
+            const progressFill = document.getElementById('progress-fill');
+            const statusText = document.getElementById('status-text');
+
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    progressFill.style.width = Math.min(progress, 90) + '%';
+                }
+            }, 300);
+
+            statusText.textContent = 'Uploading and parsing file...';
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+
+                const response = await fetch('/api/upload-review', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+                statusText.textContent = 'Review complete!';
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    let errorMsg = data.error || 'Review failed';
+                    if (data.hint) errorMsg += '\n\nHint: ' + data.hint;
+                    if (data.first_rows) errorMsg += '\n\nFirst rows:\n' + data.first_rows;
+                    if (data.trace) console.error('Trace:', data.trace);
+                    alert('Error: ' + errorMsg);
+                    document.getElementById('progress-section').style.display = 'none';
+                }
+            } catch (error) {
+                clearInterval(progressInterval);
+                document.getElementById('progress-section').style.display = 'none';
+                alert('Error: ' + error.message);
+            }
+
+            uploadBtn.disabled = false;
+        }
+
+        function displayResults(data) {
+            // Store results for download
+            reviewResults = data;
+
+            // Hide progress, show results
+            document.getElementById('progress-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+
+            // Update counts
+            document.getElementById('total-count').textContent = data.total_transactions || 0;
+            document.getElementById('flagged-count').textContent = data.flagged_count || 0;
+
+            // Scroll to results
+            document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+
+            const container = document.getElementById('flagged-table-container');
+
+            const flaggedCount = data.flagged_count || 0;
+            const flaggedItems = data.flagged_items || [];
+
+            if (flaggedCount === 0 || flaggedItems.length === 0) {
+                container.innerHTML = `
+                    <div class="no-issues">
+                        <div class="icon">✅</div>
+                        <h3>No Issues Found</h3>
+                        <p>All ${data.total_transactions || 0} transactions appear to be correctly recorded.</p>
+                    </div>
+                `;
+                document.getElementById('download-btn').style.display = 'none';
+            } else {
+                let tableHtml = `
+                    <table class="flagged-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">Row</th>
+                                <th style="width: 80px;">Severity</th>
+                                <th style="width: 90px;">Date</th>
+                                <th style="width: 150px;">Account</th>
+                                <th style="width: 180px;">Description</th>
+                                <th style="width: 80px;">Gross</th>
+                                <th style="width: 80px;">GST</th>
+                                <th style="width: 80px;">Net</th>
+                                <th style="width: 200px;">Comments</th>
+                                <th style="width: 280px;">Suggested Correcting Journal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                flaggedItems.forEach(item => {
+                    const desc = item.description || '';
+                    const comments = item.comments || '';
+                    // Split comments by pipe and format as list
+                    const commentParts = comments.split(' | ').filter(c => c.trim());
+                    const formattedComments = commentParts.length > 1
+                        ? '<ul style="margin:0; padding-left:18px;">' + commentParts.map(c => '<li>' + c + '</li>').join('') + '</ul>'
+                        : comments;
+
+                    // Format correcting journal
+                    let journalHtml = '';
+                    if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
+                        journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
+                        item.correcting_journal.entries.forEach(entry => {
+                            const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
+                            const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
+                            journalHtml += '<tr>';
+                            journalHtml += '<td><strong>' + entry.account_code + '</strong><br><small>' + entry.account_name + '</small></td>';
+                            journalHtml += '<td style="text-align:right;">' + dr + '</td>';
+                            journalHtml += '<td style="text-align:right;">' + cr + '</td>';
+                            journalHtml += '<td><small>' + entry.tax_code + '</small></td>';
+                            journalHtml += '</tr>';
+                        });
+                        journalHtml += '</tbody></table>';
+                    } else {
+                        journalHtml = '<em style="color:#999;">No correction needed</em>';
+                    }
+
+                    tableHtml += `
+                        <tr class="severity-${item.severity || 'medium'}">
+                            <td>${item.row_number || ''}</td>
+                            <td><span class="severity-badge ${item.severity || 'medium'}">${(item.severity || 'MEDIUM').toUpperCase()}</span></td>
+                            <td>${item.date || ''}</td>
+                            <td><strong>${item.account_code || ''}</strong><br><small>${item.account || ''}</small></td>
+                            <td>${desc}</td>
+                            <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td class="comment-cell">${formattedComments}</td>
+                            <td class="journal-cell">${journalHtml}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += '</tbody></table>';
+                container.innerHTML = tableHtml;
+                document.getElementById('download-btn').style.display = 'inline-block';
+            }
+
+            // Always show download button (even if no issues, user might want the report)
+            document.getElementById('download-btn').style.display = 'inline-block';
+        }
+
+        async function downloadReport() {
+            if (!reviewResults) {
+                alert('No review results to download');
+                return;
+            }
+
+            try {
+                const response = await fetch('/download-report', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reviewResults)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `BAS_Review_${new Date().toISOString().slice(0,10)}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                } else {
+                    const error = await response.json();
+                    alert('Download failed: ' + (error.error || 'Unknown error'));
+                }
+            } catch (error) {
+                alert('Download error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

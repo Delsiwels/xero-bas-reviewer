@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BAS Reviewer - Xero Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin: 10px;
+            width: 100%;
+            max-width: 280px;
+        }
+        .btn-primary {
+            background: #13B5EA;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #0d9bc6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(19, 181, 234, 0.4);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .logged-in-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #2e7d32;
+        }
+        .features {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .features h3 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        .features ul {
+            list-style: none;
+        }
+        .features li {
+            padding: 8px 0;
+            color: #555;
+        }
+        .features li::before {
+            content: "✓";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .option-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            text-align: left;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .option-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+        .option-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .option-card p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        .option-card .btn {
+            margin: 0;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: #999;
+        }
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        .divider span {
+            padding: 0 15px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📊</div>
+        <h1>BAS Reviewer</h1>
+        <p class="subtitle">AI-Powered Transaction Review for GST Compliance</p>
+
+        {% if logged_in %}
+            <div class="logged-in-info">
+                Connected to: <strong>{{ tenant_name }}</strong>
+            </div>
+            <a href="/review" class="btn btn-success">Start Review</a>
+            <a href="/logout" class="btn btn-secondary">Logout</a>
+        {% else %}
+            <div class="features">
+                <h3>Features</h3>
+                <ul>
+                    <li>Automatic GST validation per ATO rules</li>
+                    <li>Account coding checks</li>
+                    <li>AI-powered transaction review</li>
+                    <li>Export flagged items to Excel</li>
+                    <li>Correcting journal suggestions</li>
+                </ul>
+            </div>
+
+            <div class="options-container">
+                <div class="option-card">
+                    <h4>📁 Upload File Directly</h4>
+                    <p>Export "General Ledger Detail" report from Xero as Excel file, then upload it here for review. No login required.</p>
+                    <a href="/upload" class="btn btn-outline">Upload Excel File</a>
+                </div>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="option-card">
+                    <h4>🔗 Connect to Xero</h4>
+                    <p>Connect your Xero account to access your data directly. Requires Xero login.</p>
+                    <a href="/login" class="btn btn-primary">Connect to Xero</a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
