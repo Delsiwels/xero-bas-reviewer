@@ -2767,12 +2767,27 @@ def check_missing_gst(transaction):
     Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/taxable-sales
     """
     description = transaction.get('description', '').lower()
+    account = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
     gross_amount = abs(transaction.get('gross', 0))
     gst_rate_name = transaction.get('gst_rate_name', '').lower()
 
     # Skip if already has GST
     if gst_amount > 0:
+        return False
+
+    # Skip entertainment expenses - GST credits CANNOT be claimed on entertainment
+    # Per ATO: Entertainment is non-deductible and GST credits are blocked
+    # So entertainment coded as GST-Free is CORRECT, not an error
+    entertainment_accounts = ['entertainment', 'staff amenities', 'gift']
+    entertainment_keywords = ['dan murphy', 'bws', 'liquorland', 'wine', 'beer', 'alcohol',
+                              'client dinner', 'client lunch', 'staff party', 'christmas party',
+                              'team building', 'celebration', 'farewell']
+    is_entertainment = (
+        any(keyword in account for keyword in entertainment_accounts) or
+        any(keyword in description for keyword in entertainment_keywords)
+    )
+    if is_entertainment:
         return False
 
     # Skip if explicitly marked as GST taxable (probably just zero GST amount)
