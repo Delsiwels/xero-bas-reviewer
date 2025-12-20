@@ -82,6 +82,45 @@ XERO_CONNECTIONS_URL = 'https://api.xero.com/connections'
 XERO_API_URL = 'https://api.xero.com/api.xro/2.0'
 
 
+@app.route('/debug-r2')
+def debug_r2():
+    """Debug R2 connection - remove this in production"""
+    result = {
+        'r2_account_id_set': bool(R2_ACCOUNT_ID),
+        'r2_access_key_set': bool(R2_ACCESS_KEY_ID),
+        'r2_secret_key_set': bool(R2_SECRET_ACCESS_KEY),
+        'r2_bucket_name': R2_BUCKET_NAME,
+    }
+
+    if all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
+        try:
+            import boto3
+            from botocore.config import Config
+
+            s3_client = boto3.client(
+                's3',
+                endpoint_url=f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
+                aws_access_key_id=R2_ACCESS_KEY_ID,
+                aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+                config=Config(signature_version='s3v4'),
+                region_name='auto'
+            )
+
+            # Try to list objects in bucket
+            response = s3_client.list_objects_v2(Bucket=R2_BUCKET_NAME, MaxKeys=10)
+            result['connection'] = 'SUCCESS'
+            result['objects_in_bucket'] = response.get('KeyCount', 0)
+            result['object_names'] = [obj['Key'] for obj in response.get('Contents', [])]
+
+        except Exception as e:
+            result['connection'] = 'FAILED'
+            result['error'] = str(e)
+    else:
+        result['connection'] = 'NOT_CONFIGURED'
+
+    return jsonify(result)
+
+
 @app.route('/')
 def index():
     """Home page"""
