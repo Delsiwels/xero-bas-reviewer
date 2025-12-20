@@ -39,7 +39,7 @@ class User(UserMixin, db.Model):
     password_reset_expires = db.Column(db.DateTime)
 
     # Relationships
-    team_memberships = db.relationship('TeamMember', back_populates='user', lazy='dynamic')
+    team_memberships = db.relationship('TeamMember', back_populates='user', lazy='dynamic', foreign_keys='TeamMember.user_id')
     owned_teams = db.relationship('Team', back_populates='owner', lazy='dynamic')
     xero_connections = db.relationship('XeroConnection', back_populates='user', lazy='dynamic')
     reviews = db.relationship('Review', back_populates='user', lazy='dynamic')
