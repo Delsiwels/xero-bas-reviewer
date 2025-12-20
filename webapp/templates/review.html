@@ -664,19 +664,19 @@
                         });
                         journalHtml += '</tbody></table>';
                         // Add Push to Xero button - store journal data as base64 encoded JSON
-                        // Map tax codes to Xero TaxType values
+                        // Map tax codes to Xero Australia TaxType values
                         const mapTaxCode = (code) => {
                             const taxMap = {
                                 'GST on Expenses': 'INPUT',
                                 'GST on Income': 'OUTPUT',
-                                'GST Free': 'NONE',
+                                'GST Free': 'EXEMPTEXPENSES',
                                 'GST Free Expenses': 'EXEMPTEXPENSES',
                                 'GST Free Income': 'EXEMPTOUTPUT',
-                                'BAS Excluded': 'NONE',
+                                'BAS Excluded': 'BASEXCLUDED',
                                 'Input Taxed': 'INPUTTAXED',
-                                'NONE': 'NONE'
+                                'NONE': 'BASEXCLUDED'
                             };
-                            return taxMap[code] || 'NONE';
+                            return taxMap[code] || 'BASEXCLUDED';
                         };
                         const journalData = {
                             narration: item.correcting_journal.narration || `BAS Correction: ${item.description}`,
@@ -812,19 +812,19 @@
                 return;
             }
 
-            // Map tax codes to Xero TaxType values
+            // Map tax codes to Xero Australia TaxType values
             const mapTaxCode = (code) => {
                 const taxMap = {
                     'GST on Expenses': 'INPUT',
                     'GST on Income': 'OUTPUT',
-                    'GST Free': 'NONE',
+                    'GST Free': 'EXEMPTEXPENSES',
                     'GST Free Expenses': 'EXEMPTEXPENSES',
                     'GST Free Income': 'EXEMPTOUTPUT',
-                    'BAS Excluded': 'NONE',
+                    'BAS Excluded': 'BASEXCLUDED',
                     'Input Taxed': 'INPUTTAXED',
-                    'NONE': 'NONE'
+                    'NONE': 'BASEXCLUDED'
                 };
-                return taxMap[code] || 'NONE';
+                return taxMap[code] || 'BASEXCLUDED';
             };
 
             // Collect all journal entries from flagged items
