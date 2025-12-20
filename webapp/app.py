@@ -3325,10 +3325,20 @@ def check_account_coding(transaction):
                                     'professional fee', 'retainer', 'project fee', 'hourly rate',
                                     'rate as agreed', 'as agreed', 'as per agreement', 'per hour',
                                     'management fee', 'advisory fee', 'invoice', 'services rendered',
-                                    'billable hours', 'professional services', 'fee for service']
+                                    'billable hours', 'professional services', 'fee for service',
+                                    # Training/education as a service
+                                    'training', 'workshop', 'course', 'session', 'coaching',
+                                    'microsoft', 'ms office', 'excel', 'word', 'powerpoint',
+                                    'instruction', 'tutoring', 'lesson', 'seminar', 'webinar']
         is_service_revenue = any(keyword in description for keyword in service_revenue_keywords)
         if is_service_revenue:
             return False  # This is legitimate service income
+
+        # Also check if this matches expected income for the business type
+        likely_income_sources = business_context.get('likely_income_sources', [])
+        is_expected_income = any(source in description for source in likely_income_sources)
+        if is_expected_income:
+            return False  # Matches expected income for this business type
 
         is_refund = any(word in description for word in ['refund', 'credit note', 'reversal', 'cancelled', 'returned'])
         expense_keywords = [
@@ -3340,7 +3350,7 @@ def check_account_coding(transaction):
             'insurance', 'premium', 'rent', 'lease',
             'phone', 'mobile', 'internet', 'electricity', 'utilities',
             'bank fee', 'merchant fee', 'freight', 'courier', 'postage',
-            'repairs', 'maintenance', 'training', 'conference',
+            'repairs', 'maintenance', 'conference',
             'legal', 'accounting'
         ]
         if any(keyword in description for keyword in expense_keywords) and not is_refund:
