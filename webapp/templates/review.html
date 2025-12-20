@@ -304,10 +304,8 @@
             {% if logged_in %}
             <span class="tenant-name">{{ tenant_name }}</span>
             {% endif %}
-            <a href="/">Home</a>
-            {% if logged_in %}
-            <a href="/logout">Logout</a>
-            {% endif %}
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
         </div>
     </div>
 

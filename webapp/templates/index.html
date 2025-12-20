@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAS Reviewer - Xero Integration</title>
+    <title>BAS Reviewer - AI-Powered GST Compliance</title>
     <style>
         * {
             margin: 0;
@@ -53,28 +53,13 @@
             max-width: 280px;
         }
         .btn-primary {
-            background: #13B5EA;
+            background: #667eea;
             color: white;
         }
         .btn-primary:hover {
-            background: #0d9bc6;
+            background: #5a6fd6;
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(19, 181, 234, 0.4);
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
         .btn-outline {
             background: white;
@@ -85,13 +70,6 @@
             background: #667eea;
             color: white;
             transform: translateY(-2px);
-        }
-        .logged-in-info {
-            background: #e8f5e9;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            color: #2e7d32;
         }
         .features {
             text-align: left;
@@ -117,43 +95,30 @@
             font-weight: bold;
             margin-right: 10px;
         }
-        .options-container {
+        .auth-buttons {
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .option-card {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 25px;
-            text-align: left;
-            border: 2px solid transparent;
-            transition: all 0.3s ease;
-        }
-        .option-card:hover {
-            border-color: #667eea;
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
-        }
-        .option-card h4 {
-            color: #333;
-            margin-bottom: 10px;
-            display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 15px;
+            margin-top: 30px;
         }
-        .option-card p {
+        .login-link {
             color: #666;
-            font-size: 0.9em;
-            margin-bottom: 15px;
+            font-size: 0.95em;
+            margin-top: 10px;
         }
-        .option-card .btn {
-            margin: 0;
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
         }
         .divider {
             display: flex;
             align-items: center;
-            margin: 20px 0;
+            margin: 25px 0;
             color: #999;
         }
         .divider::before,
@@ -174,42 +139,26 @@
         <h1>BAS Reviewer</h1>
         <p class="subtitle">AI-Powered Transaction Review for GST Compliance</p>
 
-        {% if logged_in %}
-            <div class="logged-in-info">
-                Connected to: <strong>{{ tenant_name }}</strong>
-            </div>
-            <a href="/review" class="btn btn-success">Start Review</a>
-            <a href="/logout" class="btn btn-secondary">Logout</a>
-        {% else %}
-            <div class="features">
-                <h3>Features</h3>
-                <ul>
-                    <li>Automatic GST validation per ATO rules</li>
-                    <li>Account coding checks</li>
-                    <li>AI-powered transaction review</li>
-                    <li>Export flagged items to Excel</li>
-                    <li>Correcting journal suggestions</li>
-                </ul>
+        <div class="features">
+            <h3>Features</h3>
+            <ul>
+                <li>Automatic GST validation per ATO rules</li>
+                <li>Account coding checks</li>
+                <li>AI-powered transaction review</li>
+                <li>Export flagged items to Excel</li>
+                <li>Correcting journal suggestions</li>
+            </ul>
+        </div>
+
+        <div class="auth-buttons">
+            <a href="{{ url_for('auth.signup') }}" class="btn btn-primary">Get Started - Free</a>
+
+            <div class="divider">
+                <span>Already have an account?</span>
             </div>
 
-            <div class="options-container">
-                <div class="option-card">
-                    <h4>📁 Upload File Directly</h4>
-                    <p>Export "General Ledger Detail" report from Xero as Excel file, then upload it here for review. No login required.</p>
-                    <a href="/upload" class="btn btn-outline">Upload Excel File</a>
-                </div>
-
-                <div class="divider">
-                    <span>OR</span>
-                </div>
-
-                <div class="option-card">
-                    <h4>🔗 Connect to Xero</h4>
-                    <p>Connect your Xero account to access your data directly. Requires Xero login.</p>
-                    <a href="/login" class="btn btn-primary">Connect to Xero</a>
-                </div>
-            </div>
-        {% endif %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline">Sign In</a>
+        </div>
     </div>
 </body>
 </html>

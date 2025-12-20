@@ -11,6 +11,7 @@ import pandas as pd
 from io import BytesIO
 import secrets
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from flask_login import LoginManager, login_required, current_user
 
 app = Flask(__name__)
 
@@ -70,6 +71,33 @@ def handle_exception(e):
     if app.config['DEBUG']:
         raise e
     return render_template('error.html', error="An unexpected error occurred. Please try again."), 500
+
+# Database Configuration
+from config import get_config
+app.config.from_object(get_config())
+
+# Initialize database
+from models import db, User
+db.init_app(app)
+
+# Create tables on first request
+with app.app_context():
+    db.create_all()
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+login_manager.login_message = 'Please log in to access this page.'
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(user_id)
+
+# Register blueprints
+from blueprints.auth import auth_bp
+app.register_blueprint(auth_bp, url_prefix='/auth')
 
 # Xero OAuth2 Configuration
 XERO_CLIENT_ID = os.environ.get('XERO_CLIENT_ID')
@@ -134,25 +162,40 @@ XERO_API_URL = 'https://api.xero.com/api.xro/2.0'
 
 @app.route('/')
 def index():
-    """Home page"""
-    logged_in = False
+    """Home page - redirect authenticated users to dashboard"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return render_template('index.html', logged_in=False, tenant_name='')
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """User dashboard - shows options and review history"""
+    # Check if Xero is connected
+    xero_connected = False
+    tenant_name = session.get('tenant_name', '')
     if 'access_token' in session:
         token_expiry = session.get('token_expiry')
         if token_expiry:
             try:
                 expiry_dt = datetime.fromisoformat(token_expiry)
-                logged_in = expiry_dt > datetime.now()
+                xero_connected = expiry_dt > datetime.now()
             except:
-                logged_in = True  # If can't parse, assume valid
+                xero_connected = True
         else:
-            logged_in = True  # If no expiry, assume valid
-    tenant_name = session.get('tenant_name', '')
-    return render_template('index.html', logged_in=logged_in, tenant_name=tenant_name)
+            xero_connected = True
+
+    return render_template('dashboard/index.html',
+                         user=current_user,
+                         xero_connected=xero_connected,
+                         tenant_name=tenant_name)
 
 
-@app.route('/login')
-def login():
-    """Redirect to Xero OAuth"""
+@app.route('/xero/login')
+@login_required
+def xero_login():
+    """Redirect to Xero OAuth - requires user to be logged in first"""
     # Debug: Check if credentials are loaded
     if not XERO_CLIENT_ID:
         return render_template('error.html', error="XERO_CLIENT_ID is not set in environment variables")
@@ -237,17 +280,23 @@ def callback():
         except Exception as conn_err:
             return render_template('error.html', error=f"Failed to get Xero connections: {str(conn_err)}")
 
-        return redirect(url_for('index'))
+        return redirect(url_for('dashboard'))
     except Exception as e:
         import traceback
         return render_template('error.html', error=f"Callback error: {str(e)}<br><pre>{traceback.format_exc()}</pre>")
 
 
-@app.route('/logout')
-def logout():
-    """Clear session"""
-    session.clear()
-    return redirect(url_for('index'))
+@app.route('/xero/disconnect')
+@login_required
+def xero_disconnect():
+    """Disconnect from Xero (clear Xero tokens only)"""
+    # Remove Xero-specific session data, keep user login
+    session.pop('access_token', None)
+    session.pop('refresh_token', None)
+    session.pop('token_expiry', None)
+    session.pop('tenant_id', None)
+    session.pop('tenant_name', None)
+    return redirect(url_for('dashboard'))
 
 
 def parse_xero_date(raw_date):
@@ -342,21 +391,24 @@ def xero_api_request(endpoint, params=None):
 
 
 @app.route('/review')
+@login_required
 def review_page():
-    """Show review options page (requires login)"""
+    """Show review options page (requires Xero connection)"""
     if 'access_token' not in session:
-        return redirect(url_for('login'))
+        return redirect(url_for('xero_login'))
 
     return render_template('review.html', tenant_name=session.get('tenant_name', ''), logged_in=True)
 
 
 @app.route('/upload')
+@login_required
 def upload_page():
-    """Show upload page without requiring Xero login"""
+    """Show upload page for authenticated users"""
     return render_template('review.html', tenant_name='', logged_in=False)
 
 
 @app.route('/api/upload-review', methods=['POST'])
+@login_required
 def upload_review():
     """Process uploaded General Ledger Detail Excel file"""
     try:
@@ -1050,6 +1102,7 @@ def upload_review():
 
 
 @app.route('/api/accounts')
+@login_required
 def get_accounts():
     """Get chart of accounts from Xero"""
     if 'access_token' not in session:
@@ -1064,6 +1117,7 @@ def get_accounts():
 
 
 @app.route('/api/run-review', methods=['POST'])
+@login_required
 def run_review():
     """Run BAS review on transactions from General Ledger (Journals)"""
     try:
@@ -5333,6 +5387,7 @@ def review_batch_with_ai(transactions, batch_size=5, max_workers=4):
 
 
 @app.route('/download-report', methods=['GET', 'POST'])
+@login_required
 def download_report():
     """Download review results as Excel with formatting"""
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
