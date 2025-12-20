@@ -661,14 +661,28 @@
                         });
                         journalHtml += '</tbody></table>';
                         // Add Push to Xero button - store journal data as base64 encoded JSON
+                        // Map tax codes to Xero TaxType values
+                        const mapTaxCode = (code) => {
+                            const taxMap = {
+                                'GST on Expenses': 'INPUT',
+                                'GST on Income': 'OUTPUT',
+                                'GST Free': 'NONE',
+                                'GST Free Expenses': 'EXEMPTEXPENSES',
+                                'GST Free Income': 'EXEMPTOUTPUT',
+                                'BAS Excluded': 'NONE',
+                                'Input Taxed': 'INPUTTAXED',
+                                'NONE': 'NONE'
+                            };
+                            return taxMap[code] || 'NONE';
+                        };
                         const journalData = {
                             narration: item.correcting_journal.narration || `BAS Correction: ${item.description}`,
                             date: item.date,
                             entries: item.correcting_journal.entries.map(e => ({
                                 AccountCode: e.account_code,
-                                Description: e.account_name,
+                                Description: e.description || e.account_name,
                                 LineAmount: e.debit > 0 ? e.debit : -e.credit,
-                                TaxType: e.tax_code || 'NONE'
+                                TaxType: mapTaxCode(e.tax_code)
                             }))
                         };
                         const journalDataStr = btoa(JSON.stringify(journalData));
