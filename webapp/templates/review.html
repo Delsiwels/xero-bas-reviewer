@@ -378,9 +378,12 @@
                 <!-- Table will be inserted here -->
             </div>
 
-            <div class="download-section">
+            <div class="download-section" style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn-success" id="download-btn" onclick="downloadReport()" style="display:none;">
                     Download Excel Report
+                </button>
+                <button class="btn" id="push-all-btn" onclick="pushAllJournalsToXero()" style="display:none; background:#13B5EA; color:white;">
+                    Push All Journals to Xero (Draft)
                 </button>
             </div>
         </div>
@@ -713,6 +716,13 @@
                 tableHtml += '</tbody></table>';
                 container.innerHTML = tableHtml;
                 document.getElementById('download-btn').style.display = 'inline-block';
+                // Show Push All button only if there are flagged items with journals
+                const hasJournals = data.flagged_items && data.flagged_items.some(item =>
+                    item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0
+                );
+                if (hasJournals) {
+                    document.getElementById('push-all-btn').style.display = 'inline-block';
+                }
             }
 
             // Always show download button (even if no issues, user might want the report)
@@ -793,6 +803,96 @@
                 buttonElement.style.background = '#13B5EA';
                 buttonElement.disabled = false;
                 alert('Error pushing journal: ' + error.message);
+            }
+        }
+
+        async function pushAllJournalsToXero() {
+            if (!reviewResults || !reviewResults.flagged_items) {
+                alert('No review results available');
+                return;
+            }
+
+            // Map tax codes to Xero TaxType values
+            const mapTaxCode = (code) => {
+                const taxMap = {
+                    'GST on Expenses': 'INPUT',
+                    'GST on Income': 'OUTPUT',
+                    'GST Free': 'NONE',
+                    'GST Free Expenses': 'EXEMPTEXPENSES',
+                    'GST Free Income': 'EXEMPTOUTPUT',
+                    'BAS Excluded': 'NONE',
+                    'Input Taxed': 'INPUTTAXED',
+                    'NONE': 'NONE'
+                };
+                return taxMap[code] || 'NONE';
+            };
+
+            // Collect all journal entries from flagged items
+            const allEntries = [];
+            let narrationParts = [];
+
+            reviewResults.flagged_items.forEach((item, index) => {
+                if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
+                    item.correcting_journal.entries.forEach(e => {
+                        allEntries.push({
+                            AccountCode: e.account_code,
+                            Description: `[${index + 1}] ${e.description || e.account_name}`,
+                            LineAmount: e.debit > 0 ? e.debit : -e.credit,
+                            TaxType: mapTaxCode(e.tax_code)
+                        });
+                    });
+                    narrationParts.push(`${index + 1}. ${item.description.substring(0, 30)}`);
+                }
+            });
+
+            if (allEntries.length === 0) {
+                alert('No correcting journals to push');
+                return;
+            }
+
+            // Get the end date from the date picker or use current date
+            const endDateInput = document.getElementById('end-date');
+            const journalDate = endDateInput ? endDateInput.value : new Date().toISOString().split('T')[0];
+
+            const journalData = {
+                narration: `BAS Review Corrections (${narrationParts.length} items):\n${narrationParts.join('\n')}`,
+                date: journalDate,
+                entries: allEntries
+            };
+
+            // Disable button and show loading
+            const btn = document.getElementById('push-all-btn');
+            btn.disabled = true;
+            btn.textContent = 'Pushing...';
+            btn.style.background = '#999';
+
+            try {
+                const response = await fetch('/api/push-journal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(journalData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    btn.textContent = '✓ All Pushed to Xero';
+                    btn.style.background = '#28a745';
+                    const msg = result.journal_number
+                        ? `Draft journal #${result.journal_number} created with ${allEntries.length} line items!`
+                        : `Draft journal created with ${allEntries.length} line items!`;
+                    alert(msg);
+                } else {
+                    btn.textContent = 'Push All Journals to Xero (Draft)';
+                    btn.style.background = '#13B5EA';
+                    btn.disabled = false;
+                    alert('Failed to push journals: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                btn.textContent = 'Push All Journals to Xero (Draft)';
+                btn.style.background = '#13B5EA';
+                btn.disabled = false;
+                alert('Error pushing journals: ' + error.message);
             }
         }
     </script>
