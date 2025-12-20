@@ -310,7 +310,29 @@
     </div>
 
     <div class="container">
-        <!-- File Upload Section -->
+        {% if logged_in %}
+        <!-- Xero Review Section - shown when connected to Xero -->
+        <div class="card" id="xero-review-card">
+            <h2>Review Transactions from Xero</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+                Select the date range to review transactions from {{ tenant_name }}.
+            </p>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Start Date</label>
+                    <input type="date" id="start-date" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">End Date</label>
+                    <input type="date" id="end-date" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em;">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="xero-review-btn" onclick="runXeroReview()" style="background: #13B5EA;">
+                Start Review
+            </button>
+        </div>
+        {% else %}
+        <!-- File Upload Section - shown when NOT connected to Xero -->
         <div class="card" id="upload-card">
             <h2>Upload General Ledger Detail Report</h2>
             <p style="color: #666; margin-bottom: 20px;">
@@ -326,6 +348,7 @@
                 Review Uploaded File
             </button>
         </div>
+        {% endif %}
 
         <!-- Progress Section -->
         <div class="card progress-section" id="progress-section">
@@ -375,37 +398,106 @@
             return div.innerHTML;
         }
 
-        // File upload handling
+        // Set default dates for Xero review (last quarter)
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        if (startDateInput && endDateInput) {
+            const today = new Date();
+            const threeMonthsAgo = new Date(today);
+            threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+            startDateInput.value = threeMonthsAgo.toISOString().split('T')[0];
+            endDateInput.value = today.toISOString().split('T')[0];
+        }
+
+        // Xero review function
+        async function runXeroReview() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (!startDate || !endDate) {
+                alert('Please select both start and end dates');
+                return;
+            }
+
+            // Show progress
+            document.getElementById('xero-review-btn').disabled = true;
+            document.getElementById('progress-section').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+
+            let progress = 0;
+            const progressFill = document.getElementById('progress-fill');
+            const statusText = document.getElementById('status-text');
+
+            statusText.textContent = 'Fetching transactions from Xero...';
+            const progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 10;
+                    progressFill.style.width = Math.min(progress, 90) + '%';
+                }
+            }, 500);
+
+            try {
+                const response = await fetch('/api/run-review', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ start_date: startDate, end_date: endDate })
+                });
+
+                clearInterval(progressInterval);
+                progressFill.style.width = '100%';
+
+                const data = await response.json();
+
+                if (data.error) {
+                    statusText.textContent = 'Error: ' + data.error;
+                    document.getElementById('xero-review-btn').disabled = false;
+                    return;
+                }
+
+                reviewResults = data;
+                displayResults(data);
+                document.getElementById('xero-review-btn').disabled = false;
+
+            } catch (error) {
+                clearInterval(progressInterval);
+                statusText.textContent = 'Error: ' + error.message;
+                document.getElementById('xero-review-btn').disabled = false;
+            }
+        }
+
+        // File upload handling - only if upload elements exist
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('file-input');
         const fileNameDiv = document.getElementById('file-name');
         const uploadBtn = document.getElementById('upload-btn');
 
-        uploadArea.addEventListener('click', () => fileInput.click());
+        if (uploadArea && fileInput) {
+            uploadArea.addEventListener('click', () => fileInput.click());
 
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
 
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFileSelect(files[0]);
-            }
-        });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFileSelect(files[0]);
+                }
+            });
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                handleFileSelect(e.target.files[0]);
-            }
-        });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    handleFileSelect(e.target.files[0]);
+                }
+            });
+        }
 
         function handleFileSelect(file) {
             if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
