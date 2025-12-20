@@ -854,8 +854,13 @@
             const endDateInput = document.getElementById('end-date');
             const journalDate = endDateInput ? endDateInput.value : new Date().toISOString().split('T')[0];
 
+            // Format narration as "Sep-25 BAS Adjustments"
+            const endDate = new Date(journalDate);
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthYear = `${monthNames[endDate.getMonth()]}-${String(endDate.getFullYear()).slice(-2)}`;
+
             const journalData = {
-                narration: `BAS Review Corrections (${narrationParts.length} items):\n${narrationParts.join('\n')}`,
+                narration: `${monthYear} BAS Adjustments`,
                 date: journalDate,
                 entries: allEntries
             };
