@@ -664,16 +664,15 @@
                         });
                         journalHtml += '</tbody></table>';
                         // Add Push to Xero button - store journal data as base64 encoded JSON
-                        // Check if account is a revenue/income account based on name or code
+                        // Check if account is a revenue/income account based on name only
                         const isRevenueAcct = (accountCode, accountName) => {
                             const name = (accountName || '').toLowerCase();
+                            // Only check by name - code ranges vary by organization
                             if (name.includes('sales') || name.includes('income') || name.includes('revenue') ||
-                                name.includes('fees') || name.includes('interest received')) {
+                                name.includes('fees earned') || name.includes('interest received') ||
+                                name.includes('consulting revenue') || name.includes('service revenue')) {
                                 return true;
                             }
-                            const code = parseInt(accountCode);
-                            if (code >= 400 && code < 500) return true;
-                            if (code === 200 && name.includes('sales')) return true;
                             return false;
                         };
                         // Map tax codes to Xero Australia TaxType values based on account type
@@ -823,21 +822,13 @@
                 return;
             }
 
-            // Check if account is a revenue/income account based on name or code
+            // Check if account is a revenue/income account based on name only
             const isRevenueAccount = (accountCode, accountName) => {
                 const name = (accountName || '').toLowerCase();
-                // Check by name keywords
+                // Only check by name - code ranges vary by organization
                 if (name.includes('sales') || name.includes('income') || name.includes('revenue') ||
-                    name.includes('fees') || name.includes('interest received')) {
-                    return true;
-                }
-                // Check by typical revenue account code ranges (4xx is often revenue)
-                const code = parseInt(accountCode);
-                if (code >= 400 && code < 500) {
-                    return true;
-                }
-                // Account 200 is often Sales in some charts
-                if (code === 200 && name.includes('sales')) {
+                    name.includes('fees earned') || name.includes('interest received') ||
+                    name.includes('consulting revenue') || name.includes('service revenue')) {
                     return true;
                 }
                 return false;
