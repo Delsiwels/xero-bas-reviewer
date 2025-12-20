@@ -4288,6 +4288,20 @@ def infer_business_context(all_transactions):
             'income_sources': ['consulting', 'advisory', 'coaching', 'mentoring', 'training',
                               'project', 'engagement', 'retainer', 'hourly', 'fee']
         },
+        'management_consulting': {
+            'keywords': ['consulting', 'consultant', 'advisory', 'strategy', 'transformation',
+                        'change management', 'business analysis', 'process improvement',
+                        'stakeholder', 'workshop', 'facilitation', 'governance', 'compliance',
+                        'risk management', 'due diligence', 'merger', 'acquisition', 'restructure',
+                        'operating model', 'target operating', 'capability', 'benchmark',
+                        'kpi', 'dashboard', 'report', 'presentation', 'client meeting',
+                        'big 4', 'deloitte', 'pwc', 'kpmg', 'ey', 'mckinsey', 'bcg', 'bain'],
+            'income_sources': ['consulting', 'advisory', 'strategy', 'engagement', 'project',
+                              'retainer', 'monthly fee', 'fixed fee', 'hourly', 'per hour',
+                              'rate as agreed', 'professional fee', 'management fee',
+                              'workshop', 'facilitation', 'training', 'coaching', 'review',
+                              'assessment', 'analysis', 'recommendations', 'implementation']
+        },
         'trades': {
             'keywords': ['bunnings', 'hardware', 'tools', 'materials', 'building', 'construction',
                         'plumbing', 'electrical', 'carpentry', 'painting', 'renovation'],
