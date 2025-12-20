@@ -30,6 +30,51 @@ XERO_SCOPES = 'openid profile email accounting.transactions.read accounting.sett
 # DeepSeek API
 DEEPSEEK_API_KEY = os.environ.get('DEEPSEEK_API_KEY')
 
+# Cloudflare R2 Configuration (S3-compatible storage for training data)
+R2_ACCOUNT_ID = os.environ.get('R2_ACCOUNT_ID')
+R2_ACCESS_KEY_ID = os.environ.get('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = os.environ.get('R2_SECRET_ACCESS_KEY')
+R2_BUCKET_NAME = os.environ.get('R2_BUCKET_NAME', 'bas-reviewer-uploads')
+
+def upload_to_r2(file_data, filename):
+    """Upload file to Cloudflare R2 for training data collection"""
+    if not all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]):
+        print("R2 credentials not configured - skipping file upload")
+        return None
+
+    try:
+        import boto3
+        from botocore.config import Config
+
+        # Create S3 client for R2
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=f'https://{R2_ACCOUNT_ID}.r2.cloudflarestorage.com',
+            aws_access_key_id=R2_ACCESS_KEY_ID,
+            aws_secret_access_key=R2_SECRET_ACCESS_KEY,
+            config=Config(signature_version='s3v4'),
+            region_name='auto'
+        )
+
+        # Generate unique filename with timestamp
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique_filename = f"{timestamp}_{filename}"
+
+        # Upload file
+        s3_client.upload_fileobj(
+            file_data,
+            R2_BUCKET_NAME,
+            unique_filename,
+            ExtraArgs={'ContentType': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}
+        )
+
+        print(f"File uploaded to R2: {unique_filename}")
+        return unique_filename
+
+    except Exception as e:
+        print(f"Error uploading to R2: {e}")
+        return None
+
 # Xero OAuth URLs
 XERO_AUTH_URL = 'https://login.xero.com/identity/connect/authorize'
 XERO_TOKEN_URL = 'https://identity.xero.com/connect/token'
@@ -308,9 +353,20 @@ def upload_review():
         if not file.filename.endswith(('.xlsx', '.xls')):
             return jsonify({'error': 'Please upload an Excel file (.xlsx or .xls)'}), 400
 
-        # Read the Excel file
+        # Save file content to buffer (so we can both upload to R2 and process)
+        file_content = file.read()
+        file_buffer = BytesIO(file_content)
+
+        # Upload to R2 for training data collection (async, non-blocking)
         try:
-            raw_data = pd.read_excel(file, header=None)
+            r2_buffer = BytesIO(file_content)
+            upload_to_r2(r2_buffer, file.filename)
+        except Exception as r2_err:
+            print(f"R2 upload error (non-critical): {r2_err}")
+
+        # Read the Excel file from buffer
+        try:
+            raw_data = pd.read_excel(file_buffer, header=None)
         except Exception as read_err:
             return jsonify({'error': f'Failed to read Excel file: {str(read_err)}'}), 400
 
