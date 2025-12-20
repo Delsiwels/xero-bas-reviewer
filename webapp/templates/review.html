@@ -664,19 +664,30 @@
                         });
                         journalHtml += '</tbody></table>';
                         // Add Push to Xero button - store journal data as base64 encoded JSON
-                        // Map tax codes to Xero Australia TaxType values
-                        const mapTaxCode = (code) => {
-                            const taxMap = {
-                                'GST on Expenses': 'INPUT',
-                                'GST on Income': 'OUTPUT',
-                                'GST Free': 'EXEMPTEXPENSES',
-                                'GST Free Expenses': 'EXEMPTEXPENSES',
-                                'GST Free Income': 'EXEMPTOUTPUT',
-                                'BAS Excluded': 'BASEXCLUDED',
-                                'Input Taxed': 'INPUTTAXED',
-                                'NONE': 'BASEXCLUDED'
-                            };
-                            return taxMap[code] || 'BASEXCLUDED';
+                        // Check if account is a revenue/income account based on name or code
+                        const isRevenueAcct = (accountCode, accountName) => {
+                            const name = (accountName || '').toLowerCase();
+                            if (name.includes('sales') || name.includes('income') || name.includes('revenue') ||
+                                name.includes('fees') || name.includes('interest received')) {
+                                return true;
+                            }
+                            const code = parseInt(accountCode);
+                            if (code >= 400 && code < 500) return true;
+                            if (code === 200 && name.includes('sales')) return true;
+                            return false;
+                        };
+                        // Map tax codes to Xero Australia TaxType values based on account type
+                        const mapTaxCode = (taxCode, accountCode, accountName) => {
+                            const isRevenue = isRevenueAcct(accountCode, accountName);
+                            if (taxCode === 'GST on Expenses' || taxCode === 'GST on Income') {
+                                return isRevenue ? 'OUTPUT' : 'INPUT';
+                            }
+                            if (taxCode === 'GST Free' || taxCode === 'GST Free Expenses' || taxCode === 'GST Free Income') {
+                                return isRevenue ? 'EXEMPTOUTPUT' : 'EXEMPTEXPENSES';
+                            }
+                            if (taxCode === 'BAS Excluded' || taxCode === 'NONE') return 'BASEXCLUDED';
+                            if (taxCode === 'Input Taxed') return 'INPUTTAXED';
+                            return 'BASEXCLUDED';
                         };
                         const journalData = {
                             narration: item.correcting_journal.narration || `BAS Correction: ${item.description}`,
@@ -685,7 +696,7 @@
                                 AccountCode: e.account_code,
                                 Description: e.description || e.account_name,
                                 LineAmount: e.debit > 0 ? e.debit : -e.credit,
-                                TaxType: mapTaxCode(e.tax_code)
+                                TaxType: mapTaxCode(e.tax_code, e.account_code, e.account_name)
                             }))
                         };
                         const journalDataStr = btoa(JSON.stringify(journalData));
@@ -812,19 +823,48 @@
                 return;
             }
 
-            // Map tax codes to Xero Australia TaxType values
-            const mapTaxCode = (code) => {
-                const taxMap = {
-                    'GST on Expenses': 'INPUT',
-                    'GST on Income': 'OUTPUT',
-                    'GST Free': 'EXEMPTEXPENSES',
-                    'GST Free Expenses': 'EXEMPTEXPENSES',
-                    'GST Free Income': 'EXEMPTOUTPUT',
-                    'BAS Excluded': 'BASEXCLUDED',
-                    'Input Taxed': 'INPUTTAXED',
-                    'NONE': 'BASEXCLUDED'
-                };
-                return taxMap[code] || 'BASEXCLUDED';
+            // Check if account is a revenue/income account based on name or code
+            const isRevenueAccount = (accountCode, accountName) => {
+                const name = (accountName || '').toLowerCase();
+                // Check by name keywords
+                if (name.includes('sales') || name.includes('income') || name.includes('revenue') ||
+                    name.includes('fees') || name.includes('interest received')) {
+                    return true;
+                }
+                // Check by typical revenue account code ranges (4xx is often revenue)
+                const code = parseInt(accountCode);
+                if (code >= 400 && code < 500) {
+                    return true;
+                }
+                // Account 200 is often Sales in some charts
+                if (code === 200 && name.includes('sales')) {
+                    return true;
+                }
+                return false;
+            };
+
+            // Map tax codes to Xero Australia TaxType values based on account type
+            const mapTaxCode = (code, accountCode, accountName) => {
+                const isRevenue = isRevenueAccount(accountCode, accountName);
+
+                // For GST taxable items
+                if (code === 'GST on Expenses' || code === 'GST on Income') {
+                    return isRevenue ? 'OUTPUT' : 'INPUT';
+                }
+                // For GST Free items
+                if (code === 'GST Free' || code === 'GST Free Expenses' || code === 'GST Free Income') {
+                    return isRevenue ? 'EXEMPTOUTPUT' : 'EXEMPTEXPENSES';
+                }
+                // For BAS Excluded - works for both
+                if (code === 'BAS Excluded' || code === 'NONE') {
+                    return 'BASEXCLUDED';
+                }
+                // Input Taxed (typically for financial supplies)
+                if (code === 'Input Taxed') {
+                    return 'INPUTTAXED';
+                }
+                // Default to BAS Excluded (safe for both account types)
+                return 'BASEXCLUDED';
             };
 
             // Collect all journal entries from flagged items
@@ -838,7 +878,7 @@
                             AccountCode: e.account_code,
                             Description: `[${index + 1}] ${e.description || e.account_name}`,
                             LineAmount: e.debit > 0 ? e.debit : -e.credit,
-                            TaxType: mapTaxCode(e.tax_code)
+                            TaxType: mapTaxCode(e.tax_code, e.account_code, e.account_name)
                         });
                     });
                     narrationParts.push(`${index + 1}. ${item.description.substring(0, 30)}`);
