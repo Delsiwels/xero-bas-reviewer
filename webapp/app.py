@@ -3942,12 +3942,20 @@ def check_overseas_subscription_gst(transaction):
     if any(keyword in account_name for keyword in income_account_keywords):
         return False
 
-    # Skip depreciation, fixed assets, and equipment accounts - these are NOT overseas subscriptions
+    # Skip accounts that should NOT be checked for overseas subscriptions
+    # Travel, depreciation, fixed assets, etc. have their own GST checks
     excluded_account_keywords = [
+        # Travel accounts - handled by separate travel GST check
+        'travel', 'airfare', 'flight', 'accommodation', 'hotel', 'meals',
+        # Depreciation and fixed assets
         'depreciation', 'accumulated depreciation', 'amortisation', 'amortization',
         'fixed asset', 'asset', 'equipment', 'furniture', 'plant', 'machinery',
         'vehicle', 'motor vehicle', 'computer equipment', 'office equipment',
-        'leasehold improvement', 'building', 'land', 'property'
+        'leasehold improvement', 'building', 'land', 'property',
+        # Other non-subscription expenses
+        'wages', 'salary', 'superannuation', 'payroll', 'rent', 'utilities',
+        'telephone', 'electricity', 'gas', 'water', 'insurance', 'repairs',
+        'maintenance', 'cleaning', 'postage', 'freight', 'courier'
     ]
     if any(keyword in account_name for keyword in excluded_account_keywords):
         return False
