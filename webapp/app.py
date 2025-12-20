@@ -3295,6 +3295,22 @@ def check_account_coding(transaction):
     account_type = transaction.get('account_type', '').upper()
     transaction_type = transaction.get('type', '').lower()
 
+    # Get business context to avoid false positives for industry-specific expenses
+    business_context = get_business_context()
+    industry = business_context.get('industry', '')
+
+    # For automotive businesses, car-related expenses are legitimate stock/COGS
+    # Don't flag parts from Repco, Supercheap, etc. as needing motor vehicle account
+    if industry == 'automotive':
+        automotive_expense_keywords = [
+            'repco', 'supercheap', 'burson', 'autobarn', 'bursons', 'car parts', 'auto parts',
+            'spare parts', 'oil', 'filter', 'brake', 'tyre', 'tire', 'battery', 'engine',
+            'transmission', 'exhaust', 'suspension', 'radiator', 'windscreen', 'wiper',
+            'alternator', 'starter motor', 'panel', 'spray paint', 'car wash', 'detailing'
+        ]
+        if any(keyword in description for keyword in automotive_expense_keywords):
+            return False  # Legitimate automotive business expense
+
     # Check for expenses coded to Sales/Revenue accounts
     is_revenue_account = (
         'sales' in account or
@@ -4307,6 +4323,20 @@ def infer_business_context(all_transactions):
                         'plumbing', 'electrical', 'carpentry', 'painting', 'renovation'],
             'income_sources': ['labour', 'materials', 'installation', 'repair', 'maintenance',
                               'quote', 'job', 'project', 'contract', 'site work']
+        },
+        'automotive': {
+            'keywords': ['mechanic', 'workshop', 'car parts', 'auto parts', 'spare parts',
+                        'repco', 'supercheap', 'burson', 'autobarn', 'bursons',
+                        'oil', 'filter', 'brake', 'tyre', 'tire', 'battery', 'engine',
+                        'transmission', 'gearbox', 'exhaust', 'suspension', 'radiator',
+                        'car service', 'vehicle service', 'roadworthy', 'rwc', 'pink slip',
+                        'rego check', 'log book', 'smash repair', 'panel beater', 'spray paint',
+                        'detailing', 'car wash', 'windscreen', 'wiper', 'alternator', 'starter motor'],
+            'income_sources': ['repair', 'service', 'labour', 'parts', 'car service', 'vehicle service',
+                              'mechanic', 'roadworthy', 'rwc', 'pink slip', 'inspection',
+                              'log book service', 'major service', 'minor service', 'brake service',
+                              'tyre', 'wheel alignment', 'smash repair', 'panel', 'paint',
+                              'detailing', 'diagnostic', 'quote', 'job']
         },
         'health_medical': {
             'keywords': ['medical supplies', 'clinic', 'patient', 'health', 'therapy',
