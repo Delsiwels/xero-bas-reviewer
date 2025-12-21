@@ -4551,6 +4551,44 @@ def get_business_context():
 _allocation_patterns = {}
 
 
+def round_to_common_split(account_percentages):
+    """
+    Round two-way split percentages to common business allocation ratios.
+
+    Common splits: 90/10, 80/20, 75/25, 70/30, 60/40, 50/50
+    This makes the displayed percentages more meaningful for typical business allocations.
+    """
+    if len(account_percentages) != 2:
+        return account_percentages
+
+    # Common split ratios (higher percentage first)
+    common_splits = [0.90, 0.80, 0.75, 0.70, 0.60, 0.50]
+
+    # Get the two accounts and their percentages
+    accounts = list(account_percentages.keys())
+    percentages = list(account_percentages.values())
+
+    # Identify higher and lower percentage
+    if percentages[0] >= percentages[1]:
+        high_idx, low_idx = 0, 1
+    else:
+        high_idx, low_idx = 1, 0
+
+    high_pct = percentages[high_idx]
+
+    # Find closest common split
+    closest_split = min(common_splits, key=lambda x: abs(x - high_pct))
+
+    # Only round if within 5% of a common split
+    if abs(closest_split - high_pct) <= 0.05:
+        return {
+            accounts[high_idx]: closest_split,
+            accounts[low_idx]: 1.0 - closest_split
+        }
+
+    return account_percentages
+
+
 def detect_allocation_patterns(all_transactions):
     """
     Analyze 12 months of transaction history to detect allocation patterns.
@@ -4634,6 +4672,10 @@ def detect_allocation_patterns(all_transactions):
 
         # Check if this is a split allocation (multiple accounts with significant %)
         significant_accounts = {acct: pct for acct, pct in account_percentages.items() if pct >= 0.1}  # 10%+
+
+        # Round to common business split ratios (70/30, 60/40, 50/50, 80/20, 90/10)
+        if len(significant_accounts) == 2:
+            significant_accounts = round_to_common_split(significant_accounts)
 
         is_split = len(significant_accounts) > 1
 
