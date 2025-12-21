@@ -963,9 +963,35 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     # Deduplicate: Keep only the LATEST journal entry for each unique transaction
     # When bills are edited, new journals are created with higher journal numbers
     # We want the latest version (highest journal number) to reflect current state
-    transaction_map = {}
+    #
+    # Two-phase deduplication:
+    # 1. First by (date, amount, description) - catches re-coded transactions (account changed)
+    # 2. Then by (date, account, amount) - catches duplicate entries in same account
+
+    # Phase 1: Group by (date, gross, description) - keep highest journal number
+    # This catches when a transaction was re-coded to a different account
+    phase1_map = {}
     for t in transactions:
-        # Create a unique key based on date + account + amount
+        desc_key = (t.get('description', '') or '')[:30].lower().strip()
+        key = (
+            t.get('date', ''),
+            round(t.get('gross', 0), 2),
+            desc_key
+        )
+        journal_num = t.get('journal_number', 0)
+        try:
+            journal_num = int(journal_num) if journal_num else 0
+        except:
+            journal_num = 0
+
+        if key not in phase1_map or journal_num > phase1_map[key]['journal_num']:
+            phase1_map[key] = {'transaction': t, 'journal_num': journal_num}
+
+    phase1_transactions = [v['transaction'] for v in phase1_map.values()]
+
+    # Phase 2: Group by (date, account, gross) - remove any remaining duplicates
+    phase2_map = {}
+    for t in phase1_transactions:
         key = (
             t.get('date', ''),
             t.get('account_code', ''),
@@ -977,11 +1003,10 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
         except:
             journal_num = 0
 
-        # Keep the entry with the highest journal number (most recent)
-        if key not in transaction_map or journal_num > transaction_map[key]['journal_num']:
-            transaction_map[key] = {'transaction': t, 'journal_num': journal_num}
+        if key not in phase2_map or journal_num > phase2_map[key]['journal_num']:
+            phase2_map[key] = {'transaction': t, 'journal_num': journal_num}
 
-    unique_transactions = [v['transaction'] for v in transaction_map.values()]
+    unique_transactions = [v['transaction'] for v in phase2_map.values()]
 
     debug_info.append(f"After deduplication (keeping latest journals): {len(unique_transactions)} transactions")
     return unique_transactions, debug_info
