@@ -4638,6 +4638,20 @@ def detect_allocation_patterns(all_transactions):
     for tf in telstra_found[:5]:
         print(f"  - {tf}")
 
+    # Specific debug for Telstra pattern
+    telstra_accounts = {}
+    telstra_count = 0
+    for t in all_transactions:
+        contact = (t.get('contact', '') or '').lower()
+        if 'telstra' in contact:
+            telstra_count += 1
+            account = (t.get('account', '') or '').lower()
+            amount = abs(t.get('gross', 0) or t.get('amount', 0) or 0)
+            if account not in telstra_accounts:
+                telstra_accounts[account] = 0
+            telstra_accounts[account] += amount
+    print(f"DEBUG TELSTRA: {telstra_count} transactions, accounts: {telstra_accounts}")
+
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
         # In Xero journals, vendor name is often in Narration field
@@ -4702,6 +4716,11 @@ def detect_allocation_patterns(all_transactions):
     # Add unique contacts and telstra search to samples for debugging
     debug_samples.append({'_all_contacts': sorted(list(all_contacts))[:50]})
     debug_samples.append({'_telstra_found': telstra_found[:10]})
+    debug_samples.append({'_telstra_pattern_debug': {
+        'count': telstra_count,
+        'accounts': telstra_accounts,
+        'meets_threshold': telstra_count >= 5
+    }})
 
     return patterns, debug_samples
 
