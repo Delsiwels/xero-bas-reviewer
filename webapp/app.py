@@ -1559,6 +1559,11 @@ def upload_review():
                 transaction['borrowing_expenses_error']
             )
 
+            # Skip flagging for correctly coded Telstra transactions
+            # (Telstra business in Telephone, Telstra personal in Drawings)
+            if has_rule_issues and is_correctly_coded_telstra(transaction):
+                has_rule_issues = False
+
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
@@ -2277,6 +2282,11 @@ def run_review():
                 transaction['export_gst_error'] or
                 transaction['borrowing_expenses_error']
             )
+
+            # Skip flagging for correctly coded Telstra transactions
+            # (Telstra business in Telephone, Telstra personal in Drawings)
+            if has_rule_issues and is_correctly_coded_telstra(transaction):
+                has_rule_issues = False
 
             if has_rule_issues:
                 rule_flagged.append(transaction)
@@ -4818,6 +4828,54 @@ def get_allocation_patterns():
     """Get the detected allocation patterns."""
     global _allocation_patterns
     return _allocation_patterns
+
+
+def is_correctly_coded_telstra(transaction):
+    """
+    Check if a Telstra transaction is correctly coded and should NOT be flagged.
+
+    Correct codings:
+    - "telstra business" in Telephone/Internet account with GST → CORRECT
+    - "telstra personal" in Drawings/Loan account with BAS Excluded → CORRECT
+
+    Returns True if correctly coded (should skip flagging), False otherwise.
+    """
+    description = (transaction.get('description', '') or '').lower()
+    account = (transaction.get('account', '') or '').lower()
+    contact = (transaction.get('contact', '') or '').lower()
+    narration = (transaction.get('narration', '') or '').lower()
+    search_text = f"{description} {contact} {narration}"
+
+    # Check if this is a Telstra transaction
+    if 'telstra' not in search_text:
+        return False
+
+    # Business expense accounts where Telstra business is correct
+    business_accounts = ['telephone', 'internet', 'phone', 'communication']
+
+    # Personal/drawings accounts where Telstra personal is correct
+    personal_accounts = ['drawing', 'drawings', 'loan', 'private', 'personal']
+
+    # Check for business portion correctly coded
+    is_business_desc = 'business' in description or 'business' in narration
+    is_business_account = any(acct in account for acct in business_accounts)
+
+    if is_business_desc and is_business_account:
+        return True  # Telstra business in Telephone - CORRECT
+
+    # Check for personal portion correctly coded
+    is_personal_desc = 'personal' in description or 'personal' in narration or 'private' in description
+    is_personal_account = any(acct in account for acct in personal_accounts)
+
+    if is_personal_desc and is_personal_account:
+        return True  # Telstra personal in Drawings - CORRECT
+
+    # Also allow Telstra (without business/personal suffix) in Telephone
+    # as this is the common coding for 100% business use
+    if is_business_account and not is_personal_desc:
+        return True  # Telstra in Telephone without "personal" - assume business
+
+    return False
 
 
 def is_known_allocation_pattern(transaction):
