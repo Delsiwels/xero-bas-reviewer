@@ -864,7 +864,18 @@
                         const journalDataStr = btoa(JSON.stringify(journalData));
                         journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-top:8px; padding:4px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero (Draft)</button>`;
                     } else {
-                        journalHtml = '<em style="color:#999;">No correction needed</em>';
+                        // Provide helpful review guidance based on issue type
+                        let reviewMsg = 'Please review';
+                        if (item.account_coding_suspicious || (item.comments && item.comments.toLowerCase().includes('account'))) {
+                            reviewMsg = 'Please review the account coding';
+                        } else if (item.missing_gst_error || item.input_taxed_gst_error || (item.comments && (item.comments.toLowerCase().includes('gst') || item.comments.toLowerCase().includes('tax')))) {
+                            reviewMsg = 'Please review the GST coding';
+                        } else if (item.comments && item.comments.toLowerCase().includes('capitaliz')) {
+                            reviewMsg = 'Please review - may need to capitalize as asset';
+                        } else {
+                            reviewMsg = 'Please review this transaction';
+                        }
+                        journalHtml = `<em style="color:#666;">${reviewMsg}</em>`;
                     }
 
                     // Sanitize severity to only allow known values
