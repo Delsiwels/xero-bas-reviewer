@@ -2603,7 +2603,7 @@ def generate_correcting_journal(transaction):
     net = abs(transaction.get('net', 0))
 
     journal_entries = []
-    narration = f"Correction: {transaction.get('description', '')}"
+    narration = f"Reallocate: {transaction.get('description', '')}"
 
     # Check what type of error this is
     if transaction.get('account_coding_suspicious'):
