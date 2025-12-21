@@ -975,8 +975,8 @@
                 const lowCount = flaggedItems.filter(i => i.severity === 'low').length;
 
                 const reviewData = {
-                    period_start: document.getElementById('from-date').value,
-                    period_end: document.getElementById('to-date').value,
+                    period_start: document.getElementById('start-date').value || '',
+                    period_end: document.getElementById('end-date').value || '',
                     total_transactions: reviewResults.total_transactions || 0,
                     flagged_count: flaggedItems.length,
                     high_severity_count: highCount,
