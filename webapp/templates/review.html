@@ -744,6 +744,7 @@
                                 <th style="width: 80px;">Gross</th>
                                 <th style="width: 80px;">GST</th>
                                 <th style="width: 80px;">Net</th>
+                                <th style="width: 80px;">Source</th>
                                 <th style="width: 200px;">Comments</th>
                                 <th style="width: 280px;">Suggested Correcting Journal</th>
                             </tr>
@@ -830,6 +831,7 @@
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td><small>${escapeHtml(item.source || '-')}</small></td>
                             <td class="comment-cell">${formattedComments}</td>
                             <td class="journal-cell">${journalHtml}</td>
                         </tr>
