@@ -1979,17 +1979,27 @@ def run_review():
             # Quick mode - clear any previous patterns
             set_allocation_patterns({})
 
-        # Fetch transactions from Xero using Journals endpoint
-        # This is the most comprehensive as it captures ALL GL entries (same as Activity Statement)
-        # Primary method: Use Journals endpoint - captures ALL transactions in GL
-        # This matches what appears in the Activity Statement (Transactions by Tax Rate)
-        debug_info.append(f"Fetching journals from {from_date_str} to {to_date_str}")
-        journal_transactions, journal_debug = fetch_xero_journals_debug(from_date_str, to_date_str)
-        debug_info.extend(journal_debug)
-        debug_info.append(f"Got {len(journal_transactions) if journal_transactions else 0} journal transactions")
+        # Fetch transactions using Bills and Bank Transactions APIs
+        # These return the CURRENT state of transactions, not audit trail like Journals
+        # This avoids phantom entries from edited bills
 
-        if journal_transactions:
-            transactions.extend(journal_transactions)
+        debug_info.append(f"Fetching bills from {from_date_str} to {to_date_str}")
+        bills = fetch_xero_invoices(from_date_str, to_date_str, 'ACCPAY')
+        debug_info.append(f"Got {len(bills) if bills else 0} bill line items")
+        if bills:
+            transactions.extend(bills)
+
+        debug_info.append(f"Fetching sales invoices from {from_date_str} to {to_date_str}")
+        sales = fetch_xero_invoices(from_date_str, to_date_str, 'ACCREC')
+        debug_info.append(f"Got {len(sales) if sales else 0} sales invoice line items")
+        if sales:
+            transactions.extend(sales)
+
+        debug_info.append(f"Fetching bank transactions from {from_date_str} to {to_date_str}")
+        bank_txns = fetch_xero_bank_transactions(from_date_str, to_date_str)
+        debug_info.append(f"Got {len(bank_txns) if bank_txns else 0} bank transactions")
+        if bank_txns:
+            transactions.extend(bank_txns)
 
         # Enrich transactions with account names from Chart of Accounts
         if transactions:
