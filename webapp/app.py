@@ -1868,10 +1868,23 @@ def run_review():
 
             debug_info.append(f"Scanning history from {history_start_str} to {history_end_str}")
 
-            # Fetch historical BANK TRANSACTIONS for pattern detection
-            # Bank transactions include Contact (vendor) name, unlike Journals
-            history_transactions = fetch_xero_bank_transactions(history_start_str, history_end_str)
-            debug_info.append(f"Got {len(history_transactions) if history_transactions else 0} bank transactions for pattern detection")
+            # Fetch historical transactions for pattern detection
+            # Need BOTH bank transactions AND bills (invoices) to capture all vendor data
+            history_transactions = []
+
+            # 1. Bank transactions (direct spend/receive money)
+            bank_txns = fetch_xero_bank_transactions(history_start_str, history_end_str)
+            if bank_txns:
+                history_transactions.extend(bank_txns)
+            debug_info.append(f"Got {len(bank_txns) if bank_txns else 0} bank transactions")
+
+            # 2. Bills (Accounts Payable) - this is where Telstra etc would be
+            bills = fetch_xero_invoices(history_start_str, history_end_str, 'ACCPAY')
+            if bills:
+                history_transactions.extend(bills)
+            debug_info.append(f"Got {len(bills) if bills else 0} bills (ACCPAY)")
+
+            debug_info.append(f"Total: {len(history_transactions)} transactions for pattern detection")
 
             if history_transactions:
                 # Enrich with account names
