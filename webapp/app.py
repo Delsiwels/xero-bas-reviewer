@@ -1892,14 +1892,10 @@ def run_review():
 
                 # Detect allocation patterns
                 try:
-                    patterns, transaction_samples = detect_allocation_patterns(history_transactions)
+                    patterns = detect_allocation_patterns(history_transactions)
                     set_allocation_patterns(patterns)
-                    # Store samples for API response
-                    global _debug_transaction_samples
-                    _debug_transaction_samples = transaction_samples
                     pattern_count = len([p for p in patterns.values() if p.get('is_split_allocation')])
                     debug_info.append(f"Detected {pattern_count} split allocation patterns from {len(history_transactions)} history transactions")
-                    debug_info.append(f"Transaction samples collected: {len(transaction_samples)}")
                     print(f"Deep Scan: Detected {pattern_count} split allocation patterns")
                     for vendor, pattern in patterns.items():
                         if pattern.get('is_split_allocation'):
@@ -2427,16 +2423,11 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
-        # Get debug transaction samples (from global variable set during pattern detection)
-        transaction_samples = _debug_transaction_samples if _debug_transaction_samples else []
-
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
-            'patterns_detected': pattern_debug,
-            'transaction_samples': transaction_samples,
-            'debug_info': debug_info[-20:] if debug_info else []  # Last 20 debug messages
+            'patterns_detected': pattern_debug
         })
     except Exception as e:
         import traceback
@@ -4558,7 +4549,6 @@ def get_business_context():
 
 # Global variable to store detected allocation patterns from deep scan
 _allocation_patterns = {}
-_debug_transaction_samples = []
 
 
 def detect_allocation_patterns(all_transactions):
@@ -4601,81 +4591,26 @@ def detect_allocation_patterns(all_transactions):
         'aws', 'azure', 'google cloud', 'microsoft', 'adobe', 'xero',
     ]
 
-    # DEBUG: Print sample transactions to see what fields we have
-    debug_samples = []
-    for t in all_transactions[:20]:  # Increased to 20 samples
-        sample = {
-            'contact': t.get('contact', ''),
-            'narration': t.get('narration', ''),
-            'reference': t.get('reference', ''),
-            'description': t.get('description', ''),
-            'account': t.get('account', ''),
-            'gross': t.get('gross', 0),
-            'source': t.get('source', '')
-        }
-        debug_samples.append(sample)
-        print(f"DEBUG sample: {sample}")
-
-    # DEBUG: List all unique contacts found
-    all_contacts = set()
-    telstra_found = []
-    for t in all_transactions:
-        contact = t.get('contact', '')
-        if contact:
-            all_contacts.add(contact)
-        # Search for "telstra" in ALL fields
-        all_text = f"{t.get('contact', '')} {t.get('description', '')} {t.get('reference', '')} {t.get('narration', '')}".lower()
-        if 'telstra' in all_text:
-            telstra_found.append({
-                'contact': t.get('contact', ''),
-                'description': t.get('description', ''),
-                'reference': t.get('reference', ''),
-                'account': t.get('account', ''),
-                'source': t.get('source', '')
-            })
-    print(f"DEBUG: All unique contacts ({len(all_contacts)}): {sorted(all_contacts)[:30]}")
-    print(f"DEBUG: Telstra transactions found: {len(telstra_found)}")
-    for tf in telstra_found[:5]:
-        print(f"  - {tf}")
-
-    # Specific debug for Telstra pattern
-    telstra_accounts = {}
-    telstra_count = 0
-    for t in all_transactions:
-        contact = (t.get('contact', '') or '').lower()
-        if 'telstra' in contact:
-            telstra_count += 1
-            account = (t.get('account', '') or '').lower()
-            amount = abs(t.get('gross', 0) or t.get('amount', 0) or 0)
-            if account not in telstra_accounts:
-                telstra_accounts[account] = 0
-            telstra_accounts[account] += amount
-    print(f"DEBUG TELSTRA: {telstra_count} transactions, accounts: {telstra_accounts}")
-
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
-        # In Xero journals, vendor name is often in Narration field
-        # In bank transactions, it's often in Contact field
         description = (t.get('description', '') or '').lower()
         contact = (t.get('contact', '') or '').lower()
         reference = (t.get('reference', '') or '').lower()
         narration = (t.get('narration', '') or '').lower()
-        search_text = f"{contact} {narration} {reference} {description}"  # Combine all for searching
+        search_text = f"{contact} {narration} {reference} {description}"
 
         account = (t.get('account', '') or '').lower()
-        # Use 'gross' or 'amount' depending on data source
         amount = abs(t.get('gross', 0) or t.get('amount', 0) or 0)
 
         if not account or amount == 0:
             continue
 
-        # Find matching vendor keyword in contact OR description
+        # Find matching vendor keyword
         for vendor in vendor_keywords:
             if vendor in search_text:
                 if vendor not in vendor_accounts:
                     vendor_accounts[vendor] = {}
                     vendor_counts[vendor] = 0
-                    print(f"DEBUG: Found vendor '{vendor}' in narration='{narration[:30]}' or contact/ref/desc")
 
                 if account not in vendor_accounts[vendor]:
                     vendor_accounts[vendor][account] = 0
@@ -4708,21 +4643,8 @@ def detect_allocation_patterns(all_transactions):
             'total_amount': total,
             'is_split_allocation': is_split
         }
-        print(f"DEBUG pattern result: {vendor} -> is_split={is_split}, accounts={significant_accounts}, count={vendor_counts[vendor]}")
 
-    print(f"DEBUG: Final patterns detected: {list(patterns.keys())}")
-    print(f"DEBUG: Split patterns: {[v for v, p in patterns.items() if p.get('is_split_allocation')]}")
-
-    # Add unique contacts and telstra search to samples for debugging
-    debug_samples.append({'_all_contacts': sorted(list(all_contacts))[:50]})
-    debug_samples.append({'_telstra_found': telstra_found[:10]})
-    debug_samples.append({'_telstra_pattern_debug': {
-        'count': telstra_count,
-        'accounts': telstra_accounts,
-        'meets_threshold': telstra_count >= 5
-    }})
-
-    return patterns, debug_samples
+    return patterns
 
 
 def set_allocation_patterns(patterns):

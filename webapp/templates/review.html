@@ -706,23 +706,6 @@
             // Store results for download
             reviewResults = data;
 
-            // Debug: Log patterns detected
-            console.log('=== DEEP SCAN DEBUG ===');
-            console.log('Patterns detected:', data.patterns_detected);
-            console.log('Transaction samples:', data.transaction_samples);
-            console.log('Debug info:', data.debug_info);
-            // Show transaction samples to see where vendor names are stored
-            let debugMsg = 'TRANSACTION SAMPLES (first 10 from history):\n\n';
-            if (data.transaction_samples && data.transaction_samples.length > 0) {
-                data.transaction_samples.forEach((t, i) => {
-                    debugMsg += `${i+1}. desc: "${t.description}"\n   narration: "${t.narration}"\n   reference: "${t.reference}"\n   contact: "${t.contact}"\n   account: "${t.account}"\n\n`;
-                });
-            } else {
-                debugMsg += '(No samples available)';
-            }
-            debugMsg += '\n\nPATTERNS DETECTED:\n' + JSON.stringify(data.patterns_detected, null, 2);
-            alert(debugMsg);
-
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
             document.getElementById('results-section').style.display = 'block';
