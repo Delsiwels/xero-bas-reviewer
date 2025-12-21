@@ -4790,15 +4790,31 @@ def check_split_allocation_pattern(transaction):
             # Check if this vendor has a split allocation pattern
             if pattern.get('is_split_allocation', False):
                 # This vendor normally has split allocations
-                # Flag it so user can verify the split was done
-                # Just list account names without percentages (percentages are unreliable)
-                account_names = ', '.join(pattern['accounts'].keys())
-                return {
-                    'should_flag': True,
-                    'vendor': vendor,
-                    'expected_split': account_names,
-                    'transaction_count': pattern.get('count', 0)
-                }
+                # Only flag if the description/account combination seems WRONG
+
+                # Check if description indicates personal vs business
+                is_personal_desc = 'personal' in description or 'private' in description
+                is_business_desc = 'business' in description
+
+                # Check if account is personal (drawings/loan) vs business expense
+                is_personal_account = any(x in account for x in ['drawing', 'loan', 'private'])
+                is_business_account = any(x in account for x in ['telephone', 'internet', 'expense', 'motor', 'fuel', 'office'])
+
+                # Flag MISMATCH: personal description but business account, or vice versa
+                should_flag = False
+                if is_personal_desc and is_business_account:
+                    should_flag = True  # "telstra personal" in Telephone = WRONG
+                elif is_business_desc and is_personal_account:
+                    should_flag = True  # "telstra business" in Drawings = WRONG
+
+                if should_flag:
+                    account_names = ', '.join(pattern['accounts'].keys())
+                    return {
+                        'should_flag': True,
+                        'vendor': vendor,
+                        'expected_split': account_names,
+                        'transaction_count': pattern.get('count', 0)
+                    }
 
     return None
 
