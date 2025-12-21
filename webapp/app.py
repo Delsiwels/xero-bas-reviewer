@@ -6609,6 +6609,10 @@ def review_with_ai(transaction):
 
     prompt = f"""Review this Australian transaction for BAS compliance per ATO rules:
 
+CRITICAL RULES - NEVER VIOLATE THESE:
+1. NEVER mention "duplicate" transactions. You are reviewing ONE transaction in isolation. You have NO knowledge of other transactions.
+2. Monthly subscriptions (Xero, software, utilities) with same amount each month are NORMAL recurring charges.
+
 Date: {transaction.get('date')}
 Account: {transaction.get('account_code')} - {transaction.get('account')}
 Description: {transaction.get('description')}
@@ -6660,8 +6664,6 @@ ATO GST Rules to check:
 6. Software subscriptions should be coded to Subscriptions, NOT Consulting
 7. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 8. Office supplies (toner, cartridges) MUST include GST (10%)
-
-IMPORTANT: Do NOT flag transactions as "duplicates". Monthly subscriptions (like Xero, software, utilities) with the same amount each month are NORMAL recurring charges, NOT duplicates. You are reviewing individual transactions without context of other transactions.
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
