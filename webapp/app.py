@@ -1797,6 +1797,7 @@ def run_review():
         data = request.json or {}
         from_date_str = data.get('start_date') or data.get('from_date')
         to_date_str = data.get('end_date') or data.get('to_date')
+        review_mode = data.get('review_mode', 'quick')  # 'quick' or 'deep'
 
         # Default to current Australian financial year if no dates provided
         # Australian FY runs July 1 to June 30
@@ -1828,11 +1829,54 @@ def run_review():
         except ValueError:
             return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
-        # Fetch transactions from Xero using Journals endpoint
-        # This is the most comprehensive as it captures ALL GL entries (same as Activity Statement)
         transactions = []
         debug_info = []
 
+        # Deep Scan Mode: Fetch 12 months of history first to detect patterns
+        if review_mode == 'deep':
+            print("Deep Scan mode: Analyzing 12 months of history for patterns...")
+            debug_info.append("Deep Scan: Fetching 12 months of history for pattern detection")
+
+            # Calculate 12 months back from review end date
+            history_end = to_date
+            history_start = history_end - timedelta(days=365)
+            history_start_str = history_start.strftime('%Y-%m-%d')
+            history_end_str = history_end.strftime('%Y-%m-%d')
+
+            debug_info.append(f"Scanning history from {history_start_str} to {history_end_str}")
+
+            # Fetch historical transactions for pattern detection
+            history_transactions, history_debug = fetch_xero_journals_debug(history_start_str, history_end_str)
+            debug_info.extend(history_debug)
+            debug_info.append(f"Got {len(history_transactions) if history_transactions else 0} historical transactions")
+
+            if history_transactions:
+                # Enrich with account names
+                history_transactions = enrich_transactions_with_accounts(history_transactions)
+
+                # Detect allocation patterns
+                try:
+                    patterns = detect_allocation_patterns(history_transactions)
+                    set_allocation_patterns(patterns)
+                    pattern_count = len([p for p in patterns.values() if p.get('is_split_allocation')])
+                    debug_info.append(f"Detected {pattern_count} split allocation patterns")
+                    print(f"Deep Scan: Detected {pattern_count} split allocation patterns")
+                    for vendor, pattern in patterns.items():
+                        if pattern.get('is_split_allocation'):
+                            acct_str = ', '.join([f"{a}: {p:.0%}" for a, p in pattern['accounts'].items()])
+                            print(f"  - {vendor}: {acct_str} ({pattern['count']} transactions)")
+                except Exception as e:
+                    print(f"Error detecting patterns: {e}")
+                    debug_info.append(f"Pattern detection error: {e}")
+            else:
+                debug_info.append("No historical transactions found for pattern detection")
+                set_allocation_patterns({})
+        else:
+            # Quick mode - clear any previous patterns
+            set_allocation_patterns({})
+
+        # Fetch transactions from Xero using Journals endpoint
+        # This is the most comprehensive as it captures ALL GL entries (same as Activity Statement)
         # Primary method: Use Journals endpoint - captures ALL transactions in GL
         # This matches what appears in the Activity Statement (Transactions by Tax Rate)
         debug_info.append(f"Fetching journals from {from_date_str} to {to_date_str}")
@@ -3311,6 +3355,11 @@ def check_account_coding(transaction):
         if any(keyword in description for keyword in automotive_expense_keywords):
             return False  # Legitimate automotive business expense
 
+    # Check if this matches a known allocation pattern from Deep Scan
+    # e.g., Telstra split 70/30 between Telephone and Drawings
+    if is_known_allocation_pattern(transaction):
+        return False  # This is a known allocation pattern - don't flag
+
     # Check for expenses coded to Sales/Revenue accounts
     is_revenue_account = (
         'sales' in account or
@@ -4426,6 +4475,144 @@ def get_business_context():
     if _business_context is None:
         return {'industry': 'unknown', 'likely_income_sources': [], 'confidence': 0}
     return _business_context
+
+
+# Global variable to store detected allocation patterns from deep scan
+_allocation_patterns = {}
+
+
+def detect_allocation_patterns(all_transactions):
+    """
+    Analyze 12 months of transaction history to detect allocation patterns.
+
+    Detects patterns like:
+    - Telstra expenses split 70% to Telephone, 30% to Drawings
+    - Fuel split between Motor Vehicle and Cost of Sales
+    - Any vendor/description that consistently goes to multiple accounts
+
+    Returns a dict of patterns:
+    {
+        'telstra': {
+            'accounts': {'telephone': 0.7, 'drawings': 0.3},
+            'count': 50,
+            'is_split_allocation': True
+        },
+        ...
+    }
+    """
+    if not all_transactions:
+        return {}
+
+    # Group transactions by vendor/description keywords
+    vendor_accounts = {}  # vendor_key -> {account: total_amount}
+    vendor_counts = {}    # vendor_key -> count
+
+    # Common vendor keywords to track
+    vendor_keywords = [
+        'telstra', 'optus', 'vodafone', 'tpg', 'iinet', 'aussie broadband',
+        'origin', 'agl', 'energy australia', 'alinta',
+        'ampol', 'bp ', 'caltex', 'shell', '7-eleven', 'united petroleum',
+        'officeworks', 'bunnings', 'jb hi-fi', 'harvey norman',
+        'coles', 'woolworths', 'aldi', 'iga',
+        'commbank', 'westpac', 'anz ', 'nab ', 'st george',
+        'paypal', 'stripe', 'square',
+        'uber', 'didi', 'ola',
+        'qantas', 'virgin', 'jetstar', 'rex ',
+        'aws', 'azure', 'google cloud', 'microsoft', 'adobe', 'xero',
+    ]
+
+    for t in all_transactions:
+        description = (t.get('description', '') or '').lower()
+        account = (t.get('account', '') or '').lower()
+        amount = abs(t.get('amount', 0) or 0)
+
+        if not description or not account or amount == 0:
+            continue
+
+        # Find matching vendor keyword
+        for vendor in vendor_keywords:
+            if vendor in description:
+                if vendor not in vendor_accounts:
+                    vendor_accounts[vendor] = {}
+                    vendor_counts[vendor] = 0
+
+                if account not in vendor_accounts[vendor]:
+                    vendor_accounts[vendor][account] = 0
+
+                vendor_accounts[vendor][account] += amount
+                vendor_counts[vendor] += 1
+                break  # Only match first vendor
+
+    # Analyze patterns
+    patterns = {}
+    for vendor, accounts in vendor_accounts.items():
+        if vendor_counts[vendor] < 5:  # Need at least 5 transactions to establish pattern
+            continue
+
+        total = sum(accounts.values())
+        if total == 0:
+            continue
+
+        # Calculate percentage allocation per account
+        account_percentages = {acct: amt / total for acct, amt in accounts.items()}
+
+        # Check if this is a split allocation (multiple accounts with significant %)
+        significant_accounts = {acct: pct for acct, pct in account_percentages.items() if pct >= 0.1}  # 10%+
+
+        is_split = len(significant_accounts) > 1
+
+        patterns[vendor] = {
+            'accounts': significant_accounts,
+            'count': vendor_counts[vendor],
+            'total_amount': total,
+            'is_split_allocation': is_split
+        }
+
+    return patterns
+
+
+def set_allocation_patterns(patterns):
+    """Set the detected allocation patterns from deep scan."""
+    global _allocation_patterns
+    _allocation_patterns = patterns
+    return _allocation_patterns
+
+
+def get_allocation_patterns():
+    """Get the detected allocation patterns."""
+    global _allocation_patterns
+    return _allocation_patterns
+
+
+def is_known_allocation_pattern(transaction):
+    """
+    Check if a transaction matches a known allocation pattern from deep scan.
+
+    If Telstra is known to be split 70/30 between Telephone and Drawings,
+    then a Telstra expense in Drawings should NOT be flagged as miscoded.
+
+    Returns:
+    - True if this matches a known pattern (don't flag)
+    - False if this doesn't match or no patterns detected
+    """
+    patterns = get_allocation_patterns()
+    if not patterns:
+        return False
+
+    description = (transaction.get('description', '') or '').lower()
+    account = (transaction.get('account', '') or '').lower()
+
+    for vendor, pattern in patterns.items():
+        if vendor in description:
+            # Check if current account is in the known allocation
+            if account in pattern['accounts'] or any(acct in account for acct in pattern['accounts']):
+                return True
+            # Also check partial account matches
+            for known_acct in pattern['accounts']:
+                if known_acct in account or account in known_acct:
+                    return True
+
+    return False
 
 
 def check_sales_gst_error(transaction):

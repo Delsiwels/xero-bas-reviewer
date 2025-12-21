@@ -327,6 +327,31 @@
                     <input type="date" id="end-date" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em;">
                 </div>
             </div>
+
+            <!-- Review Mode Selection -->
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 10px; font-weight: 600; color: #333;">Review Mode</label>
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #13B5EA; border-radius: 8px; background: white;">
+                        <input type="radio" name="review-mode" value="quick" checked style="width: 18px; height: 18px;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Quick Review</div>
+                            <div style="font-size: 0.85em; color: #666;">Standard review of selected period</div>
+                        </div>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #764ba2; border-radius: 8px; background: white;">
+                        <input type="radio" name="review-mode" value="deep" style="width: 18px; height: 18px;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">Deep Scan</div>
+                            <div style="font-size: 0.85em; color: #666;">Learn patterns from 12 months history first</div>
+                        </div>
+                    </label>
+                </div>
+                <p id="deep-scan-note" style="display: none; margin-top: 10px; font-size: 0.9em; color: #764ba2;">
+                    Deep scan will analyze 12 months of history to detect allocation patterns (e.g., Telstra split between Telephone and Drawings). This takes longer but reduces false positives.
+                </p>
+            </div>
+
             <button class="btn btn-primary" id="xero-review-btn" onclick="runXeroReview()" style="background: #13B5EA;">
                 Start Review
             </button>
@@ -426,10 +451,28 @@
             endDateInput.value = fyEnd.toISOString().split('T')[0];
         }
 
+        // Review mode toggle
+        document.querySelectorAll('input[name="review-mode"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const deepScanNote = document.getElementById('deep-scan-note');
+                const reviewBtn = document.getElementById('xero-review-btn');
+                if (this.value === 'deep') {
+                    deepScanNote.style.display = 'block';
+                    reviewBtn.textContent = 'Start Deep Scan';
+                    reviewBtn.style.background = '#764ba2';
+                } else {
+                    deepScanNote.style.display = 'none';
+                    reviewBtn.textContent = 'Start Review';
+                    reviewBtn.style.background = '#13B5EA';
+                }
+            });
+        });
+
         // Xero review function
         async function runXeroReview() {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
+            const reviewMode = document.querySelector('input[name="review-mode"]:checked').value;
 
             if (!startDate || !endDate) {
                 alert('Please select both start and end dates');
@@ -445,10 +488,15 @@
             const progressFill = document.getElementById('progress-fill');
             const statusText = document.getElementById('status-text');
 
-            statusText.textContent = 'Fetching transactions from Xero...';
+            if (reviewMode === 'deep') {
+                statusText.textContent = 'Scanning 12 months of history to learn patterns...';
+            } else {
+                statusText.textContent = 'Fetching transactions from Xero...';
+            }
+
             const progressInterval = setInterval(() => {
                 if (progress < 90) {
-                    progress += Math.random() * 10;
+                    progress += Math.random() * (reviewMode === 'deep' ? 3 : 10);
                     progressFill.style.width = Math.min(progress, 90) + '%';
                 }
             }, 500);
@@ -457,7 +505,11 @@
                 const response = await fetch('/api/run-review', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ start_date: startDate, end_date: endDate })
+                    body: JSON.stringify({
+                        start_date: startDate,
+                        end_date: endDate,
+                        review_mode: reviewMode
+                    })
                 });
 
                 clearInterval(progressInterval);
