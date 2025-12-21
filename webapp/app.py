@@ -2414,8 +2414,7 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
-        # Get debug transaction samples
-        global _debug_transaction_samples
+        # Get debug transaction samples (from global variable set during pattern detection)
         transaction_samples = _debug_transaction_samples if _debug_transaction_samples else []
 
         return jsonify({
