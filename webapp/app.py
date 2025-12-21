@@ -4555,14 +4555,16 @@ def round_to_common_split(account_percentages):
     """
     Round two-way split percentages to common business allocation ratios.
 
-    Common splits: 90/10, 80/20, 75/25, 70/30, 60/40, 50/50
+    Common splits: 90/10, 75/25, 70/30, 67/33, 60/40, 50/50
+    Note: 80/20 removed as it often misrepresents actual 70/30 splits due to price differences.
     This makes the displayed percentages more meaningful for typical business allocations.
     """
     if len(account_percentages) != 2:
         return account_percentages
 
     # Common split ratios (higher percentage first)
-    common_splits = [0.90, 0.80, 0.75, 0.70, 0.60, 0.50]
+    # 80/20 intentionally omitted - often caused by price variations in 70/30 splits
+    common_splits = [0.90, 0.75, 0.70, 0.67, 0.60, 0.50]
 
     # Get the two accounts and their percentages
     accounts = list(account_percentages.keys())
@@ -4579,8 +4581,8 @@ def round_to_common_split(account_percentages):
     # Find closest common split
     closest_split = min(common_splits, key=lambda x: abs(x - high_pct))
 
-    # Only round if within 5% of a common split
-    if abs(closest_split - high_pct) <= 0.05:
+    # Round if within 12% of a common split (generous tolerance for price variations)
+    if abs(closest_split - high_pct) <= 0.12:
         return {
             accounts[high_idx]: closest_split,
             accounts[low_idx]: 1.0 - closest_split
@@ -4755,7 +4757,6 @@ def check_split_allocation_pattern(transaction):
     """
     patterns = get_allocation_patterns()
     if not patterns:
-        print("DEBUG: No allocation patterns found")
         return None
 
     # Check contact, narration, reference, and description for vendor matching
@@ -4766,11 +4767,8 @@ def check_split_allocation_pattern(transaction):
     search_text = f"{contact} {narration} {reference} {description}"
     account = (transaction.get('account', '') or '').lower()
 
-    print(f"DEBUG check_split: narration='{narration[:30]}', vendors found: {[v for v in patterns.keys() if v in search_text]}")
-
     for vendor, pattern in patterns.items():
         if vendor in search_text:
-            print(f"DEBUG: Found vendor '{vendor}' in contact+description. is_split={pattern.get('is_split_allocation')}, accounts={pattern.get('accounts')}")
             # Check if this vendor has a split allocation pattern
             if pattern.get('is_split_allocation', False):
                 # This vendor normally has split allocations
@@ -4778,7 +4776,6 @@ def check_split_allocation_pattern(transaction):
                 expected_split = ', '.join([
                     f"{acct}: {pct:.0%}" for acct, pct in pattern['accounts'].items()
                 ])
-                print(f"DEBUG: Flagging split pattern for {vendor}: {expected_split}")
                 return {
                     'should_flag': True,
                     'vendor': vendor,
