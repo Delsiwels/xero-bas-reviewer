@@ -1868,10 +1868,10 @@ def run_review():
 
             debug_info.append(f"Scanning history from {history_start_str} to {history_end_str}")
 
-            # Fetch historical transactions for pattern detection
-            history_transactions, history_debug = fetch_xero_journals_debug(history_start_str, history_end_str)
-            debug_info.extend(history_debug)
-            debug_info.append(f"Got {len(history_transactions) if history_transactions else 0} historical transactions")
+            # Fetch historical BANK TRANSACTIONS for pattern detection
+            # Bank transactions include Contact (vendor) name, unlike Journals
+            history_transactions = fetch_xero_bank_transactions(history_start_str, history_end_str)
+            debug_info.append(f"Got {len(history_transactions) if history_transactions else 0} bank transactions for pattern detection")
 
             if history_transactions:
                 # Enrich with account names
