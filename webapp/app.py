@@ -6704,10 +6704,28 @@ If issues found, respond with specific problems and ATO rule reference. If OK, r
             else:
                 severity = 'low'
 
+            # Filter out OK comments - only show issues
+            filtered_comment = ''
+            if has_issues:
+                filtered_comment = ai_response
+            else:
+                # Check if there's useful info beyond just "OK"
+                # Remove OK prefix and check if there's substance
+                cleaned = ai_response.strip()
+                for prefix in ['OK -', 'OK:', 'OK.', 'OK,', 'OK ']:
+                    if cleaned.upper().startswith(prefix.upper()):
+                        cleaned = cleaned[len(prefix):].strip()
+                        break
+                # If there's no substantial content after removing OK, leave empty
+                if len(cleaned) < 20 or 'appears correct' in cleaned.lower() or 'correctly coded' in cleaned.lower():
+                    filtered_comment = ''
+                else:
+                    filtered_comment = cleaned
+
             return {
                 'has_issues': has_issues,
                 'severity': severity,
-                'comments': ai_response,
+                'comments': filtered_comment,
                 'issues': []
             }
     except Exception as e:
@@ -6828,10 +6846,27 @@ Transaction 2: [OK or ISSUE: brief description]
                         else:
                             severity = 'low'
 
+                        # Filter out OK comments - only show issues
+                        filtered_comment = ''
+                        if has_issues:
+                            filtered_comment = response_text
+                        else:
+                            # Remove OK prefix and check if there's substance
+                            cleaned = response_text.strip()
+                            for prefix in ['OK -', 'OK:', 'OK.', 'OK,', 'OK ', 'ok -', 'ok:', 'ok.', 'ok,', 'ok ']:
+                                if cleaned.startswith(prefix):
+                                    cleaned = cleaned[len(prefix):].strip()
+                                    break
+                            # If there's no substantial content, leave empty
+                            if len(cleaned) < 20 or 'appears correct' in cleaned.lower() or 'correctly coded' in cleaned.lower():
+                                filtered_comment = ''
+                            else:
+                                filtered_comment = cleaned
+
                         current_result = {
                             'has_issues': has_issues,
                             'severity': severity,
-                            'comments': response_text,
+                            'comments': filtered_comment,
                             'issues': []
                         }
                         break
