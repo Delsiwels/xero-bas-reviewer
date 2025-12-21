@@ -1515,7 +1515,7 @@ def upload_review():
                 vendor = split_info.get('vendor', 'vendor').title()
                 expected = split_info.get('expected_split', '')
                 count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
+                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -1622,7 +1622,7 @@ def upload_review():
                 vendor = split_info.get('vendor', 'vendor').title()
                 expected = split_info.get('expected_split', '')
                 count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
+                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
@@ -2236,7 +2236,7 @@ def run_review():
                 vendor = split_info.get('vendor', 'vendor').title()
                 expected = split_info.get('expected_split', '')
                 count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
+                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -2343,7 +2343,7 @@ def run_review():
                 vendor = split_info.get('vendor', 'vendor').title()
                 expected = split_info.get('expected_split', '')
                 count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
+                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
@@ -4791,13 +4791,12 @@ def check_split_allocation_pattern(transaction):
             if pattern.get('is_split_allocation', False):
                 # This vendor normally has split allocations
                 # Flag it so user can verify the split was done
-                expected_split = ', '.join([
-                    f"{acct}: {pct:.0%}" for acct, pct in pattern['accounts'].items()
-                ])
+                # Just list account names without percentages (percentages are unreliable)
+                account_names = ', '.join(pattern['accounts'].keys())
                 return {
                     'should_flag': True,
                     'vendor': vendor,
-                    'expected_split': expected_split,
+                    'expected_split': account_names,
                     'transaction_count': pattern.get('count', 0)
                 }
 
