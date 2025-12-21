@@ -1065,9 +1065,13 @@ def fetch_xero_bas_report_list():
 
 # ============== Cloudflare D1 Integration ==============
 
-CLOUDFLARE_ACCOUNT_ID = os.environ.get('CLOUDFLARE_ACCOUNT_ID', '')
-CLOUDFLARE_API_TOKEN = os.environ.get('CLOUDFLARE_API_TOKEN', '')
-CLOUDFLARE_D1_DATABASE_ID = os.environ.get('CLOUDFLARE_D1_DATABASE_ID', '')
+def get_cloudflare_config():
+    """Get Cloudflare D1 configuration from environment variables"""
+    return {
+        'account_id': os.environ.get('CLOUDFLARE_ACCOUNT_ID', ''),
+        'api_token': os.environ.get('CLOUDFLARE_API_TOKEN', ''),
+        'database_id': os.environ.get('CLOUDFLARE_D1_DATABASE_ID', '')
+    }
 
 def cloudflare_d1_query(sql, params=None):
     """Execute a query on Cloudflare D1 database
@@ -1079,13 +1083,18 @@ def cloudflare_d1_query(sql, params=None):
     Returns:
         dict: Query results or error
     """
-    if not all([CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_D1_DATABASE_ID]):
-        return {'success': False, 'error': 'Cloudflare D1 not configured'}
+    config = get_cloudflare_config()
+    account_id = config['account_id']
+    api_token = config['api_token']
+    database_id = config['database_id']
 
-    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/d1/database/{CLOUDFLARE_D1_DATABASE_ID}/query"
+    if not all([account_id, api_token, database_id]):
+        return {'success': False, 'error': f'Cloudflare D1 not configured. account_id={bool(account_id)}, api_token={bool(api_token)}, database_id={bool(database_id)}'}
+
+    url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database/{database_id}/query"
 
     headers = {
-        'Authorization': f'Bearer {CLOUDFLARE_API_TOKEN}',
+        'Authorization': f'Bearer {api_token}',
         'Content-Type': 'application/json'
     }
 
