@@ -4563,25 +4563,30 @@ def detect_allocation_patterns(all_transactions):
         'aws', 'azure', 'google cloud', 'microsoft', 'adobe', 'xero',
     ]
 
-    # DEBUG: Print sample descriptions to see what we're working with
-    sample_descriptions = [t.get('description', '')[:60] for t in all_transactions[:20] if t.get('description')]
-    print(f"DEBUG detect_patterns: Sample descriptions: {sample_descriptions}")
+    # DEBUG: Print sample transactions to see what fields we have
+    for t in all_transactions[:5]:
+        print(f"DEBUG sample: contact='{t.get('contact', '')}', desc='{t.get('description', '')}', acct='{t.get('account', '')}'")
 
     for t in all_transactions:
+        # Check BOTH contact AND description for vendor matching
+        # In Xero, "Telstra" might be in Contact name while Description is "business"/"personal"
         description = (t.get('description', '') or '').lower()
+        contact = (t.get('contact', '') or '').lower()
+        search_text = f"{contact} {description}"  # Combine for searching
+
         account = (t.get('account', '') or '').lower()
         amount = abs(t.get('amount', 0) or 0)
 
-        if not description or not account or amount == 0:
+        if not account or amount == 0:
             continue
 
-        # Find matching vendor keyword
+        # Find matching vendor keyword in contact OR description
         for vendor in vendor_keywords:
-            if vendor in description:
+            if vendor in search_text:
                 if vendor not in vendor_accounts:
                     vendor_accounts[vendor] = {}
                     vendor_counts[vendor] = 0
-                    print(f"DEBUG: Found new vendor '{vendor}' in '{description[:40]}'")
+                    print(f"DEBUG: Found vendor '{vendor}' in contact='{contact}' desc='{description[:20]}'")
 
                 if account not in vendor_accounts[vendor]:
                     vendor_accounts[vendor][account] = 0
@@ -4650,11 +4655,14 @@ def is_known_allocation_pattern(transaction):
     if not patterns:
         return False
 
+    # Check both contact and description for vendor matching
     description = (transaction.get('description', '') or '').lower()
+    contact = (transaction.get('contact', '') or '').lower()
+    search_text = f"{contact} {description}"
     account = (transaction.get('account', '') or '').lower()
 
     for vendor, pattern in patterns.items():
-        if vendor in description:
+        if vendor in search_text:
             # Only skip flagging if this vendor does NOT have a split allocation
             # If it's a split pattern, we want to flag it for review
             if not pattern.get('is_split_allocation', False):
@@ -4685,14 +4693,17 @@ def check_split_allocation_pattern(transaction):
         print("DEBUG: No allocation patterns found")
         return None
 
+    # Check both contact and description for vendor matching
     description = (transaction.get('description', '') or '').lower()
+    contact = (transaction.get('contact', '') or '').lower()
+    search_text = f"{contact} {description}"
     account = (transaction.get('account', '') or '').lower()
 
-    print(f"DEBUG check_split: description='{description[:50]}', account='{account}', patterns={list(patterns.keys())}")
+    print(f"DEBUG check_split: contact='{contact}', description='{description[:30]}', search_text contains vendors: {[v for v in patterns.keys() if v in search_text]}")
 
     for vendor, pattern in patterns.items():
-        if vendor in description:
-            print(f"DEBUG: Found vendor '{vendor}' in description. is_split={pattern.get('is_split_allocation')}, accounts={pattern.get('accounts')}")
+        if vendor in search_text:
+            print(f"DEBUG: Found vendor '{vendor}' in contact+description. is_split={pattern.get('is_split_allocation')}, accounts={pattern.get('accounts')}")
             # Check if this vendor has a split allocation pattern
             if pattern.get('is_split_allocation', False):
                 # This vendor normally has split allocations
