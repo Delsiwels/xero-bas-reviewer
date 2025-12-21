@@ -6661,6 +6661,8 @@ ATO GST Rules to check:
 7. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 8. Office supplies (toner, cartridges) MUST include GST (10%)
 
+IMPORTANT: Do NOT flag transactions as "duplicates". Monthly subscriptions (like Xero, software, utilities) with the same amount each month are NORMAL recurring charges, NOT duplicates. You are reviewing individual transactions without context of other transactions.
+
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
 
