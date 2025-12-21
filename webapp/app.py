@@ -679,6 +679,8 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
         for txn in bank_txns:
             txn_date = parse_xero_date(txn.get('Date', ''))
             date_str = txn_date.strftime('%Y-%m-%d') if txn_date else 'NO DATE'
+            # Check if amounts are tax inclusive or exclusive
+            line_amount_types = txn.get('LineAmountTypes', 'Exclusive')
 
             # Each bank transaction can have multiple line items
             for line in txn.get('LineItems', []):
@@ -689,10 +691,16 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                 # Amounts
                 line_amount = float(line.get('LineAmount', 0) or 0)
                 tax_amount = float(line.get('TaxAmount', 0) or 0)
-                unit_amount = float(line.get('UnitAmount', 0) or 0)
-                quantity = float(line.get('Quantity', 1) or 1)
 
-                gross = line_amount + tax_amount
+                # Calculate gross and net based on LineAmountTypes
+                if line_amount_types == 'Inclusive':
+                    # LineAmount already includes tax
+                    gross = line_amount
+                    net = line_amount - tax_amount
+                else:
+                    # LineAmount is exclusive of tax (default)
+                    gross = line_amount + tax_amount
+                    net = line_amount
 
                 # Determine transaction type
                 is_expense = txn.get('Type', '') == 'SPEND'
@@ -720,7 +728,7 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                     'description': description,
                     'gross': abs(gross),
                     'gst': abs(tax_amount),
-                    'net': abs(line_amount),
+                    'net': abs(net),
                     'gst_rate_name': gst_rate_name,
                     'source': 'BankTransaction',
                     'reference': txn.get('Reference', ''),
@@ -763,6 +771,8 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
             date_str = inv_date.strftime('%Y-%m-%d') if inv_date else 'NO DATE'
             contact_name = inv.get('Contact', {}).get('Name', '') if inv.get('Contact') else ''
             inv_number = inv.get('InvoiceNumber', '')
+            # Check if amounts are tax inclusive or exclusive
+            line_amount_types = inv.get('LineAmountTypes', 'Exclusive')
 
             # Each invoice can have multiple line items
             for line in inv.get('LineItems', []):
@@ -771,7 +781,16 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
 
                 line_amount = float(line.get('LineAmount', 0) or 0)
                 tax_amount = float(line.get('TaxAmount', 0) or 0)
-                gross = line_amount + tax_amount
+
+                # Calculate gross and net based on LineAmountTypes
+                if line_amount_types == 'Inclusive':
+                    # LineAmount already includes tax
+                    gross = line_amount
+                    net = line_amount - tax_amount
+                else:
+                    # LineAmount is exclusive of tax (default)
+                    gross = line_amount + tax_amount
+                    net = line_amount
 
                 is_expense = invoice_type == 'ACCPAY'
 
@@ -797,7 +816,7 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
                     'description': description,
                     'gross': abs(gross),
                     'gst': abs(tax_amount),
-                    'net': abs(line_amount),
+                    'net': abs(net),
                     'gst_rate_name': gst_rate_name,
                     'source': 'Invoice' if invoice_type == 'ACCREC' else 'Bill',
                     'reference': inv_number,
@@ -2888,98 +2907,110 @@ def generate_correcting_journal(transaction):
 
     if transaction.get('overseas_subscription_gst'):
         # Overseas subscription - GST should not be claimed
+        # Correcting journal: reverse original GST coding and re-enter as GST Free
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
+        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
 
-        if gst > 0:
+        if gross > 0:
+            # Debit: Re-enter with GST Free Expenses (correct - overseas suppliers shouldn't charge GST)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
-                'debit': gst,
+                'debit': gross,
                 'credit': 0,
-                'tax_code': 'GST Free',
+                'tax_code': 'GST Free Expenses',
                 'description': std_desc
             })
+            # Credit: Reverse the original GST on Expenses entry
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': 0,
-                'credit': gst,
+                'credit': gross,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
 
     if transaction.get('government_charges_gst'):
-        # Government charges - NO GST applies
+        # Government charges - NO GST applies (stamp duty, rates, ASIC fees, rego are GST-free)
+        # Correcting journal: reverse original GST coding and re-enter as GST Free
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
+        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
 
-        if gst > 0:
+        if gross > 0:
+            # Debit: Re-enter with GST Free Expenses (correct - gov charges have no GST)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
-                'debit': gst,
+                'debit': gross,
                 'credit': 0,
-                'tax_code': 'GST Free',
+                'tax_code': 'GST Free Expenses',
                 'description': std_desc
             })
+            # Credit: Reverse the original GST on Expenses entry
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': 0,
-                'credit': gst,
+                'credit': gross,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
 
     if transaction.get('client_entertainment_gst'):
         # Client entertainment - NO GST credit claimable per ATO
+        # Correcting journal: reverse original GST coding and re-enter as GST Free
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
-        if gst > 0:
+        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
+        if gross > 0:
+            # Debit: Re-enter with GST Free Expenses (correct - no GST claim on entertainment)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
-                'debit': gst,
+                'debit': gross,
                 'credit': 0,
                 'tax_code': 'GST Free Expenses',
                 'description': std_desc
             })
+            # Credit: Reverse the original GST on Expenses entry
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': 0,
-                'credit': gst,
+                'credit': gross,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
 
     if transaction.get('staff_entertainment_gst'):
         # Staff entertainment - NO GST credit unless FBT is paid
+        # Correcting journal: reverse original GST coding and re-enter as GST Free
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
-        if gst > 0:
+        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
+        if gross > 0:
+            # Debit: Re-enter with GST Free Expenses (correct - no GST claim on entertainment)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
-                'debit': gst,
+                'debit': gross,
                 'credit': 0,
                 'tax_code': 'GST Free Expenses',
                 'description': std_desc
             })
+            # Credit: Reverse the original GST on Expenses entry
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': 0,
-                'credit': gst,
+                'credit': gross,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
