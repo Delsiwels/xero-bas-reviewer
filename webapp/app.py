@@ -2460,17 +2460,24 @@ def run_review():
             }
 
         # Debug: Show account breakdown of all Telstra transactions
+        # Search in ALL text fields for "telstra"
         telstra_debug = []
         for t in transactions:
-            desc = (t.get('description', '') or '').lower()
-            narr = (t.get('narration', '') or '').lower()
-            contact = (t.get('contact', '') or '').lower()
-            if 'telstra' in desc or 'telstra' in narr or 'telstra' in contact:
+            search_text = ' '.join([
+                str(t.get('description', '') or ''),
+                str(t.get('narration', '') or ''),
+                str(t.get('contact', '') or ''),
+                str(t.get('reference', '') or ''),
+                str(t.get('account', '') or '')
+            ]).lower()
+            if 'telstra' in search_text or 'personal' in search_text:
                 telstra_debug.append({
                     'date': t.get('date'),
                     'account_code': t.get('account_code'),
                     'account': t.get('account'),
                     'description': t.get('description'),
+                    'narration': t.get('narration'),
+                    'reference': t.get('reference'),
                     'gross': t.get('gross'),
                     'source': t.get('source'),
                     'journal_number': t.get('journal_number')

@@ -712,17 +712,20 @@
             debugMsg += `Flagged count: ${data.flagged_count}\n`;
             debugMsg += `Telstra debug entries: ${data.telstra_debug ? data.telstra_debug.length : 'N/A'}\n\n`;
 
-            // Show Telstra transactions if found
+            // Show Telstra/Personal transactions if found
             if (data.telstra_debug && data.telstra_debug.length > 0) {
-                debugMsg += "TELSTRA TRANSACTIONS FOUND:\n\n";
-                data.telstra_debug.forEach((t, i) => {
-                    debugMsg += `${i+1}. Date: ${t.date}, Account: ${t.account_code} (${t.account})\n`;
-                    debugMsg += `   Desc: "${t.description}", Gross: $${t.gross}, Source: ${t.source}\n`;
-                    debugMsg += `   Journal #: ${t.journal_number}\n\n`;
+                debugMsg += "TELSTRA/PERSONAL TRANSACTIONS FOUND:\n\n";
+                data.telstra_debug.slice(0, 10).forEach((t, i) => {
+                    debugMsg += `${i+1}. Date: ${t.date}, Acct: ${t.account_code} (${t.account})\n`;
+                    debugMsg += `   Desc: "${t.description}"\n`;
+                    debugMsg += `   Narration: "${t.narration}", Ref: "${t.reference}"\n`;
+                    debugMsg += `   Gross: $${t.gross}, Source: ${t.source}, J#: ${t.journal_number}\n\n`;
                 });
+                if (data.telstra_debug.length > 10) {
+                    debugMsg += `... and ${data.telstra_debug.length - 10} more\n`;
+                }
             } else {
-                debugMsg += "No Telstra transactions found in telstra_debug.\n";
-                debugMsg += "This might mean 'telstra' is not in description/narration fields.\n";
+                debugMsg += "No Telstra/Personal transactions found.\n";
             }
 
             console.log(debugMsg);
