@@ -758,13 +758,19 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
 
 
 def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
-    """Fetch invoices from Xero API (ACCREC for sales, ACCPAY for bills)"""
+    """Fetch invoices from Xero API (ACCREC for sales, ACCPAY for bills)
+
+    Only includes AUTHORISED and PAID invoices/bills - excludes DRAFT and SUBMITTED
+    as these haven't been posted and won't affect the BAS.
+    """
     transactions = []
 
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
-    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day}) AND Type == "{invoice_type}"'
+    # Only include approved invoices/bills (AUTHORISED or PAID)
+    # Exclude DRAFT and SUBMITTED as they haven't been posted yet
+    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day}) AND Type == "{invoice_type}" AND (Status == "AUTHORISED" OR Status == "PAID")'
 
     page = 1
     while True:
