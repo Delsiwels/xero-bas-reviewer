@@ -320,11 +320,11 @@
             <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 500;">Start Date</label>
-                    <input type="date" id="start-date" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em;">
+                    <input type="text" id="start-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em; width: 130px;">
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 500;">End Date</label>
-                    <input type="date" id="end-date" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em;">
+                    <input type="text" id="end-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em; width: 130px;">
                 </div>
             </div>
 
@@ -426,9 +426,33 @@
             return div.innerHTML;
         }
 
-        // Set default dates for Xero review (current Australian financial year)
-        // Australian FY runs July 1 to June 30
-        // FY2026 = July 1, 2025 to June 30, 2026
+        // Helper function to format date as dd/mm/yyyy
+        function formatDateAU(date) {
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        // Helper function to parse dd/mm/yyyy to Date object
+        function parseDateAU(dateStr) {
+            const parts = dateStr.split('/');
+            if (parts.length !== 3) return null;
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // JS months are 0-indexed
+            const year = parseInt(parts[2], 10);
+            return new Date(year, month, day);
+        }
+
+        // Helper function to convert dd/mm/yyyy to yyyy-mm-dd for API
+        function toISODate(dateStr) {
+            const date = parseDateAU(dateStr);
+            if (!date) return null;
+            return date.toISOString().split('T')[0];
+        }
+
+        // Set default dates for Xero review (PREVIOUS quarter)
+        // Australian BAS quarters: Jul-Sep, Oct-Dec, Jan-Mar, Apr-Jun
         const startDateInput = document.getElementById('start-date');
         const endDateInput = document.getElementById('end-date');
         if (startDateInput && endDateInput) {
@@ -436,19 +460,30 @@
             const month = today.getMonth(); // 0-11
             const year = today.getFullYear();
 
-            // Determine FY start year (July onwards = current year, Jan-June = previous year)
-            const fyStartYear = month >= 6 ? year : year - 1; // month 6 = July
+            // Determine current quarter and calculate previous quarter
+            // Q1: Jul-Sep (months 6,7,8), Q2: Oct-Dec (9,10,11), Q3: Jan-Mar (0,1,2), Q4: Apr-Jun (3,4,5)
+            let prevQStart, prevQEnd;
 
-            const fyStart = new Date(fyStartYear, 6, 1); // July 1
-            let fyEnd = new Date(fyStartYear + 1, 5, 30); // June 30
-
-            // If we're in the current FY, only go up to today
-            if (fyEnd > today) {
-                fyEnd = today;
+            if (month >= 0 && month <= 2) {
+                // Current is Jan-Mar, previous is Oct-Dec of previous year
+                prevQStart = new Date(year - 1, 9, 1);  // Oct 1
+                prevQEnd = new Date(year - 1, 11, 31); // Dec 31
+            } else if (month >= 3 && month <= 5) {
+                // Current is Apr-Jun, previous is Jan-Mar
+                prevQStart = new Date(year, 0, 1);     // Jan 1
+                prevQEnd = new Date(year, 2, 31);      // Mar 31
+            } else if (month >= 6 && month <= 8) {
+                // Current is Jul-Sep, previous is Apr-Jun
+                prevQStart = new Date(year, 3, 1);     // Apr 1
+                prevQEnd = new Date(year, 5, 30);      // Jun 30
+            } else {
+                // Current is Oct-Dec, previous is Jul-Sep
+                prevQStart = new Date(year, 6, 1);     // Jul 1
+                prevQEnd = new Date(year, 8, 30);      // Sep 30
             }
 
-            startDateInput.value = fyStart.toISOString().split('T')[0];
-            endDateInput.value = fyEnd.toISOString().split('T')[0];
+            startDateInput.value = formatDateAU(prevQStart);
+            endDateInput.value = formatDateAU(prevQEnd);
         }
 
         // Review mode toggle
@@ -470,12 +505,21 @@
 
         // Xero review function
         async function runXeroReview() {
-            const startDate = document.getElementById('start-date').value;
-            const endDate = document.getElementById('end-date').value;
+            const startDateRaw = document.getElementById('start-date').value;
+            const endDateRaw = document.getElementById('end-date').value;
             const reviewMode = document.querySelector('input[name="review-mode"]:checked').value;
 
+            if (!startDateRaw || !endDateRaw) {
+                alert('Please enter both start and end dates');
+                return;
+            }
+
+            // Convert dd/mm/yyyy to yyyy-mm-dd for API
+            const startDate = toISODate(startDateRaw);
+            const endDate = toISODate(endDateRaw);
+
             if (!startDate || !endDate) {
-                alert('Please select both start and end dates');
+                alert('Please enter dates in dd/mm/yyyy format');
                 return;
             }
 
@@ -935,10 +979,11 @@
 
             // Get the end date from the date picker or use current date
             const endDateInput = document.getElementById('end-date');
-            const journalDate = endDateInput ? endDateInput.value : new Date().toISOString().split('T')[0];
+            const endDateRaw = endDateInput ? endDateInput.value : null;
+            const journalDate = endDateRaw ? toISODate(endDateRaw) : new Date().toISOString().split('T')[0];
 
             // Format narration as "Sep-25 BAS Adjustments"
-            const endDate = new Date(journalDate);
+            const endDate = endDateRaw ? parseDateAU(endDateRaw) : new Date();
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const monthYear = `${monthNames[endDate.getMonth()]}-${String(endDate.getFullYear()).slice(-2)}`;
 
