@@ -6623,8 +6623,7 @@ GST Rate: {transaction.get('gst_rate_name')}
 
 IMPORTANT GST CALCULATION RULE:
 For GST-inclusive amounts in Australia, GST = Gross ÷ 11 (NOT Gross × 10%).
-Example: $3,200 gross → GST = $3,200 ÷ 11 = $290.91 (CORRECT), NOT $320.
-The GST amount shown above (${transaction.get('gst', 0):,.2f}) has been VERIFIED as mathematically correct. Do NOT claim the GST calculation is wrong.
+The GST amount has been VERIFIED as mathematically correct. Do NOT mention GST calculation at all - it is correct. Only mention account coding or other issues.
 
 Pre-checks (VERIFIED - do not contradict these):
 - Account coding suspicious: {transaction.get('account_coding_suspicious', False)}
@@ -6755,7 +6754,9 @@ def process_single_batch(batch_data):
     batch_prompt = """Review these Australian transactions for BAS compliance per ATO rules.
 For EACH transaction, provide a brief assessment.
 
-CRITICAL RULE: NEVER flag transactions as "duplicates" or mention "double claim". Monthly subscriptions and recurring charges (like Xero, software, utilities, rent) with the same amount appearing multiple times are NORMAL and EXPECTED. Each transaction should be reviewed on its own merits only.
+CRITICAL RULES:
+1. NEVER flag transactions as "duplicates" or mention "double claim". Recurring charges are NORMAL.
+2. GST calculations have been verified correct. Do NOT mention GST amounts or calculations - only mention account coding or other issues.
 
 ATO GST Rules:
 1. GST-FREE (no GST, CAN claim input credits): Basic food, health/medical, education, exports
