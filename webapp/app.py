@@ -4603,7 +4603,7 @@ def detect_allocation_patterns(all_transactions):
 
     # DEBUG: Print sample transactions to see what fields we have
     debug_samples = []
-    for t in all_transactions[:10]:
+    for t in all_transactions[:20]:  # Increased to 20 samples
         sample = {
             'contact': t.get('contact', ''),
             'narration': t.get('narration', ''),
@@ -4615,6 +4615,14 @@ def detect_allocation_patterns(all_transactions):
         }
         debug_samples.append(sample)
         print(f"DEBUG sample: {sample}")
+
+    # DEBUG: List all unique contacts found
+    all_contacts = set()
+    for t in all_transactions:
+        contact = t.get('contact', '')
+        if contact:
+            all_contacts.add(contact)
+    print(f"DEBUG: All unique contacts ({len(all_contacts)}): {sorted(all_contacts)[:30]}")  # First 30
 
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
@@ -4676,6 +4684,10 @@ def detect_allocation_patterns(all_transactions):
 
     print(f"DEBUG: Final patterns detected: {list(patterns.keys())}")
     print(f"DEBUG: Split patterns: {[v for v, p in patterns.items() if p.get('is_split_allocation')]}")
+
+    # Add unique contacts to samples for debugging
+    debug_samples.append({'_all_contacts': sorted(list(all_contacts))[:50]})
+
     return patterns, debug_samples
 
 
