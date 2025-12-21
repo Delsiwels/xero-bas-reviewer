@@ -1624,7 +1624,18 @@ def upload_review():
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
-                comments.append('Sales GST error - check if GST Free is valid (medical/therapy/education/childcare/export)')
+                # Check if it's a commercial service coded as GST Free (specific error)
+                desc = transaction.get('description', '').lower()
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
+                is_commercial = any(kw in desc for kw in commercial_keywords)
+                is_bas_excluded = 'bas excluded' in gst_rate
+                if is_bas_excluded:
+                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                elif is_commercial:
+                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                else:
+                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
             if transaction.get('motor_vehicle_gst_limit'):
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334 (ATO 2025-26 car limit $69,674)')
             if transaction.get('overseas_subscription_gst'):
@@ -1723,7 +1734,18 @@ def upload_review():
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
-                comments.append('Sales GST error - check if GST Free is valid (medical/therapy/education/childcare/export)')
+                # Check if it's a commercial service coded as GST Free (specific error)
+                desc = transaction.get('description', '').lower()
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
+                is_commercial = any(kw in desc for kw in commercial_keywords)
+                is_bas_excluded = 'bas excluded' in gst_rate
+                if is_bas_excluded:
+                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                elif is_commercial:
+                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                else:
+                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
             if transaction.get('motor_vehicle_gst_limit'):
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334')
             if transaction.get('overseas_subscription_gst'):
@@ -2348,7 +2370,18 @@ def run_review():
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
-                comments.append('Sales GST error - check if GST Free is valid (medical/therapy/education/childcare/export)')
+                # Check if it's a commercial service coded as GST Free (specific error)
+                desc = transaction.get('description', '').lower()
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
+                is_commercial = any(kw in desc for kw in commercial_keywords)
+                is_bas_excluded = 'bas excluded' in gst_rate
+                if is_bas_excluded:
+                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                elif is_commercial:
+                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                else:
+                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
             if transaction.get('motor_vehicle_gst_limit'):
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334 (ATO 2025-26 car limit $69,674)')
             if transaction.get('overseas_subscription_gst'):
@@ -2447,7 +2480,18 @@ def run_review():
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
-                comments.append('Sales GST error - check if GST Free is valid (medical/therapy/education/childcare/export)')
+                # Check if it's a commercial service coded as GST Free (specific error)
+                desc = transaction.get('description', '').lower()
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
+                is_commercial = any(kw in desc for kw in commercial_keywords)
+                is_bas_excluded = 'bas excluded' in gst_rate
+                if is_bas_excluded:
+                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                elif is_commercial:
+                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                else:
+                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
             if transaction.get('motor_vehicle_gst_limit'):
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334')
             if transaction.get('overseas_subscription_gst'):
