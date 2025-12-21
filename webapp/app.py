@@ -895,15 +895,18 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                 # Assets (Bank, Receivables, Fixed Assets) and Liabilities (Payables, GST)
                 # are not relevant for BAS GST compliance review
                 balance_sheet_types = [
-                    'BANK', 'CURRENT', 'FIXED', 'INVENTORY', 'NONCURRENT',  # Asset types
-                    'CURRLIAB', 'LIABILITY', 'TERMLIAB',  # Liability types
+                    'BANK', 'CURRENT', 'FIXED', 'INVENTORY', 'NONCURRENT', 'PREPAYMENT',  # Asset types
+                    'CURRLIAB', 'LIABILITY', 'TERMLIAB', 'PAYGLIABILITY', 'SUPERANNUATIONLIABILITY',  # Liability types
                 ]
                 if account_type in balance_sheet_types:
                     continue
 
-                # Also skip GST control accounts by name
+                # Also skip GST control accounts and balance sheet accounts by name
                 account_name_lower = account_name.lower()
-                if any(x in account_name_lower for x in ['gst', 'accounts payable', 'accounts receivable', 'bank', 'petty cash']):
+                skip_keywords = ['gst', 'accounts payable', 'accounts receivable', 'bank', 'petty cash',
+                                'clearing', 'suspense', 'control', 'payg', 'superannuation liability',
+                                'rounding', 'historical adjustment', 'retained earnings', 'current year earnings']
+                if any(x in account_name_lower for x in skip_keywords):
                     continue
 
                 is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
