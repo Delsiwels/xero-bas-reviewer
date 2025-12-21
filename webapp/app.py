@@ -3688,6 +3688,19 @@ def check_missing_gst(transaction):
     if gst_amount > 0:
         return False
 
+    # Skip Drawings/Loan accounts - these are personal expenses and should be BAS Excluded
+    # Personal expenses cannot claim GST credits, so no GST is correct
+    drawings_loan_keywords = ['drawing', 'drawings', 'loan', 'director loan', 'shareholder loan', 'private']
+    is_drawings_loan = any(keyword in account for keyword in drawings_loan_keywords)
+    if is_drawings_loan:
+        return False
+
+    # Skip personal expenses - these should be BAS Excluded with no GST
+    personal_keywords = ['personal', 'private', 'private use', 'personal use']
+    is_personal = any(keyword in description for keyword in personal_keywords)
+    if is_personal:
+        return False
+
     # Skip entertainment expenses - GST credits CANNOT be claimed on entertainment
     # Per ATO: Entertainment is non-deductible and GST credits are blocked
     # So entertainment coded as GST-Free is CORRECT, not an error
