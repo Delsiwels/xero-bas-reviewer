@@ -1284,6 +1284,12 @@ def upload_review():
                 transaction['drawings_loan_error'] = False
 
             try:
+                transaction['personal_in_business_account'] = check_personal_expense_in_business_account(transaction)
+            except Exception as e:
+                print(f"Error in check_personal_expense_in_business_account: {e}")
+                transaction['personal_in_business_account'] = False
+
+            try:
                 transaction['asset_capitalization_error'] = check_asset_capitalization(transaction)
             except Exception as e:
                 print(f"Error in check_asset_capitalization: {e}")
@@ -1454,6 +1460,7 @@ def upload_review():
                 transaction['missing_gst_error'] or
                 not transaction['gst_calculation_correct'] or
                 transaction['drawings_loan_error'] or
+                transaction.get('personal_in_business_account') or
                 transaction['asset_capitalization_error'] or
                 transaction['computer_equipment_expense'] or
                 transaction['interest_gst_error'] or
@@ -1519,6 +1526,8 @@ def upload_review():
                 comments.append('GST calculation error')
             if transaction.get('drawings_loan_error'):
                 comments.append('Drawings/Loan account - should be BAS Excluded (personal/owner expense)')
+            if transaction.get('personal_in_business_account'):
+                comments.append('ISSUE: "personal" expense is coded to a business account. Should be in Owner Drawings with BAS Excluded (no GST claim on personal expenses)')
             if transaction.get('asset_capitalization_error'):
                 comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules')
             if transaction.get('computer_equipment_expense'):
@@ -1996,6 +2005,12 @@ def run_review():
                 transaction['drawings_loan_error'] = False
 
             try:
+                transaction['personal_in_business_account'] = check_personal_expense_in_business_account(transaction)
+            except Exception as e:
+                print(f"Error in check_personal_expense_in_business_account: {e}")
+                transaction['personal_in_business_account'] = False
+
+            try:
                 transaction['asset_capitalization_error'] = check_asset_capitalization(transaction)
             except Exception as e:
                 print(f"Error in check_asset_capitalization: {e}")
@@ -2166,6 +2181,7 @@ def run_review():
                 transaction['missing_gst_error'] or
                 not transaction['gst_calculation_correct'] or
                 transaction['drawings_loan_error'] or
+                transaction.get('personal_in_business_account') or
                 transaction['asset_capitalization_error'] or
                 transaction['computer_equipment_expense'] or
                 transaction['interest_gst_error'] or
@@ -2231,6 +2247,8 @@ def run_review():
                 comments.append('GST calculation error')
             if transaction.get('drawings_loan_error'):
                 comments.append('Drawings/Loan account - should be BAS Excluded (personal/owner expense)')
+            if transaction.get('personal_in_business_account'):
+                comments.append('ISSUE: "personal" expense is coded to a business account. Should be in Owner Drawings with BAS Excluded (no GST claim on personal expenses)')
             if transaction.get('asset_capitalization_error'):
                 comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules')
             if transaction.get('computer_equipment_expense'):
@@ -5238,6 +5256,65 @@ def check_allowance_gst_error(transaction):
     return False
 
 
+def check_personal_expense_in_business_account(transaction):
+    """
+    Check if a personal expense is incorrectly coded to a business expense account.
+
+    Common pattern: Telstra bills with "personal" portion should go to:
+    - Owner A Drawings (or similar) with BAS Excluded
+    NOT to business expense accounts like Telephone & Internet with GST.
+
+    This catches errors like:
+    - "telstra personal" coded to Telephone & Internet (WRONG)
+    - "personal use" coded to Motor Vehicle Expenses (WRONG)
+    - Any description containing "personal" in a business expense account
+
+    Personal expenses should be in Drawings/Loan accounts with no GST claimed.
+    """
+    description = (transaction.get('description', '') or '').lower()
+    account = (transaction.get('account', '') or '').lower()
+
+    # Keywords indicating personal expense
+    personal_keywords = [
+        'personal', 'private', 'private use', 'personal use',
+        'owner personal', 'directors personal', 'shareholder personal'
+    ]
+
+    # Check if description indicates personal expense
+    is_personal = any(keyword in description for keyword in personal_keywords)
+
+    if not is_personal:
+        return False
+
+    # Accounts where personal expenses SHOULD go (these are OK)
+    personal_accounts = [
+        'drawing', 'drawings', 'owner a drawing', 'owner b drawing',
+        'loan', 'director loan', 'shareholder loan',
+        'private', 'personal'
+    ]
+
+    # Check if it's in an appropriate personal account
+    is_in_personal_account = any(acct in account for acct in personal_accounts)
+
+    if is_in_personal_account:
+        return False  # Correctly coded to personal account
+
+    # Personal expense in a business account - this is an error
+    # Business expense accounts include most things except drawings/loans
+    business_expense_indicators = [
+        'expense', 'telephone', 'internet', 'motor vehicle', 'fuel',
+        'office', 'supplies', 'equipment', 'utilities', 'rent',
+        'advertising', 'travel', 'entertainment', 'subscriptions'
+    ]
+
+    is_business_account = any(indicator in account for indicator in business_expense_indicators)
+
+    if is_business_account:
+        return True  # ERROR: Personal expense in business account
+
+    return False
+
+
 def check_reimbursement_gst(transaction):
     """
     Check if employee reimbursement transactions have valid GST credit claims.
@@ -6207,6 +6284,7 @@ def review_with_ai(transaction):
             transaction.get('missing_gst_error') or
             not transaction.get('gst_calculation_correct', True) or
             transaction.get('drawings_loan_error') or
+            transaction.get('personal_in_business_account') or
             transaction.get('asset_capitalization_error') or
             transaction.get('computer_equipment_expense') or
             transaction.get('residential_premises_gst') or
