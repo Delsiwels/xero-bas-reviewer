@@ -6737,6 +6737,8 @@ def process_single_batch(batch_data):
     batch_prompt = """Review these Australian transactions for BAS compliance per ATO rules.
 For EACH transaction, provide a brief assessment.
 
+CRITICAL RULE: NEVER flag transactions as "duplicates" or mention "double claim". Monthly subscriptions and recurring charges (like Xero, software, utilities, rent) with the same amount appearing multiple times are NORMAL and EXPECTED. Each transaction should be reviewed on its own merits only.
+
 ATO GST Rules:
 1. GST-FREE (no GST, CAN claim input credits): Basic food, health/medical, education, exports
 2. INPUT-TAXED (no GST, CANNOT claim credits): Bank fees, interest, residential rent, life insurance
@@ -6783,7 +6785,7 @@ Transaction 2: [OK or ISSUE: brief description]
             json={
                 'model': 'deepseek-chat',
                 'messages': [
-                    {'role': 'system', 'content': 'You are an Australian tax accountant reviewing BAS transactions. Be concise. For each transaction, respond with OK or ISSUE followed by a brief explanation.'},
+                    {'role': 'system', 'content': 'You are an Australian tax accountant reviewing BAS transactions. Be concise. For each transaction, respond with OK or ISSUE followed by a brief explanation. NEVER mention duplicates - recurring charges are normal.'},
                     {'role': 'user', 'content': batch_prompt}
                 ],
                 'temperature': 0.3,
