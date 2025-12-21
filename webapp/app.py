@@ -1879,10 +1879,14 @@ def run_review():
 
                 # Detect allocation patterns
                 try:
-                    patterns = detect_allocation_patterns(history_transactions)
+                    patterns, transaction_samples = detect_allocation_patterns(history_transactions)
                     set_allocation_patterns(patterns)
+                    # Store samples for API response
+                    global _debug_transaction_samples
+                    _debug_transaction_samples = transaction_samples
                     pattern_count = len([p for p in patterns.values() if p.get('is_split_allocation')])
-                    debug_info.append(f"Detected {pattern_count} split allocation patterns")
+                    debug_info.append(f"Detected {pattern_count} split allocation patterns from {len(history_transactions)} history transactions")
+                    debug_info.append(f"Transaction samples collected: {len(transaction_samples)}")
                     print(f"Deep Scan: Detected {pattern_count} split allocation patterns")
                     for vendor, pattern in patterns.items():
                         if pattern.get('is_split_allocation'):
@@ -1890,6 +1894,8 @@ def run_review():
                             print(f"  - {vendor}: {acct_str} ({pattern['count']} transactions)")
                 except Exception as e:
                     print(f"Error detecting patterns: {e}")
+                    import traceback
+                    traceback.print_exc()
                     debug_info.append(f"Pattern detection error: {e}")
             else:
                 debug_info.append("No historical transactions found for pattern detection")
@@ -2410,10 +2416,7 @@ def run_review():
 
         # Get debug transaction samples
         global _debug_transaction_samples
-        try:
-            transaction_samples = _debug_transaction_samples if '_debug_transaction_samples' in dir() else []
-        except:
-            transaction_samples = []
+        transaction_samples = _debug_transaction_samples if _debug_transaction_samples else []
 
         return jsonify({
             'total_transactions': len(transactions),
@@ -4601,10 +4604,6 @@ def detect_allocation_patterns(all_transactions):
         debug_samples.append(sample)
         print(f"DEBUG sample: {sample}")
 
-    # Store debug samples globally for API response
-    global _debug_transaction_samples
-    _debug_transaction_samples = debug_samples
-
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
         # In Xero journals, vendor name is often in Narration field
@@ -4665,7 +4664,7 @@ def detect_allocation_patterns(all_transactions):
 
     print(f"DEBUG: Final patterns detected: {list(patterns.keys())}")
     print(f"DEBUG: Split patterns: {[v for v, p in patterns.items() if p.get('is_split_allocation')]}")
-    return patterns
+    return patterns, debug_samples
 
 
 def set_allocation_patterns(patterns):
