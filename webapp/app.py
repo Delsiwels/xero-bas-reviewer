@@ -764,9 +764,11 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
 
     page = 1
     while True:
+        # Request invoices with full line item details
         data = xero_api_request('Invoices', params={
             'where': where_clause,
-            'page': page
+            'page': page,
+            'includeArchived': 'false'
         })
 
         if not data or 'Invoices' not in data:
@@ -1063,9 +1065,18 @@ def enrich_transactions_with_accounts(transactions):
     # Enrich transactions
     for txn in transactions:
         code = txn.get('account_code', '')
-        if code in account_map:
-            txn['account'] = account_map[code]['name']
+        if code and code in account_map:
+            txn['account'] = f"{account_map[code]['name']} ({code})"
             txn['account_type'] = account_map[code]['type']
+        elif code:
+            # Code exists but not in chart of accounts
+            txn['account'] = f"Unknown Account ({code})"
+            txn['account_type'] = ''
+        else:
+            # No account code - flag this
+            txn['account'] = 'No Account Assigned'
+            txn['account_code'] = ''
+            txn['account_type'] = ''
 
     return transactions
 
