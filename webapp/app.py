@@ -2398,15 +2398,15 @@ def run_review():
             'review_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
 
-        # Include pattern debug info
+        # Include pattern debug info (ALL patterns, not just split ones)
         patterns = get_allocation_patterns()
         pattern_debug = {}
         for vendor, pattern in patterns.items():
-            if pattern.get('is_split_allocation'):
-                pattern_debug[vendor] = {
-                    'accounts': pattern.get('accounts', {}),
-                    'count': pattern.get('count', 0)
-                }
+            pattern_debug[vendor] = {
+                'accounts': pattern.get('accounts', {}),
+                'count': pattern.get('count', 0),
+                'is_split': pattern.get('is_split_allocation', False)
+            }
 
         return jsonify({
             'total_transactions': len(transactions),

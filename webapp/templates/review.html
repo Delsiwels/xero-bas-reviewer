@@ -710,9 +710,8 @@
             console.log('=== DEEP SCAN DEBUG ===');
             console.log('Patterns detected:', data.patterns_detected);
             console.log('Debug info:', data.debug_info);
-            if (data.patterns_detected && Object.keys(data.patterns_detected).length > 0) {
-                alert('Patterns detected: ' + JSON.stringify(data.patterns_detected, null, 2));
-            }
+            // Always show alert with patterns (even if empty) for debugging
+            alert('Patterns detected:\n' + JSON.stringify(data.patterns_detected, null, 2));
 
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
