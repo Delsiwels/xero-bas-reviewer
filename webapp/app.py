@@ -4563,6 +4563,10 @@ def detect_allocation_patterns(all_transactions):
         'aws', 'azure', 'google cloud', 'microsoft', 'adobe', 'xero',
     ]
 
+    # DEBUG: Print sample descriptions to see what we're working with
+    sample_descriptions = [t.get('description', '')[:60] for t in all_transactions[:20] if t.get('description')]
+    print(f"DEBUG detect_patterns: Sample descriptions: {sample_descriptions}")
+
     for t in all_transactions:
         description = (t.get('description', '') or '').lower()
         account = (t.get('account', '') or '').lower()
@@ -4577,6 +4581,7 @@ def detect_allocation_patterns(all_transactions):
                 if vendor not in vendor_accounts:
                     vendor_accounts[vendor] = {}
                     vendor_counts[vendor] = 0
+                    print(f"DEBUG: Found new vendor '{vendor}' in '{description[:40]}'")
 
                 if account not in vendor_accounts[vendor]:
                     vendor_accounts[vendor][account] = 0
@@ -4609,7 +4614,10 @@ def detect_allocation_patterns(all_transactions):
             'total_amount': total,
             'is_split_allocation': is_split
         }
+        print(f"DEBUG pattern result: {vendor} -> is_split={is_split}, accounts={significant_accounts}, count={vendor_counts[vendor]}")
 
+    print(f"DEBUG: Final patterns detected: {list(patterns.keys())}")
+    print(f"DEBUG: Split patterns: {[v for v, p in patterns.items() if p.get('is_split_allocation')]}")
     return patterns
 
 
@@ -4674,13 +4682,17 @@ def check_split_allocation_pattern(transaction):
     """
     patterns = get_allocation_patterns()
     if not patterns:
+        print("DEBUG: No allocation patterns found")
         return None
 
     description = (transaction.get('description', '') or '').lower()
     account = (transaction.get('account', '') or '').lower()
 
+    print(f"DEBUG check_split: description='{description[:50]}', account='{account}', patterns={list(patterns.keys())}")
+
     for vendor, pattern in patterns.items():
         if vendor in description:
+            print(f"DEBUG: Found vendor '{vendor}' in description. is_split={pattern.get('is_split_allocation')}, accounts={pattern.get('accounts')}")
             # Check if this vendor has a split allocation pattern
             if pattern.get('is_split_allocation', False):
                 # This vendor normally has split allocations
@@ -4688,6 +4700,7 @@ def check_split_allocation_pattern(transaction):
                 expected_split = ', '.join([
                     f"{acct}: {pct:.0%}" for acct, pct in pattern['accounts'].items()
                 ])
+                print(f"DEBUG: Flagging split pattern for {vendor}: {expected_split}")
                 return {
                     'should_flag': True,
                     'vendor': vendor,
