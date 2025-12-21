@@ -960,23 +960,30 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
     debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions before dedup: {len(transactions)}")
 
-    # Deduplicate transactions based on date + account + amount only
-    # The Journals API returns the same transaction with different descriptions
-    # (e.g., bill entry vs payment entry have different narrations)
-    seen = set()
-    unique_transactions = []
+    # Deduplicate: Keep only the LATEST journal entry for each unique transaction
+    # When bills are edited, new journals are created with higher journal numbers
+    # We want the latest version (highest journal number) to reflect current state
+    transaction_map = {}
     for t in transactions:
-        # Create a unique key - ignore description as it varies between journal entries
+        # Create a unique key based on date + account + amount
         key = (
             t.get('date', ''),
             t.get('account_code', ''),
             round(t.get('gross', 0), 2)
         )
-        if key not in seen:
-            seen.add(key)
-            unique_transactions.append(t)
+        journal_num = t.get('journal_number', 0)
+        try:
+            journal_num = int(journal_num) if journal_num else 0
+        except:
+            journal_num = 0
 
-    debug_info.append(f"After deduplication: {len(unique_transactions)} transactions")
+        # Keep the entry with the highest journal number (most recent)
+        if key not in transaction_map or journal_num > transaction_map[key]['journal_num']:
+            transaction_map[key] = {'transaction': t, 'journal_num': journal_num}
+
+    unique_transactions = [v['transaction'] for v in transaction_map.values()]
+
+    debug_info.append(f"After deduplication (keeping latest journals): {len(unique_transactions)} transactions")
     return unique_transactions, debug_info
 
 
