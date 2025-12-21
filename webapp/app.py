@@ -4618,11 +4618,25 @@ def detect_allocation_patterns(all_transactions):
 
     # DEBUG: List all unique contacts found
     all_contacts = set()
+    telstra_found = []
     for t in all_transactions:
         contact = t.get('contact', '')
         if contact:
             all_contacts.add(contact)
-    print(f"DEBUG: All unique contacts ({len(all_contacts)}): {sorted(all_contacts)[:30]}")  # First 30
+        # Search for "telstra" in ALL fields
+        all_text = f"{t.get('contact', '')} {t.get('description', '')} {t.get('reference', '')} {t.get('narration', '')}".lower()
+        if 'telstra' in all_text:
+            telstra_found.append({
+                'contact': t.get('contact', ''),
+                'description': t.get('description', ''),
+                'reference': t.get('reference', ''),
+                'account': t.get('account', ''),
+                'source': t.get('source', '')
+            })
+    print(f"DEBUG: All unique contacts ({len(all_contacts)}): {sorted(all_contacts)[:30]}")
+    print(f"DEBUG: Telstra transactions found: {len(telstra_found)}")
+    for tf in telstra_found[:5]:
+        print(f"  - {tf}")
 
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
@@ -4685,8 +4699,9 @@ def detect_allocation_patterns(all_transactions):
     print(f"DEBUG: Final patterns detected: {list(patterns.keys())}")
     print(f"DEBUG: Split patterns: {[v for v, p in patterns.items() if p.get('is_split_allocation')]}")
 
-    # Add unique contacts to samples for debugging
+    # Add unique contacts and telstra search to samples for debugging
     debug_samples.append({'_all_contacts': sorted(list(all_contacts))[:50]})
+    debug_samples.append({'_telstra_found': telstra_found[:10]})
 
     return patterns, debug_samples
 
