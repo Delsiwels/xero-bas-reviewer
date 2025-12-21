@@ -706,17 +706,27 @@
             // Store results for download
             reviewResults = data;
 
-            // Debug: Show Telstra transactions breakdown
+            // Debug: Always show transaction count
+            let debugMsg = `REVIEW DEBUG:\n`;
+            debugMsg += `Total transactions: ${data.total_transactions}\n`;
+            debugMsg += `Flagged count: ${data.flagged_count}\n`;
+            debugMsg += `Telstra debug entries: ${data.telstra_debug ? data.telstra_debug.length : 'N/A'}\n\n`;
+
+            // Show Telstra transactions if found
             if (data.telstra_debug && data.telstra_debug.length > 0) {
-                let debugMsg = "TELSTRA DEBUG - All Telstra transactions found:\n\n";
+                debugMsg += "TELSTRA TRANSACTIONS FOUND:\n\n";
                 data.telstra_debug.forEach((t, i) => {
                     debugMsg += `${i+1}. Date: ${t.date}, Account: ${t.account_code} (${t.account})\n`;
                     debugMsg += `   Desc: "${t.description}", Gross: $${t.gross}, Source: ${t.source}\n`;
                     debugMsg += `   Journal #: ${t.journal_number}\n\n`;
                 });
-                console.log(debugMsg);
-                alert(debugMsg);
+            } else {
+                debugMsg += "No Telstra transactions found in telstra_debug.\n";
+                debugMsg += "This might mean 'telstra' is not in description/narration fields.\n";
             }
+
+            console.log(debugMsg);
+            alert(debugMsg);
 
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
