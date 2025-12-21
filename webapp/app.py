@@ -1243,6 +1243,14 @@ def upload_review():
                 print(f"Error in check_account_coding: {e}")
                 transaction['account_coding_suspicious'] = False
 
+            # Check for split allocation patterns (Deep Scan only)
+            try:
+                split_check = check_split_allocation_pattern(transaction)
+                transaction['split_allocation_warning'] = split_check
+            except Exception as e:
+                print(f"Error in check_split_allocation_pattern: {e}")
+                transaction['split_allocation_warning'] = None
+
             try:
                 transaction['alcohol_gst_error'] = check_alcohol_gst(transaction)
             except Exception as e:
@@ -1438,6 +1446,7 @@ def upload_review():
             # Flag if any rule triggered (including new checks)
             has_rule_issues = (
                 transaction['account_coding_suspicious'] or
+                transaction.get('split_allocation_warning') or
                 transaction['alcohol_gst_error'] or
                 transaction['input_taxed_gst_error'] or
                 transaction['missing_gst_error'] or
@@ -1492,6 +1501,12 @@ def upload_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
+            if transaction.get('split_allocation_warning'):
+                split_info = transaction['split_allocation_warning']
+                vendor = split_info.get('vendor', 'vendor').title()
+                expected = split_info.get('expected_split', '')
+                count = split_info.get('transaction_count', 0)
+                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -1591,6 +1606,12 @@ def upload_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
+            if transaction.get('split_allocation_warning'):
+                split_info = transaction['split_allocation_warning']
+                vendor = split_info.get('vendor', 'vendor').title()
+                expected = split_info.get('expected_split', '')
+                count = split_info.get('transaction_count', 0)
+                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
@@ -1919,6 +1940,14 @@ def run_review():
                 print(f"Error in check_account_coding: {e}")
                 transaction['account_coding_suspicious'] = False
 
+            # Check for split allocation patterns (Deep Scan only)
+            try:
+                split_check = check_split_allocation_pattern(transaction)
+                transaction['split_allocation_warning'] = split_check
+            except Exception as e:
+                print(f"Error in check_split_allocation_pattern: {e}")
+                transaction['split_allocation_warning'] = None
+
             try:
                 transaction['alcohol_gst_error'] = check_alcohol_gst(transaction)
             except Exception as e:
@@ -2114,6 +2143,7 @@ def run_review():
             # Flag if any rule triggered (including new checks)
             has_rule_issues = (
                 transaction['account_coding_suspicious'] or
+                transaction.get('split_allocation_warning') or
                 transaction['alcohol_gst_error'] or
                 transaction['input_taxed_gst_error'] or
                 transaction['missing_gst_error'] or
@@ -2168,6 +2198,12 @@ def run_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
+            if transaction.get('split_allocation_warning'):
+                split_info = transaction['split_allocation_warning']
+                vendor = split_info.get('vendor', 'vendor').title()
+                expected = split_info.get('expected_split', '')
+                count = split_info.get('transaction_count', 0)
+                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -2267,6 +2303,12 @@ def run_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
+            if transaction.get('split_allocation_warning'):
+                split_info = transaction['split_allocation_warning']
+                vendor = split_info.get('vendor', 'vendor').title()
+                expected = split_info.get('expected_split', '')
+                count = split_info.get('transaction_count', 0)
+                comments.append(f'Split allocation check: {vendor} typically split ({expected}) based on {count} transactions - verify split was done')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
@@ -4586,14 +4628,15 @@ def get_allocation_patterns():
 
 def is_known_allocation_pattern(transaction):
     """
-    Check if a transaction matches a known allocation pattern from deep scan.
+    Check if a transaction matches a known NON-SPLIT allocation pattern.
 
-    If Telstra is known to be split 70/30 between Telephone and Drawings,
-    then a Telstra expense in Drawings should NOT be flagged as miscoded.
+    Only returns True for vendors that ALWAYS go to the same account.
+    If a vendor has a SPLIT pattern (e.g., Telstra 70/30), we DON'T skip -
+    we want to flag it so the user checks if the split was done correctly.
 
     Returns:
-    - True if this matches a known pattern (don't flag)
-    - False if this doesn't match or no patterns detected
+    - True if this matches a known SINGLE-account pattern (don't flag)
+    - False if this is a split pattern or no patterns detected
     """
     patterns = get_allocation_patterns()
     if not patterns:
@@ -4604,15 +4647,55 @@ def is_known_allocation_pattern(transaction):
 
     for vendor, pattern in patterns.items():
         if vendor in description:
-            # Check if current account is in the known allocation
-            if account in pattern['accounts'] or any(acct in account for acct in pattern['accounts']):
-                return True
-            # Also check partial account matches
-            for known_acct in pattern['accounts']:
-                if known_acct in account or account in known_acct:
+            # Only skip flagging if this vendor does NOT have a split allocation
+            # If it's a split pattern, we want to flag it for review
+            if not pattern.get('is_split_allocation', False):
+                # Single account allocation - check if current account matches
+                if account in pattern['accounts'] or any(acct in account for acct in pattern['accounts']):
                     return True
+                for known_acct in pattern['accounts']:
+                    if known_acct in account or account in known_acct:
+                        return True
 
     return False
+
+
+def check_split_allocation_pattern(transaction):
+    """
+    Check if a transaction should have been split but wasn't.
+
+    If Telstra is known to be split 70/30 between Telephone and Drawings,
+    then a Telstra expense that's 100% to Telephone should be FLAGGED
+    because it might be missing the Drawings portion.
+
+    Returns:
+    - dict with 'should_flag', 'vendor', 'expected_split' if pattern mismatch found
+    - None if no issue
+    """
+    patterns = get_allocation_patterns()
+    if not patterns:
+        return None
+
+    description = (transaction.get('description', '') or '').lower()
+    account = (transaction.get('account', '') or '').lower()
+
+    for vendor, pattern in patterns.items():
+        if vendor in description:
+            # Check if this vendor has a split allocation pattern
+            if pattern.get('is_split_allocation', False):
+                # This vendor normally has split allocations
+                # Flag it so user can verify the split was done
+                expected_split = ', '.join([
+                    f"{acct}: {pct:.0%}" for acct, pct in pattern['accounts'].items()
+                ])
+                return {
+                    'should_flag': True,
+                    'vendor': vendor,
+                    'expected_split': expected_split,
+                    'transaction_count': pattern.get('count', 0)
+                }
+
+    return None
 
 
 def check_sales_gst_error(transaction):
