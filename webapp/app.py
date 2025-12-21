@@ -519,6 +519,118 @@ def push_journal():
         return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
 
 
+# ============== Cloudflare D1 API Endpoints ==============
+
+@app.route('/api/init-d1', methods=['POST'])
+@login_required
+def init_d1_tables():
+    """Initialize Cloudflare D1 tables (admin only)"""
+    try:
+        result = init_cloudflare_d1_tables()
+        return jsonify({'success': True, 'result': result})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/save-review', methods=['POST'])
+@login_required
+def save_review():
+    """Save a BAS review to Cloudflare D1"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'error': 'No review data provided'}), 400
+
+        # Add tenant and user info from session
+        review_data = {
+            'tenant_id': session.get('tenant_id', ''),
+            'tenant_name': session.get('tenant_name', ''),
+            'user_email': current_user.email if current_user.is_authenticated else '',
+            'period_start': data.get('period_start', ''),
+            'period_end': data.get('period_end', ''),
+            'total_transactions': data.get('total_transactions', 0),
+            'flagged_count': data.get('flagged_count', 0),
+            'high_severity_count': data.get('high_severity_count', 0),
+            'medium_severity_count': data.get('medium_severity_count', 0),
+            'low_severity_count': data.get('low_severity_count', 0),
+            'bas_report_data': data.get('bas_report_data', {}),
+            'review_summary': data.get('review_summary', {}),
+            'flagged_items': data.get('flagged_items', [])
+        }
+
+        result = save_review_to_d1(review_data)
+        return jsonify(result)
+
+    except Exception as e:
+        import traceback
+        return jsonify({'success': False, 'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
+@app.route('/api/reviews')
+@login_required
+def get_reviews():
+    """Get list of saved reviews from Cloudflare D1"""
+    try:
+        tenant_id = session.get('tenant_id')
+        limit = request.args.get('limit', 50, type=int)
+
+        reviews = get_reviews_from_d1(tenant_id=tenant_id, limit=limit)
+        return jsonify({'success': True, 'reviews': reviews})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/reviews/<statement_id>')
+@login_required
+def get_review_detail(statement_id):
+    """Get detailed review from Cloudflare D1"""
+    try:
+        review = get_review_details_from_d1(statement_id)
+        if not review:
+            return jsonify({'success': False, 'error': 'Review not found'}), 404
+
+        return jsonify({'success': True, 'review': review})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/bas-report')
+@login_required
+def get_bas_report():
+    """Get BAS Report from Xero API"""
+    try:
+        if 'access_token' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated with Xero'}), 401
+
+        report_id = request.args.get('report_id')
+        bas_data = fetch_xero_bas_report(report_id)
+
+        if bas_data:
+            return jsonify({'success': True, 'bas_report': bas_data})
+        else:
+            return jsonify({'success': False, 'error': 'No BAS report data available'}), 404
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/bas-reports')
+@login_required
+def get_bas_reports_list():
+    """Get list of available BAS reports from Xero"""
+    try:
+        if 'access_token' not in session:
+            return jsonify({'success': False, 'error': 'Not authenticated with Xero'}), 401
+
+        reports = fetch_xero_bas_report_list()
+        return jsonify({'success': True, 'reports': reports})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @app.route('/review')
 @login_required
 def review_page():
@@ -866,6 +978,339 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
 def fetch_xero_bills(from_date_str, to_date_str):
     """Fetch bills (accounts payable invoices) from Xero API"""
     return fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCPAY')
+
+
+def fetch_xero_bas_report(report_id=None):
+    """Fetch BAS (Business Activity Statement) Report from Xero API
+
+    Args:
+        report_id: Optional specific BAS report ID. If None, fetches the list of available reports.
+
+    Returns:
+        dict: BAS report data including GST amounts, PAYG, etc.
+    """
+    if not refresh_token_if_needed():
+        return None
+
+    # Fetch the BAS report
+    if report_id:
+        # Get specific BAS report
+        data = xero_api_request('Reports/AustralianBASReport', params={'reportID': report_id})
+    else:
+        # Get list of BAS reports
+        data = xero_api_request('Reports/AustralianBASReport')
+
+    if not data or 'Reports' not in data:
+        print(f"DEBUG fetch_xero_bas_report: No BAS report data returned")
+        return None
+
+    reports = data.get('Reports', [])
+    if not reports:
+        return None
+
+    report = reports[0]
+
+    # Parse the BAS report into a structured format
+    bas_data = {
+        'report_id': report.get('ReportID'),
+        'report_name': report.get('ReportName'),
+        'report_type': report.get('ReportType'),
+        'report_date': report.get('ReportDate'),
+        'updated_date': report.get('UpdatedDateUTC'),
+        'fields': {}
+    }
+
+    # Extract BAS fields from rows
+    rows = report.get('Rows', [])
+    for row in rows:
+        row_type = row.get('RowType')
+        if row_type == 'Section':
+            section_title = row.get('Title', '')
+            section_rows = row.get('Rows', [])
+            for section_row in section_rows:
+                cells = section_row.get('Cells', [])
+                if len(cells) >= 2:
+                    field_label = cells[0].get('Value', '')
+                    field_value = cells[1].get('Value', '')
+                    # Extract field code if present (e.g., "G1", "1A", "1B")
+                    if field_label:
+                        bas_data['fields'][field_label] = field_value
+
+    return bas_data
+
+
+def fetch_xero_bas_report_list():
+    """Fetch list of available BAS reports from Xero"""
+    if not refresh_token_if_needed():
+        return []
+
+    # The Reports endpoint can return a list when no specific report is requested
+    data = xero_api_request('Reports')
+
+    if not data or 'Reports' not in data:
+        return []
+
+    # Filter for Australian BAS reports
+    bas_reports = []
+    for report in data.get('Reports', []):
+        if 'BAS' in report.get('ReportName', '') or 'Activity Statement' in report.get('ReportName', ''):
+            bas_reports.append({
+                'report_id': report.get('ReportID'),
+                'report_name': report.get('ReportName'),
+                'report_type': report.get('ReportType')
+            })
+
+    return bas_reports
+
+
+# ============== Cloudflare D1 Integration ==============
+
+CLOUDFLARE_ACCOUNT_ID = os.environ.get('CLOUDFLARE_ACCOUNT_ID', '')
+CLOUDFLARE_API_TOKEN = os.environ.get('CLOUDFLARE_API_TOKEN', '')
+CLOUDFLARE_D1_DATABASE_ID = os.environ.get('CLOUDFLARE_D1_DATABASE_ID', '')
+
+def cloudflare_d1_query(sql, params=None):
+    """Execute a query on Cloudflare D1 database
+
+    Args:
+        sql: SQL query string
+        params: Optional list of parameters for the query
+
+    Returns:
+        dict: Query results or error
+    """
+    if not all([CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN, CLOUDFLARE_D1_DATABASE_ID]):
+        return {'success': False, 'error': 'Cloudflare D1 not configured'}
+
+    url = f"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/d1/database/{CLOUDFLARE_D1_DATABASE_ID}/query"
+
+    headers = {
+        'Authorization': f'Bearer {CLOUDFLARE_API_TOKEN}',
+        'Content-Type': 'application/json'
+    }
+
+    payload = {'sql': sql}
+    if params:
+        payload['params'] = params
+
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'success': False, 'error': f'D1 query failed: {response.text}'}
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+
+def init_cloudflare_d1_tables():
+    """Initialize Cloudflare D1 tables for storing reviewed activity statements"""
+
+    # Create reviewed_statements table
+    create_statements_sql = """
+    CREATE TABLE IF NOT EXISTS reviewed_statements (
+        id TEXT PRIMARY KEY,
+        tenant_id TEXT NOT NULL,
+        tenant_name TEXT,
+        user_email TEXT,
+        period_start TEXT NOT NULL,
+        period_end TEXT NOT NULL,
+        review_date TEXT NOT NULL,
+        total_transactions INTEGER DEFAULT 0,
+        flagged_count INTEGER DEFAULT 0,
+        high_severity_count INTEGER DEFAULT 0,
+        medium_severity_count INTEGER DEFAULT 0,
+        low_severity_count INTEGER DEFAULT 0,
+        bas_report_data TEXT,
+        review_summary TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """
+
+    # Create flagged_items table
+    create_items_sql = """
+    CREATE TABLE IF NOT EXISTS flagged_items (
+        id TEXT PRIMARY KEY,
+        statement_id TEXT NOT NULL,
+        row_number INTEGER,
+        date TEXT,
+        account_code TEXT,
+        account_name TEXT,
+        description TEXT,
+        gross REAL,
+        gst REAL,
+        net REAL,
+        source TEXT,
+        severity TEXT,
+        comments TEXT,
+        correcting_journal TEXT,
+        xero_url TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (statement_id) REFERENCES reviewed_statements(id)
+    )
+    """
+
+    # Create index for faster lookups
+    create_index_sql = """
+    CREATE INDEX IF NOT EXISTS idx_statements_tenant ON reviewed_statements(tenant_id)
+    """
+
+    result1 = cloudflare_d1_query(create_statements_sql)
+    result2 = cloudflare_d1_query(create_items_sql)
+    result3 = cloudflare_d1_query(create_index_sql)
+
+    return {
+        'statements_table': result1,
+        'items_table': result2,
+        'index': result3
+    }
+
+
+def save_review_to_d1(review_data):
+    """Save a BAS review to Cloudflare D1
+
+    Args:
+        review_data: dict containing review details and flagged items
+
+    Returns:
+        dict: Success status and statement ID
+    """
+    import uuid
+    import json
+
+    statement_id = str(uuid.uuid4())
+
+    # Insert the statement record
+    insert_statement_sql = """
+    INSERT INTO reviewed_statements (
+        id, tenant_id, tenant_name, user_email, period_start, period_end,
+        review_date, total_transactions, flagged_count, high_severity_count,
+        medium_severity_count, low_severity_count, bas_report_data, review_summary
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+
+    params = [
+        statement_id,
+        review_data.get('tenant_id', ''),
+        review_data.get('tenant_name', ''),
+        review_data.get('user_email', ''),
+        review_data.get('period_start', ''),
+        review_data.get('period_end', ''),
+        review_data.get('review_date', datetime.now().strftime('%Y-%m-%d %H:%M:%S')),
+        review_data.get('total_transactions', 0),
+        review_data.get('flagged_count', 0),
+        review_data.get('high_severity_count', 0),
+        review_data.get('medium_severity_count', 0),
+        review_data.get('low_severity_count', 0),
+        json.dumps(review_data.get('bas_report_data', {})),
+        json.dumps(review_data.get('review_summary', {}))
+    ]
+
+    result = cloudflare_d1_query(insert_statement_sql, params)
+
+    if not result.get('success', True):
+        return {'success': False, 'error': result.get('error')}
+
+    # Insert flagged items
+    flagged_items = review_data.get('flagged_items', [])
+    for item in flagged_items:
+        item_id = str(uuid.uuid4())
+        insert_item_sql = """
+        INSERT INTO flagged_items (
+            id, statement_id, row_number, date, account_code, account_name,
+            description, gross, gst, net, source, severity, comments,
+            correcting_journal, xero_url
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        item_params = [
+            item_id,
+            statement_id,
+            item.get('row_number', 0),
+            item.get('date', ''),
+            item.get('account_code', ''),
+            item.get('account', ''),
+            item.get('description', ''),
+            item.get('gross', 0),
+            item.get('gst', 0),
+            item.get('net', 0),
+            item.get('source', ''),
+            item.get('severity', 'low'),
+            item.get('comments', ''),
+            json.dumps(item.get('correcting_journal', {})),
+            item.get('xero_url', '')
+        ]
+
+        cloudflare_d1_query(insert_item_sql, item_params)
+
+    return {'success': True, 'statement_id': statement_id}
+
+
+def get_reviews_from_d1(tenant_id=None, limit=50):
+    """Get list of reviewed statements from Cloudflare D1
+
+    Args:
+        tenant_id: Optional filter by tenant
+        limit: Max number of records to return
+
+    Returns:
+        list: List of reviewed statements
+    """
+    if tenant_id:
+        sql = """
+        SELECT * FROM reviewed_statements
+        WHERE tenant_id = ?
+        ORDER BY review_date DESC
+        LIMIT ?
+        """
+        params = [tenant_id, limit]
+    else:
+        sql = """
+        SELECT * FROM reviewed_statements
+        ORDER BY review_date DESC
+        LIMIT ?
+        """
+        params = [limit]
+
+    result = cloudflare_d1_query(sql, params)
+
+    if result.get('success') and result.get('result'):
+        return result['result'][0].get('results', [])
+    return []
+
+
+def get_review_details_from_d1(statement_id):
+    """Get detailed review including flagged items from Cloudflare D1
+
+    Args:
+        statement_id: The statement ID to retrieve
+
+    Returns:
+        dict: Statement details with flagged items
+    """
+    # Get statement
+    statement_sql = "SELECT * FROM reviewed_statements WHERE id = ?"
+    statement_result = cloudflare_d1_query(statement_sql, [statement_id])
+
+    if not statement_result.get('success') or not statement_result.get('result'):
+        return None
+
+    statements = statement_result['result'][0].get('results', [])
+    if not statements:
+        return None
+
+    statement = statements[0]
+
+    # Get flagged items
+    items_sql = "SELECT * FROM flagged_items WHERE statement_id = ? ORDER BY row_number"
+    items_result = cloudflare_d1_query(items_sql, [statement_id])
+
+    flagged_items = []
+    if items_result.get('success') and items_result.get('result'):
+        flagged_items = items_result['result'][0].get('results', [])
+
+    statement['flagged_items'] = flagged_items
+    return statement
 
 
 def fetch_xero_journals_debug(from_date_str, to_date_str):

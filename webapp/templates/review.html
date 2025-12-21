@@ -418,6 +418,9 @@
                 <button class="btn" id="push-all-btn" onclick="pushAllJournalsToXero()" style="display:none; background:#13B5EA; color:white;">
                     Push All Journals to Xero (Draft)
                 </button>
+                <button class="btn" id="save-review-btn" onclick="saveReviewToCloud()" style="display:none; background:#7c3aed; color:white;">
+                    Save Review to Cloud
+                </button>
             </div>
         </div>
     </div>
@@ -905,6 +908,7 @@
                 tableHtml += '</tbody></table>';
                 container.innerHTML = tableHtml;
                 document.getElementById('download-btn').style.display = 'inline-block';
+                document.getElementById('save-review-btn').style.display = 'inline-block';
                 // Show Push All button only if there are flagged items with journals
                 const hasJournals = data.flagged_items && data.flagged_items.some(item =>
                     item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0
@@ -914,8 +918,9 @@
                 }
             }
 
-            // Always show download button (even if no issues, user might want the report)
+            // Always show download and save buttons (even if no issues, user might want the report)
             document.getElementById('download-btn').style.display = 'inline-block';
+            document.getElementById('save-review-btn').style.display = 'inline-block';
         }
 
         async function downloadReport() {
@@ -949,6 +954,66 @@
                 }
             } catch (error) {
                 alert('Download error: ' + error.message);
+            }
+        }
+
+        async function saveReviewToCloud() {
+            if (!reviewResults) {
+                alert('No review results to save');
+                return;
+            }
+
+            const saveBtn = document.getElementById('save-review-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+
+            try {
+                // Count severities
+                const flaggedItems = reviewResults.flagged_items || [];
+                const highCount = flaggedItems.filter(i => i.severity === 'high').length;
+                const mediumCount = flaggedItems.filter(i => i.severity === 'medium').length;
+                const lowCount = flaggedItems.filter(i => i.severity === 'low').length;
+
+                const reviewData = {
+                    period_start: document.getElementById('from-date').value,
+                    period_end: document.getElementById('to-date').value,
+                    total_transactions: reviewResults.total_transactions || 0,
+                    flagged_count: flaggedItems.length,
+                    high_severity_count: highCount,
+                    medium_severity_count: mediumCount,
+                    low_severity_count: lowCount,
+                    review_summary: {
+                        company_name: reviewResults.company_name || '',
+                        review_date: new Date().toISOString()
+                    },
+                    flagged_items: flaggedItems
+                };
+
+                const response = await fetch('/api/save-review', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reviewData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    saveBtn.textContent = 'Saved to Cloud';
+                    saveBtn.style.background = '#28a745';
+                    alert('Review saved successfully! ID: ' + result.statement_id);
+                } else {
+                    saveBtn.textContent = 'Save Review to Cloud';
+                    saveBtn.style.background = '#7c3aed';
+                    saveBtn.disabled = false;
+                    alert('Failed to save review: ' + (result.error || 'Unknown error'));
+                }
+            } catch (error) {
+                saveBtn.textContent = 'Save Review to Cloud';
+                saveBtn.style.background = '#7c3aed';
+                saveBtn.disabled = false;
+                alert('Error saving review: ' + error.message);
             }
         }
 
