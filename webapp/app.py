@@ -4562,9 +4562,9 @@ def round_to_common_split(account_percentages):
     if len(account_percentages) != 2:
         return account_percentages
 
-    # Common split ratios (higher percentage first)
-    # 80/20 intentionally omitted - often caused by price variations in 70/30 splits
-    common_splits = [0.90, 0.75, 0.70, 0.67, 0.60, 0.50]
+    # Common split ratios - ordered to prefer lower ratios when equidistant
+    # 80/20 and 75/25 omitted - often caused by price variations in 70/30 splits
+    common_splits = [0.70, 0.67, 0.60, 0.50, 0.90]
 
     # Get the two accounts and their percentages
     accounts = list(account_percentages.keys())
