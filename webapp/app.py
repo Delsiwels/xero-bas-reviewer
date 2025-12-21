@@ -681,6 +681,9 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
             date_str = txn_date.strftime('%Y-%m-%d') if txn_date else 'NO DATE'
             # Check if amounts are tax inclusive or exclusive
             line_amount_types = txn.get('LineAmountTypes', 'Exclusive')
+            # Get bank transaction ID for Xero URL
+            bank_txn_id = txn.get('BankTransactionID', '')
+            xero_url = f"https://go.xero.com/Bank/ViewTransaction.aspx?bankTransactionID={bank_txn_id}" if bank_txn_id else ''
 
             # Each bank transaction can have multiple line items
             for line in txn.get('LineItems', []):
@@ -742,7 +745,8 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                     'gst_rate_name': gst_rate_name,
                     'source': source,
                     'reference': txn.get('Reference', ''),
-                    'contact': txn.get('Contact', {}).get('Name', '') if txn.get('Contact') else ''
+                    'contact': txn.get('Contact', {}).get('Name', '') if txn.get('Contact') else '',
+                    'xero_url': xero_url
                 })
 
         page += 1
@@ -783,8 +787,15 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
             date_str = inv_date.strftime('%Y-%m-%d') if inv_date else 'NO DATE'
             contact_name = inv.get('Contact', {}).get('Name', '') if inv.get('Contact') else ''
             inv_number = inv.get('InvoiceNumber', '')
+            inv_id = inv.get('InvoiceID', '')
             # Check if amounts are tax inclusive or exclusive
             line_amount_types = inv.get('LineAmountTypes', 'Exclusive')
+
+            # Generate Xero URL based on invoice type
+            if invoice_type == 'ACCPAY':
+                xero_url = f"https://go.xero.com/AccountsPayable/Edit.aspx?InvoiceID={inv_id}" if inv_id else ''
+            else:
+                xero_url = f"https://go.xero.com/AccountsReceivable/Edit.aspx?InvoiceID={inv_id}" if inv_id else ''
 
             # Each invoice can have multiple line items
             for line in inv.get('LineItems', []):
@@ -835,7 +846,8 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
                     'gst_rate_name': gst_rate_name,
                     'source': ('Credit Note' if is_refund else 'Invoice') if invoice_type == 'ACCREC' else ('Debit Note' if is_refund else 'Bill'),
                     'reference': inv_number,
-                    'contact': contact_name
+                    'contact': contact_name,
+                    'xero_url': xero_url
                 })
 
         page += 1

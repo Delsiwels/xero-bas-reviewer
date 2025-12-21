@@ -884,7 +884,7 @@
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
-                            <td><small>${escapeHtml(item.source || '-')}</small></td>
+                            <td><small>${escapeHtml(item.source || '-')}</small>${item.xero_url ? `<br><a href="${escapeHtml(item.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View in Xero</a>` : ''}</td>
                             <td class="comment-cell">${formattedComments}</td>
                             <td class="journal-cell">${journalHtml}</td>
                         </tr>
