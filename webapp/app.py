@@ -2408,11 +2408,19 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
+        # Get debug transaction samples
+        global _debug_transaction_samples
+        try:
+            transaction_samples = _debug_transaction_samples if '_debug_transaction_samples' in dir() else []
+        except:
+            transaction_samples = []
+
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
             'patterns_detected': pattern_debug,
+            'transaction_samples': transaction_samples,
             'debug_info': debug_info[-20:] if debug_info else []  # Last 20 debug messages
         })
     except Exception as e:
@@ -4535,6 +4543,7 @@ def get_business_context():
 
 # Global variable to store detected allocation patterns from deep scan
 _allocation_patterns = {}
+_debug_transaction_samples = []
 
 
 def detect_allocation_patterns(all_transactions):
@@ -4578,8 +4587,23 @@ def detect_allocation_patterns(all_transactions):
     ]
 
     # DEBUG: Print sample transactions to see what fields we have
-    for t in all_transactions[:5]:
-        print(f"DEBUG sample: contact='{t.get('contact', '')}', narration='{t.get('narration', '')}', ref='{t.get('reference', '')}', desc='{t.get('description', '')}', acct='{t.get('account', '')}'")
+    debug_samples = []
+    for t in all_transactions[:10]:
+        sample = {
+            'contact': t.get('contact', ''),
+            'narration': t.get('narration', ''),
+            'reference': t.get('reference', ''),
+            'description': t.get('description', ''),
+            'account': t.get('account', ''),
+            'gross': t.get('gross', 0),
+            'source': t.get('source', '')
+        }
+        debug_samples.append(sample)
+        print(f"DEBUG sample: {sample}")
+
+    # Store debug samples globally for API response
+    global _debug_transaction_samples
+    _debug_transaction_samples = debug_samples
 
     for t in all_transactions:
         # Check contact, narration, reference, AND description for vendor matching
