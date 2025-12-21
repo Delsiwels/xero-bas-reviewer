@@ -719,6 +719,16 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                 else:
                     gst_rate_name = tax_type
 
+                # Determine source type based on transaction type and sign
+                txn_type = txn.get('Type', '')
+                is_refund = gross < 0
+                if txn_type == 'SPEND':
+                    source = 'Refund Received' if is_refund else 'Bank Payment'
+                elif txn_type == 'RECEIVE':
+                    source = 'Refund Given' if is_refund else 'Bank Receipt'
+                else:
+                    source = txn_type
+
                 transactions.append({
                     'row_number': len(transactions) + 1,
                     'date': date_str,
@@ -726,11 +736,11 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                     'account_code': account_code,
                     'account': line.get('AccountCode', ''),  # Will be enriched later
                     'description': description,
-                    'gross': abs(gross),
-                    'gst': abs(tax_amount),
-                    'net': abs(net),
+                    'gross': gross,  # Preserve sign for refunds
+                    'gst': tax_amount,  # Preserve sign for refunds
+                    'net': net,  # Preserve sign for refunds
                     'gst_rate_name': gst_rate_name,
-                    'source': 'BankTransaction',
+                    'source': source,
                     'reference': txn.get('Reference', ''),
                     'contact': txn.get('Contact', {}).get('Name', '') if txn.get('Contact') else ''
                 })
@@ -807,6 +817,9 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
                 else:
                     gst_rate_name = tax_type
 
+                # Determine if this is a refund/credit note (negative amount)
+                is_refund = gross < 0 or (invoice_type == 'ACCREC' and line_amount < 0)
+
                 transactions.append({
                     'row_number': len(transactions) + 1,
                     'date': date_str,
@@ -814,11 +827,11 @@ def fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCREC'):
                     'account_code': account_code,
                     'account': account_code,
                     'description': description,
-                    'gross': abs(gross),
-                    'gst': abs(tax_amount),
-                    'net': abs(net),
+                    'gross': gross,  # Preserve sign for refunds
+                    'gst': tax_amount,  # Preserve sign for refunds
+                    'net': net,  # Preserve sign for refunds
                     'gst_rate_name': gst_rate_name,
-                    'source': 'Invoice' if invoice_type == 'ACCREC' else 'Bill',
+                    'source': ('Credit Note' if is_refund else 'Invoice') if invoice_type == 'ACCREC' else ('Debit Note' if is_refund else 'Bill'),
                     'reference': inv_number,
                     'contact': contact_name
                 })
