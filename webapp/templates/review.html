@@ -320,11 +320,19 @@
             <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 500;">Start Date</label>
-                    <input type="text" id="start-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em; width: 130px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="text" id="start-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px 0 0 8px; font-size: 1em; width: 120px;">
+                        <button type="button" onclick="document.getElementById('start-date-picker').showPicker()" style="padding: 10px 12px; border: 2px solid #e1e1e1; border-left: none; border-radius: 0 8px 8px 0; background: #f8f9fa; cursor: pointer; font-size: 1em;">📅</button>
+                        <input type="date" id="start-date-picker" style="position: absolute; opacity: 0; pointer-events: none;" onchange="syncDateFromPicker('start-date', this.value)">
+                    </div>
                 </div>
                 <div>
                     <label style="display: block; margin-bottom: 5px; font-weight: 500;">End Date</label>
-                    <input type="text" id="end-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px; font-size: 1em; width: 130px;">
+                    <div style="display: flex; align-items: center;">
+                        <input type="text" id="end-date" placeholder="dd/mm/yyyy" style="padding: 10px; border: 2px solid #e1e1e1; border-radius: 8px 0 0 8px; font-size: 1em; width: 120px;">
+                        <button type="button" onclick="document.getElementById('end-date-picker').showPicker()" style="padding: 10px 12px; border: 2px solid #e1e1e1; border-left: none; border-radius: 0 8px 8px 0; background: #f8f9fa; cursor: pointer; font-size: 1em;">📅</button>
+                        <input type="date" id="end-date-picker" style="position: absolute; opacity: 0; pointer-events: none;" onchange="syncDateFromPicker('end-date', this.value)">
+                    </div>
                 </div>
             </div>
 
@@ -449,6 +457,15 @@
             const date = parseDateAU(dateStr);
             if (!date) return null;
             return date.toISOString().split('T')[0];
+        }
+
+        // Sync date from native picker to text input (convert yyyy-mm-dd to dd/mm/yyyy)
+        function syncDateFromPicker(textInputId, isoDate) {
+            if (!isoDate) return;
+            const parts = isoDate.split('-');
+            if (parts.length !== 3) return;
+            const formatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+            document.getElementById(textInputId).value = formatted;
         }
 
         // Set default dates for Xero review (PREVIOUS quarter)
