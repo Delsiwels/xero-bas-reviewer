@@ -706,31 +706,6 @@
             // Store results for download
             reviewResults = data;
 
-            // Debug: Always show transaction count
-            let debugMsg = `REVIEW DEBUG:\n`;
-            debugMsg += `Total transactions: ${data.total_transactions}\n`;
-            debugMsg += `Flagged count: ${data.flagged_count}\n`;
-            debugMsg += `Telstra debug entries: ${data.telstra_debug ? data.telstra_debug.length : 'N/A'}\n\n`;
-
-            // Show Telstra/Personal transactions if found
-            if (data.telstra_debug && data.telstra_debug.length > 0) {
-                debugMsg += "TELSTRA/PERSONAL TRANSACTIONS FOUND:\n\n";
-                data.telstra_debug.slice(0, 10).forEach((t, i) => {
-                    debugMsg += `${i+1}. Date: ${t.date}, Acct: ${t.account_code} (${t.account})\n`;
-                    debugMsg += `   Desc: "${t.description}"\n`;
-                    debugMsg += `   Narration: "${t.narration}", Ref: "${t.reference}"\n`;
-                    debugMsg += `   Gross: $${t.gross}, Source: ${t.source}, J#: ${t.journal_number}\n\n`;
-                });
-                if (data.telstra_debug.length > 10) {
-                    debugMsg += `... and ${data.telstra_debug.length - 10} more\n`;
-                }
-            } else {
-                debugMsg += "No Telstra/Personal transactions found.\n";
-            }
-
-            console.log(debugMsg);
-            alert(debugMsg);
-
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
             document.getElementById('results-section').style.display = 'block';

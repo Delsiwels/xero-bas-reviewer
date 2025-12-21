@@ -875,11 +875,6 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                 account_name = line.get('AccountName', '')
                 description = line.get('Description', '') or reference or 'No description'
 
-                # Debug: Log Telstra transactions to trace account assignment
-                if 'telstra' in (description or '').lower() or 'telstra' in (narration or '').lower():
-                    print(f"TELSTRA DEBUG: Journal #{journal_number}, Date: {journal_date}, Source: {source_type}")
-                    print(f"  Line: Account={account_code} ({account_name}), Desc={description}, Gross={line.get('GrossAmount')}")
-
                 # Skip lines without account codes
                 if not account_code:
                     continue
@@ -2459,36 +2454,11 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
-        # Debug: Show account breakdown of all Telstra transactions
-        # Search in ALL text fields for "telstra"
-        telstra_debug = []
-        for t in transactions:
-            search_text = ' '.join([
-                str(t.get('description', '') or ''),
-                str(t.get('narration', '') or ''),
-                str(t.get('contact', '') or ''),
-                str(t.get('reference', '') or ''),
-                str(t.get('account', '') or '')
-            ]).lower()
-            if 'telstra' in search_text or 'personal' in search_text:
-                telstra_debug.append({
-                    'date': t.get('date'),
-                    'account_code': t.get('account_code'),
-                    'account': t.get('account'),
-                    'description': t.get('description'),
-                    'narration': t.get('narration'),
-                    'reference': t.get('reference'),
-                    'gross': t.get('gross'),
-                    'source': t.get('source'),
-                    'journal_number': t.get('journal_number')
-                })
-
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
-            'patterns_detected': pattern_debug,
-            'telstra_debug': telstra_debug
+            'patterns_detected': pattern_debug
         })
     except Exception as e:
         import traceback
