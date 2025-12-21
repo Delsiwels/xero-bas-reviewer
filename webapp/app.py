@@ -2436,11 +2436,28 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
+        # Debug: Show account breakdown of all Telstra transactions
+        telstra_debug = []
+        for t in transactions:
+            desc = (t.get('description', '') or '').lower()
+            narr = (t.get('narration', '') or '').lower()
+            contact = (t.get('contact', '') or '').lower()
+            if 'telstra' in desc or 'telstra' in narr or 'telstra' in contact:
+                telstra_debug.append({
+                    'date': t.get('date'),
+                    'description': t.get('description'),
+                    'account': t.get('account'),
+                    'account_type': t.get('account_type'),
+                    'gross': t.get('gross'),
+                    'source': t.get('source')
+                })
+
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
-            'patterns_detected': pattern_debug
+            'patterns_detected': pattern_debug,
+            'telstra_debug': telstra_debug
         })
     except Exception as e:
         import traceback
