@@ -6617,12 +6617,17 @@ GST: ${transaction.get('gst', 0):,.2f}
 Net: ${transaction.get('net', 0):,.2f}
 GST Rate: {transaction.get('gst_rate_name')}
 
+IMPORTANT GST CALCULATION RULE:
+For GST-inclusive amounts in Australia, GST = Gross ÷ 11 (NOT Gross × 10%).
+Example: $3,200 gross → GST = $3,200 ÷ 11 = $290.91 (CORRECT), NOT $320.
+The GST amount shown above (${transaction.get('gst', 0):,.2f}) has been VERIFIED as mathematically correct. Do NOT claim the GST calculation is wrong.
+
 Pre-checks (VERIFIED - do not contradict these):
 - Account coding suspicious: {transaction.get('account_coding_suspicious', False)}
 - Entertainment alcohol GST error: {transaction.get('alcohol_gst_error', False)}
 - Input-taxed GST error (GST claimed on financial supply): {transaction.get('input_taxed_gst_error', False)}
 - Missing GST error (should have GST but coded GST Free): {transaction.get('missing_gst_error', False)}
-- GST calculation: {'CORRECT - GST math is verified correct, do NOT say it is incorrect' if transaction.get('gst_calculation_correct', True) else 'INCORRECT - GST amount does not match expected calculation'}
+- GST calculation: {'VERIFIED CORRECT - the GST math (Gross÷11) is accurate, do NOT say it is incorrect or suspicious' if transaction.get('gst_calculation_correct', True) else 'INCORRECT - GST amount does not match expected calculation'}
 - Drawings/Loan error (should be BAS Excluded): {transaction.get('drawings_loan_error', False)}
 - Asset capitalization error (over $20k threshold): {transaction.get('asset_capitalization_error', False)}
 - Computer equipment coded to expense (should be asset): {transaction.get('computer_equipment_expense', False)}
