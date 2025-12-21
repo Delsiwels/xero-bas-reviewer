@@ -910,6 +910,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
             if isinstance(current_journal_number, (int, float)):
                 last_journal_number = max(last_journal_number, int(current_journal_number))
 
+            # Skip draft and voided journals - only include posted journals
+            journal_status = journal.get('Status', 'POSTED')
+            if journal_status in ['DRAFT', 'VOIDED', 'DELETED']:
+                continue
+
             # Filter by date range
             if journal_date:
                 if journal_date < from_date or journal_date > to_date:
