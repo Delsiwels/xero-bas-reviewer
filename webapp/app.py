@@ -960,17 +960,17 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
     debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions before dedup: {len(transactions)}")
 
-    # Deduplicate transactions based on date + account + amount + description
-    # The Journals API can return the same line item multiple times
+    # Deduplicate transactions based on date + account + amount only
+    # The Journals API returns the same transaction with different descriptions
+    # (e.g., bill entry vs payment entry have different narrations)
     seen = set()
     unique_transactions = []
     for t in transactions:
-        # Create a unique key for each transaction
+        # Create a unique key - ignore description as it varies between journal entries
         key = (
             t.get('date', ''),
             t.get('account_code', ''),
-            round(t.get('gross', 0), 2),
-            (t.get('description', '') or '')[:50].lower().strip()
+            round(t.get('gross', 0), 2)
         )
         if key not in seen:
             seen.add(key)
