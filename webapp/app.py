@@ -867,6 +867,7 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
             journal_number = journal.get('JournalNumber', '')
             source_type = journal.get('SourceType', '')
             reference = journal.get('Reference', '')
+            narration = journal.get('Narration', '')  # Journal-level description (often contains vendor name)
 
             # Process each journal line (GL entry)
             for line in journal.get('JournalLines', []):
@@ -920,6 +921,7 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                     'gst_rate_name': gst_rate_name,
                     'source': source_type,
                     'reference': reference,
+                    'narration': narration,  # Journal-level narration (often has vendor name)
                     'journal_number': journal_number,
                     'account_type': account_type
                 })
@@ -4565,16 +4567,17 @@ def detect_allocation_patterns(all_transactions):
 
     # DEBUG: Print sample transactions to see what fields we have
     for t in all_transactions[:5]:
-        print(f"DEBUG sample: contact='{t.get('contact', '')}', ref='{t.get('reference', '')}', desc='{t.get('description', '')}', acct='{t.get('account', '')}'")
+        print(f"DEBUG sample: contact='{t.get('contact', '')}', narration='{t.get('narration', '')}', ref='{t.get('reference', '')}', desc='{t.get('description', '')}', acct='{t.get('account', '')}'")
 
     for t in all_transactions:
-        # Check contact, reference, AND description for vendor matching
-        # In Xero journals, vendor name might be in Reference field
+        # Check contact, narration, reference, AND description for vendor matching
+        # In Xero journals, vendor name is often in Narration field
         # In bank transactions, it's often in Contact field
         description = (t.get('description', '') or '').lower()
         contact = (t.get('contact', '') or '').lower()
         reference = (t.get('reference', '') or '').lower()
-        search_text = f"{contact} {reference} {description}"  # Combine all for searching
+        narration = (t.get('narration', '') or '').lower()
+        search_text = f"{contact} {narration} {reference} {description}"  # Combine all for searching
 
         account = (t.get('account', '') or '').lower()
         # Use 'gross' or 'amount' depending on data source
@@ -4589,7 +4592,7 @@ def detect_allocation_patterns(all_transactions):
                 if vendor not in vendor_accounts:
                     vendor_accounts[vendor] = {}
                     vendor_counts[vendor] = 0
-                    print(f"DEBUG: Found vendor '{vendor}' in contact='{contact}' ref='{reference[:20]}' desc='{description[:20]}'")
+                    print(f"DEBUG: Found vendor '{vendor}' in narration='{narration[:30]}' or contact/ref/desc")
 
                 if account not in vendor_accounts[vendor]:
                     vendor_accounts[vendor][account] = 0
@@ -4658,11 +4661,12 @@ def is_known_allocation_pattern(transaction):
     if not patterns:
         return False
 
-    # Check contact, reference, and description for vendor matching
+    # Check contact, narration, reference, and description for vendor matching
     description = (transaction.get('description', '') or '').lower()
     contact = (transaction.get('contact', '') or '').lower()
     reference = (transaction.get('reference', '') or '').lower()
-    search_text = f"{contact} {reference} {description}"
+    narration = (transaction.get('narration', '') or '').lower()
+    search_text = f"{contact} {narration} {reference} {description}"
     account = (transaction.get('account', '') or '').lower()
 
     for vendor, pattern in patterns.items():
@@ -4697,14 +4701,15 @@ def check_split_allocation_pattern(transaction):
         print("DEBUG: No allocation patterns found")
         return None
 
-    # Check contact, reference, and description for vendor matching
+    # Check contact, narration, reference, and description for vendor matching
     description = (transaction.get('description', '') or '').lower()
     contact = (transaction.get('contact', '') or '').lower()
     reference = (transaction.get('reference', '') or '').lower()
-    search_text = f"{contact} {reference} {description}"
+    narration = (transaction.get('narration', '') or '').lower()
+    search_text = f"{contact} {narration} {reference} {description}"
     account = (transaction.get('account', '') or '').lower()
 
-    print(f"DEBUG check_split: contact='{contact}', ref='{reference[:20]}', desc='{description[:20]}', vendors found: {[v for v in patterns.keys() if v in search_text]}")
+    print(f"DEBUG check_split: narration='{narration[:30]}', vendors found: {[v for v in patterns.keys() if v in search_text]}")
 
     for vendor, pattern in patterns.items():
         if vendor in search_text:
