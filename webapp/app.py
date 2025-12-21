@@ -958,8 +958,26 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
         debug_info.append(f"{journals_in_range} journals in date range from this batch")
 
-    debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions: {len(transactions)}")
-    return transactions, debug_info
+    debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions before dedup: {len(transactions)}")
+
+    # Deduplicate transactions based on date + account + amount + description
+    # The Journals API can return the same line item multiple times
+    seen = set()
+    unique_transactions = []
+    for t in transactions:
+        # Create a unique key for each transaction
+        key = (
+            t.get('date', ''),
+            t.get('account_code', ''),
+            round(t.get('gross', 0), 2),
+            (t.get('description', '') or '')[:50].lower().strip()
+        )
+        if key not in seen:
+            seen.add(key)
+            unique_transactions.append(t)
+
+    debug_info.append(f"After deduplication: {len(unique_transactions)} transactions")
+    return unique_transactions, debug_info
 
 
 def enrich_transactions_with_accounts(transactions):
