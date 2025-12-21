@@ -3299,6 +3299,36 @@ def generate_correcting_journal(transaction):
                 'description': f"Reverse expense - borrowing costs > $100 must be capitalized"
             })
 
+    if transaction.get('personal_in_business_account'):
+        # Personal expense incorrectly coded to business expense account
+        # Need to move from business account (e.g., Telephone) to Owner Drawings
+        # AND reverse any GST claimed (personal expenses can't claim GST)
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"Recode personal expense - {trans_desc}"
+        original_tax_code = transaction.get('gst_rate_name', 'GST on Expenses') or 'GST on Expenses'
+
+        if gross > 0:
+            # Debit: Owner A Drawings (880) with BAS Excluded
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': '880',
+                'account_name': 'Owner A Drawings',
+                'debit': gross,
+                'credit': 0,
+                'tax_code': 'BAS Excluded',
+                'description': std_desc
+            })
+            # Credit: Original business expense account to reverse it
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': 0,
+                'credit': gross,
+                'tax_code': original_tax_code,
+                'description': std_desc
+            })
+
     return {
         'narration': narration,
         'entries': journal_entries
