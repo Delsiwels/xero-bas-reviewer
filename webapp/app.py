@@ -890,6 +890,22 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
                 # Determine transaction type
                 account_type = line.get('AccountType', '')
+
+                # Skip balance sheet accounts - only review P&L accounts for BAS
+                # Assets (Bank, Receivables, Fixed Assets) and Liabilities (Payables, GST)
+                # are not relevant for BAS GST compliance review
+                balance_sheet_types = [
+                    'BANK', 'CURRENT', 'FIXED', 'INVENTORY', 'NONCURRENT',  # Asset types
+                    'CURRLIAB', 'LIABILITY', 'TERMLIAB',  # Liability types
+                ]
+                if account_type in balance_sheet_types:
+                    continue
+
+                # Also skip GST control accounts by name
+                account_name_lower = account_name.lower()
+                if any(x in account_name_lower for x in ['gst', 'accounts payable', 'accounts receivable', 'bank', 'petty cash']):
+                    continue
+
                 is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
 
                 date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
