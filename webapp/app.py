@@ -6617,12 +6617,12 @@ GST: ${transaction.get('gst', 0):,.2f}
 Net: ${transaction.get('net', 0):,.2f}
 GST Rate: {transaction.get('gst_rate_name')}
 
-Pre-checks:
+Pre-checks (VERIFIED - do not contradict these):
 - Account coding suspicious: {transaction.get('account_coding_suspicious', False)}
 - Entertainment alcohol GST error: {transaction.get('alcohol_gst_error', False)}
 - Input-taxed GST error (GST claimed on financial supply): {transaction.get('input_taxed_gst_error', False)}
 - Missing GST error (should have GST but coded GST Free): {transaction.get('missing_gst_error', False)}
-- GST calculation correct: {transaction.get('gst_calculation_correct', True)}
+- GST calculation: {'CORRECT - GST math is verified correct, do NOT say it is incorrect' if transaction.get('gst_calculation_correct', True) else 'INCORRECT - GST amount does not match expected calculation'}
 - Drawings/Loan error (should be BAS Excluded): {transaction.get('drawings_loan_error', False)}
 - Asset capitalization error (over $20k threshold): {transaction.get('asset_capitalization_error', False)}
 - Computer equipment coded to expense (should be asset): {transaction.get('computer_equipment_expense', False)}
