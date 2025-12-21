@@ -1452,9 +1452,9 @@ def upload_review():
                 transaction['borrowing_expenses_error'] = False
 
             # Flag if any rule triggered (including new checks)
+            # Note: split_allocation_warning removed from flagging - personal_in_business_account handles actual errors
             has_rule_issues = (
                 transaction['account_coding_suspicious'] or
-                transaction.get('split_allocation_warning') or
                 transaction['alcohol_gst_error'] or
                 transaction['input_taxed_gst_error'] or
                 transaction['missing_gst_error'] or
@@ -1510,12 +1510,6 @@ def upload_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
-            if transaction.get('split_allocation_warning'):
-                split_info = transaction['split_allocation_warning']
-                vendor = split_info.get('vendor', 'vendor').title()
-                expected = split_info.get('expected_split', '')
-                count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -1617,12 +1611,6 @@ def upload_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
-            if transaction.get('split_allocation_warning'):
-                split_info = transaction['split_allocation_warning']
-                vendor = split_info.get('vendor', 'vendor').title()
-                expected = split_info.get('expected_split', '')
-                count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
@@ -2173,9 +2161,9 @@ def run_review():
                 transaction['borrowing_expenses_error'] = False
 
             # Flag if any rule triggered (including new checks)
+            # Note: split_allocation_warning removed from flagging - personal_in_business_account handles actual errors
             has_rule_issues = (
                 transaction['account_coding_suspicious'] or
-                transaction.get('split_allocation_warning') or
                 transaction['alcohol_gst_error'] or
                 transaction['input_taxed_gst_error'] or
                 transaction['missing_gst_error'] or
@@ -2231,12 +2219,6 @@ def run_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
-            if transaction.get('split_allocation_warning'):
-                split_info = transaction['split_allocation_warning']
-                vendor = split_info.get('vendor', 'vendor').title()
-                expected = split_info.get('expected_split', '')
-                count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
             if transaction['input_taxed_gst_error']:
@@ -2338,12 +2320,6 @@ def run_review():
             comments = []
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
-            if transaction.get('split_allocation_warning'):
-                split_info = transaction['split_allocation_warning']
-                vendor = split_info.get('vendor', 'vendor').title()
-                expected = split_info.get('expected_split', '')
-                count = split_info.get('transaction_count', 0)
-                comments.append(f'Split allocation check: {vendor} is typically split between {expected} - verify split was done correctly')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error']:
