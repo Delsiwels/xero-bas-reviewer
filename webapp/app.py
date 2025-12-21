@@ -875,6 +875,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                 account_name = line.get('AccountName', '')
                 description = line.get('Description', '') or reference or 'No description'
 
+                # Debug: Log Telstra transactions to trace account assignment
+                if 'telstra' in (description or '').lower() or 'telstra' in (narration or '').lower():
+                    print(f"TELSTRA DEBUG: Journal #{journal_number}, Date: {journal_date}, Source: {source_type}")
+                    print(f"  Line: Account={account_code} ({account_name}), Desc={description}, Gross={line.get('GrossAmount')}")
+
                 # Skip lines without account codes
                 if not account_code:
                     continue
@@ -2463,11 +2468,12 @@ def run_review():
             if 'telstra' in desc or 'telstra' in narr or 'telstra' in contact:
                 telstra_debug.append({
                     'date': t.get('date'),
-                    'description': t.get('description'),
+                    'account_code': t.get('account_code'),
                     'account': t.get('account'),
-                    'account_type': t.get('account_type'),
+                    'description': t.get('description'),
                     'gross': t.get('gross'),
-                    'source': t.get('source')
+                    'source': t.get('source'),
+                    'journal_number': t.get('journal_number')
                 })
 
         return jsonify({

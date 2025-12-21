@@ -706,6 +706,18 @@
             // Store results for download
             reviewResults = data;
 
+            // Debug: Show Telstra transactions breakdown
+            if (data.telstra_debug && data.telstra_debug.length > 0) {
+                let debugMsg = "TELSTRA DEBUG - All Telstra transactions found:\n\n";
+                data.telstra_debug.forEach((t, i) => {
+                    debugMsg += `${i+1}. Date: ${t.date}, Account: ${t.account_code} (${t.account})\n`;
+                    debugMsg += `   Desc: "${t.description}", Gross: $${t.gross}, Source: ${t.source}\n`;
+                    debugMsg += `   Journal #: ${t.journal_number}\n\n`;
+                });
+                console.log(debugMsg);
+                alert(debugMsg);
+            }
+
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
             document.getElementById('results-section').style.display = 'block';
