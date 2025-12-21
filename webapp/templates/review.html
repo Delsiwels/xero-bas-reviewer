@@ -702,6 +702,19 @@
             uploadBtn.disabled = false;
         }
 
+        // Format date from yyyy-mm-dd to dd/mm/yyyy
+        function formatDateAU(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateStr;
+        }
+
+        // Store flagged items globally for filtering
+        let allFlaggedItems = [];
+
         function displayResults(data) {
             // Store results for download
             reviewResults = data;
@@ -720,7 +733,8 @@
             const container = document.getElementById('flagged-table-container');
 
             const flaggedCount = data.flagged_count || 0;
-            const flaggedItems = data.flagged_items || [];
+            allFlaggedItems = data.flagged_items || [];
+            const flaggedItems = allFlaggedItems;
 
             if (flaggedCount === 0 || flaggedItems.length === 0) {
                 container.innerHTML = `
@@ -733,7 +747,30 @@
                 document.getElementById('download-btn').style.display = 'none';
             } else {
                 let tableHtml = `
-                    <table class="flagged-table">
+                    <div class="filter-controls" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <label style="font-weight: 500; font-size: 14px;">Filter:</label>
+                        </div>
+                        <input type="text" id="filter-description" placeholder="Description..." oninput="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 150px;">
+                        <input type="text" id="filter-account" placeholder="Account..." oninput="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 120px;">
+                        <select id="filter-severity" onchange="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                            <option value="">All Severities</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                        <select id="filter-source" onchange="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                            <option value="">All Sources</option>
+                            <option value="ACCPAY">ACCPAY (Bills)</option>
+                            <option value="Bill">Bill</option>
+                            <option value="SPEND">Bank Spend</option>
+                            <option value="RECEIVE">Bank Receive</option>
+                            <option value="MANJOURNAL">Manual Journal</option>
+                        </select>
+                        <button onclick="clearFilters()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Clear</button>
+                        <span id="filter-count" style="margin-left: auto; font-size: 14px; color: #666;"></span>
+                    </div>
+                    <table class="flagged-table" id="results-table">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">Row</th>
@@ -749,7 +786,7 @@
                                 <th style="width: 280px;">Suggested Correcting Journal</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="results-tbody">
                 `;
 
                 flaggedItems.forEach(item => {
@@ -822,10 +859,14 @@
                     const safeSeverity = ['low', 'medium', 'high'].includes(item.severity) ? item.severity : 'medium';
 
                     tableHtml += `
-                        <tr class="severity-${safeSeverity}">
+                        <tr class="severity-${safeSeverity}"
+                            data-description="${escapeHtml(item.description || '').toLowerCase()}"
+                            data-account="${escapeHtml(item.account || '').toLowerCase()} ${escapeHtml(item.account_code || '').toLowerCase()}"
+                            data-severity="${safeSeverity}"
+                            data-source="${escapeHtml(item.source || '').toLowerCase()}">
                             <td>${escapeHtml(item.row_number)}</td>
                             <td><span class="severity-badge ${safeSeverity}">${safeSeverity.toUpperCase()}</span></td>
-                            <td>${escapeHtml(item.date)}</td>
+                            <td>${formatDateAU(item.date)}</td>
                             <td><strong>${escapeHtml(item.account_code)}</strong><br><small>${escapeHtml(item.account)}</small></td>
                             <td>${desc}</td>
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
@@ -929,6 +970,61 @@
                 buttonElement.disabled = false;
                 alert('Error pushing journal: ' + error.message);
             }
+        }
+
+        // Filter functions
+        function applyFilters() {
+            const descFilter = (document.getElementById('filter-description')?.value || '').toLowerCase();
+            const accountFilter = (document.getElementById('filter-account')?.value || '').toLowerCase();
+            const severityFilter = document.getElementById('filter-severity')?.value || '';
+            const sourceFilter = (document.getElementById('filter-source')?.value || '').toLowerCase();
+
+            const rows = document.querySelectorAll('#results-tbody tr');
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const desc = row.dataset.description || '';
+                const account = row.dataset.account || '';
+                const severity = row.dataset.severity || '';
+                const source = row.dataset.source || '';
+
+                const matchDesc = !descFilter || desc.includes(descFilter);
+                const matchAccount = !accountFilter || account.includes(accountFilter);
+                const matchSeverity = !severityFilter || severity === severityFilter;
+                const matchSource = !sourceFilter || source.includes(sourceFilter);
+
+                if (matchDesc && matchAccount && matchSeverity && matchSource) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update filter count
+            const countEl = document.getElementById('filter-count');
+            if (countEl) {
+                const total = rows.length;
+                if (visibleCount < total) {
+                    countEl.textContent = `Showing ${visibleCount} of ${total}`;
+                } else {
+                    countEl.textContent = '';
+                }
+            }
+        }
+
+        function clearFilters() {
+            const descInput = document.getElementById('filter-description');
+            const accountInput = document.getElementById('filter-account');
+            const severitySelect = document.getElementById('filter-severity');
+            const sourceSelect = document.getElementById('filter-source');
+
+            if (descInput) descInput.value = '';
+            if (accountInput) accountInput.value = '';
+            if (severitySelect) severitySelect.value = '';
+            if (sourceSelect) sourceSelect.value = '';
+
+            applyFilters();
         }
 
         async function pushAllJournalsToXero() {
