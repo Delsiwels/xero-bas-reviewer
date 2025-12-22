@@ -41,7 +41,7 @@
             text-decoration: none;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1600px;
             margin: 0 auto;
             padding: 30px;
         }
@@ -225,7 +225,6 @@
         }
         .flagged-table {
             width: 100%;
-            min-width: 1350px;
             border-collapse: collapse;
             font-size: 0.9em;
         }
@@ -488,15 +487,6 @@
         </div>
     </div>
 
-    <!-- Global Journal Popover -->
-    <div id="journal-popover" class="journal-popover">
-        <div class="journal-popover-header">
-            <h4>Correcting Journal</h4>
-            <button class="journal-popover-close" onclick="hideJournalPopover()">&times;</button>
-        </div>
-        <div id="journal-popover-content"></div>
-    </div>
-
     <script>
         let selectedFile = null;
         let reviewResults = null;  // Store results for download
@@ -507,78 +497,6 @@
             const div = document.createElement('div');
             div.textContent = String(text);
             return div.innerHTML;
-        }
-
-        // Journal Popover functions
-        function showJournalPopover(event, journalId) {
-            event.stopPropagation();
-            console.log('showJournalPopover called with:', journalId);
-
-            const journalData = document.getElementById(journalId);
-            console.log('journalData element:', journalData);
-            if (!journalData) {
-                console.log('ERROR: No journal data found for', journalId);
-                return;
-            }
-
-            const popover = document.getElementById('journal-popover');
-            const content = document.getElementById('journal-popover-content');
-            console.log('Popover element:', popover);
-            console.log('Content element:', content);
-
-            // Copy the journal table HTML to the popover
-            content.innerHTML = journalData.innerHTML;
-
-            // Position the popover near the button but ensure it stays in viewport
-            const btn = event.target;
-            const btnRect = btn.getBoundingClientRect();
-            const popoverWidth = 400;
-            const popoverHeight = 200;
-
-            // Calculate position - prefer left of button, but adjust if needed
-            let left = btnRect.left - popoverWidth - 10;
-            let top = btnRect.top;
-
-            // If popover would go off left edge, show on right side instead
-            if (left < 10) {
-                left = btnRect.right + 10;
-            }
-
-            // If popover would go off right edge, constrain it
-            if (left + popoverWidth > window.innerWidth - 10) {
-                left = window.innerWidth - popoverWidth - 10;
-            }
-
-            // If popover would go off bottom, move it up
-            if (top + popoverHeight > window.innerHeight - 10) {
-                top = window.innerHeight - popoverHeight - 10;
-            }
-
-            // Ensure top is not negative
-            if (top < 10) top = 10;
-
-            popover.style.left = left + 'px';
-            popover.style.top = top + 'px';
-            popover.classList.add('show');
-            console.log('Popover positioned at:', left, top);
-            console.log('Popover classList:', popover.classList);
-            console.log('Popover display style:', window.getComputedStyle(popover).display);
-
-            // Close when clicking outside
-            document.addEventListener('click', closePopoverOnClickOutside);
-        }
-
-        function hideJournalPopover() {
-            const popover = document.getElementById('journal-popover');
-            popover.classList.remove('show');
-            document.removeEventListener('click', closePopoverOnClickOutside);
-        }
-
-        function closePopoverOnClickOutside(event) {
-            const popover = document.getElementById('journal-popover');
-            if (!popover.contains(event.target) && !event.target.classList.contains('journal-btn')) {
-                hideJournalPopover();
-            }
         }
 
         // Helper function to format date as dd/mm/yyyy
@@ -936,20 +854,19 @@
                         <span id="filter-count" style="margin-left: auto; font-size: 14px; color: #666;"></span>
                     </div>
                     <div id="table-scroll-wrapper" style="overflow-x: auto; width: 100%;">
-                    <table class="flagged-table" id="results-table" style="min-width: 1400px;">
+                    <table class="flagged-table" id="results-table">
                         <thead>
                             <tr>
-                                <th style="width: 50px;">Row</th>
-                                <th style="width: 80px;">Severity</th>
-                                <th style="width: 90px;">Date</th>
-                                <th style="width: 150px;">Account</th>
-                                <th style="width: 180px;">Description</th>
-                                <th style="width: 80px;">Gross</th>
-                                <th style="width: 80px;">GST</th>
-                                <th style="width: 80px;">Net</th>
-                                <th style="width: 80px;">Source</th>
-                                <th style="width: 200px;">Comments</th>
-                                <th style="width: 280px;">Suggested Correcting Journal</th>
+                                <th style="width: 40px;">Row</th>
+                                <th style="width: 70px;">Severity</th>
+                                <th style="width: 80px;">Date</th>
+                                <th style="width: 120px;">Account</th>
+                                <th style="width: 150px;">Description</th>
+                                <th style="width: 70px;">Gross</th>
+                                <th style="width: 60px;">GST</th>
+                                <th style="width: 70px;">Net</th>
+                                <th style="width: 70px;">Source</th>
+                                <th>Comments / Suggested Journal</th>
                             </tr>
                         </thead>
                         <tbody id="results-tbody">
@@ -968,24 +885,19 @@
                     // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
-                        // Build the journal table HTML for the popover
-                        let tableHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
+                        // Build the journal table HTML inline
+                        journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
                         item.correcting_journal.entries.forEach(entry => {
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
-                            tableHtml += '<tr>';
-                            tableHtml += '<td><strong>' + escapeHtml(entry.account_code || '') + '</strong><br><small>' + escapeHtml(entry.account_name || '') + '</small></td>';
-                            tableHtml += '<td style="text-align:right;">' + dr + '</td>';
-                            tableHtml += '<td style="text-align:right;">' + cr + '</td>';
-                            tableHtml += '<td><small>' + escapeHtml(entry.tax_code || '') + '</small></td>';
-                            tableHtml += '</tr>';
+                            journalHtml += '<tr>';
+                            journalHtml += '<td><strong>' + escapeHtml(entry.account_code || '') + '</strong><br><small>' + escapeHtml(entry.account_name || '') + '</small></td>';
+                            journalHtml += '<td style="text-align:right;">' + dr + '</td>';
+                            journalHtml += '<td style="text-align:right;">' + cr + '</td>';
+                            journalHtml += '<td><small>' + escapeHtml(entry.tax_code || '') + '</small></td>';
+                            journalHtml += '</tr>';
                         });
-                        tableHtml += '</tbody></table>';
-
-                        // Store journal data for popover
-                        const journalId = 'journal-' + item.row_number;
-                        journalHtml = `<button class="journal-btn" onclick="showJournalPopover(event, '${journalId}')">View Journal</button>`;
-                        journalHtml += `<div id="${journalId}" class="journal-popover-data" style="display:none;">${tableHtml}</div>`;
+                        journalHtml += '</tbody></table>';
                         // Add Push to Xero button - store journal data as base64 encoded JSON
                         // Check if account is a revenue/income account based on name only
                         const isRevenueAcct = (accountCode, accountName) => {
@@ -1044,6 +956,15 @@
                     // Sanitize severity to only allow known values
                     const safeSeverity = ['low', 'medium', 'high'].includes(item.severity) ? item.severity : 'medium';
 
+                    // Combine comments and journal into one cell
+                    let combinedHtml = '';
+                    if (formattedComments) {
+                        combinedHtml += '<div style="margin-bottom: 8px;">' + formattedComments + '</div>';
+                    }
+                    if (journalHtml) {
+                        combinedHtml += '<div style="background: #f9f9f9; padding: 8px; border-radius: 4px;">' + journalHtml + '</div>';
+                    }
+
                     tableHtml += `
                         <tr class="severity-${safeSeverity}"
                             data-description="${escapeHtml(item.description || '').toLowerCase()}"
@@ -1059,8 +980,7 @@
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td><small>${escapeHtml(item.source || '-')}</small>${item.xero_url ? `<br><a href="${escapeHtml(item.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View in Xero</a>` : ''}</td>
-                            <td class="comment-cell">${formattedComments}</td>
-                            <td class="journal-cell">${journalHtml}</td>
+                            <td class="comment-cell">${combinedHtml}</td>
                         </tr>
                     `;
                 });
