@@ -3628,8 +3628,9 @@ def generate_correcting_journal(transaction):
             })
             gst_correction_done = True
 
-    if transaction.get('insurance_gst_error') and not gst_correction_done:
+    if transaction.get('insurance_gst_error') and not gst_correction_done and not transaction.get('life_insurance_personal'):
         # Life/income protection insurance - GST not claimable (input-taxed)
+        # Skip if life_insurance_personal is flagged (whole expense being moved to Owner Drawings)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
         if gst > 0:
