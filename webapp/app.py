@@ -3434,23 +3434,23 @@ def generate_correcting_journal(transaction):
             })
 
     if transaction.get('input_taxed_gst_error'):
-        # GST incorrectly claimed on input-taxed supply (e.g., bank fees)
+        # GST incorrectly claimed on input-taxed supply (e.g., bank fees, interest)
         # Per ATO: Input-taxed supplies have NO GST and you CANNOT claim GST credits
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
 
         if gst > 0:
-            # Debit: Same account with GST Free (add GST back to expense cost)
+            # Debit: Same account with Input Taxed (correct tax code for financial supplies)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': gst,
                 'credit': 0,
-                'tax_code': 'GST Free',
+                'tax_code': 'Input Taxed',
                 'description': std_desc
             })
-            # Credit: Same account with GST on Expenses (reduces GST claimed via tax code)
+            # Credit: Same account with GST on Expenses (reverses GST incorrectly claimed)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -3517,21 +3517,22 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('interest_gst_error'):
-        # Interest incorrectly coded - should be GST Free Income or Input Taxed
+    # Skip interest_gst_error journal if input_taxed_gst_error already handled it (avoid duplicates)
+    if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
+        # Interest incorrectly coded - should be Input Taxed (no GST credit)
         original_tax_code = transaction.get('gst_rate_name', '') or 'Unknown'
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
 
         if gst > 0:
-            # GST was claimed - need to reverse it
+            # GST was claimed - need to reverse it using Input Taxed
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': gst,
                 'credit': 0,
-                'tax_code': 'GST Free',
+                'tax_code': 'Input Taxed',
                 'description': std_desc
             })
             journal_entries.append({
