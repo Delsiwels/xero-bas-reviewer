@@ -2206,10 +2206,42 @@ def upload_review():
         for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
             ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
-            # Use simplified AI-generated comment instead of detailed rule-based comments
+            # Use simplified AI-generated comment, with rule-based fallback if AI doesn't provide useful comment
             comments = []
-            if ai_result.get('comments'):
-                comments.append(ai_result.get('comments', ''))
+            ai_comment = ai_result.get('comments', '').strip()
+
+            # Check if AI comment is useful (not empty or too generic)
+            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct']
+            is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
+
+            if is_useful_ai_comment:
+                comments.append(ai_comment)
+            else:
+                # Fallback to rule-based comments when AI doesn't provide useful info
+                if transaction.get('asset_capitalization_error'):
+                    comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
+                if transaction.get('computer_equipment_expense'):
+                    comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
+                if transaction.get('life_insurance_personal'):
+                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+                if transaction.get('insurance_gst_error'):
+                    comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                if transaction.get('wages_gst_error'):
+                    comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
+                    comments.append('Entertainment expense - NO GST credit claimable per ATO rules')
+                if transaction.get('missing_gst_error'):
+                    comments.append('Should include GST (10%) - currently coded as GST Free')
+                if transaction.get('input_taxed_gst_error'):
+                    comments.append('Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
+                if transaction.get('general_expenses'):
+                    comments.append('General/Sundry Expenses - recode to specific category to reduce audit risk')
+                if transaction.get('drawings_loan_error'):
+                    comments.append('Drawings/Loan account - should be BAS Excluded')
+                if transaction.get('fines_penalties_gst'):
+                    comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
+                if transaction.get('government_charges_gst'):
+                    comments.append('Government charge - GST Free (no GST applies)')
 
             # Generate correcting journal entry
             try:
@@ -2277,7 +2309,7 @@ def upload_review():
             if transaction.get('insurance_gst_error'):
                 comments.append('Life/income protection insurance - NO GST credit claimable')
             if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a business expense. Recode to Owner Drawings (owner can claim on personal tax return)')
+                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
@@ -2873,10 +2905,42 @@ def run_review():
         for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
             ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
-            # Use simplified AI-generated comment instead of detailed rule-based comments
+            # Use simplified AI-generated comment, with rule-based fallback if AI doesn't provide useful comment
             comments = []
-            if ai_result.get('comments'):
-                comments.append(ai_result.get('comments', ''))
+            ai_comment = ai_result.get('comments', '').strip()
+
+            # Check if AI comment is useful (not empty or too generic)
+            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct']
+            is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
+
+            if is_useful_ai_comment:
+                comments.append(ai_comment)
+            else:
+                # Fallback to rule-based comments when AI doesn't provide useful info
+                if transaction.get('asset_capitalization_error'):
+                    comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
+                if transaction.get('computer_equipment_expense'):
+                    comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
+                if transaction.get('life_insurance_personal'):
+                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+                if transaction.get('insurance_gst_error'):
+                    comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                if transaction.get('wages_gst_error'):
+                    comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
+                    comments.append('Entertainment expense - NO GST credit claimable per ATO rules')
+                if transaction.get('missing_gst_error'):
+                    comments.append('Should include GST (10%) - currently coded as GST Free')
+                if transaction.get('input_taxed_gst_error'):
+                    comments.append('Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
+                if transaction.get('general_expenses'):
+                    comments.append('General/Sundry Expenses - recode to specific category to reduce audit risk')
+                if transaction.get('drawings_loan_error'):
+                    comments.append('Drawings/Loan account - should be BAS Excluded')
+                if transaction.get('fines_penalties_gst'):
+                    comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
+                if transaction.get('government_charges_gst'):
+                    comments.append('Government charge - GST Free (no GST applies)')
 
             # Generate correcting journal entry
             try:
@@ -2944,7 +3008,7 @@ def run_review():
             if transaction.get('insurance_gst_error'):
                 comments.append('Life/income protection insurance - NO GST credit claimable')
             if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a business expense. Recode to Owner Drawings (owner can claim on personal tax return)')
+                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
