@@ -243,8 +243,68 @@
             color: #666;
         }
         .journal-cell {
-            min-width: 280px;
+            min-width: 120px;
             padding: 8px !important;
+            position: relative;
+        }
+        .journal-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .journal-btn:hover {
+            background: #218838;
+        }
+        .journal-btn.review-btn {
+            background: #6c757d;
+        }
+        .journal-btn.review-btn:hover {
+            background: #5a6268;
+        }
+        .journal-popover {
+            display: none;
+            position: fixed;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 15px;
+            z-index: 1000;
+            min-width: 350px;
+            max-width: 450px;
+        }
+        .journal-popover.show {
+            display: block;
+        }
+        .journal-popover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .journal-popover-header h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #333;
+        }
+        .journal-popover-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            line-height: 1;
+        }
+        .journal-popover-close:hover {
+            color: #333;
         }
         .journal-table {
             width: 100%;
@@ -428,6 +488,15 @@
         </div>
     </div>
 
+    <!-- Global Journal Popover -->
+    <div id="journal-popover" class="journal-popover">
+        <div class="journal-popover-header">
+            <h4>Correcting Journal</h4>
+            <button class="journal-popover-close" onclick="hideJournalPopover()">&times;</button>
+        </div>
+        <div id="journal-popover-content"></div>
+    </div>
+
     <script>
         let selectedFile = null;
         let reviewResults = null;  // Store results for download
@@ -438,6 +507,78 @@
             const div = document.createElement('div');
             div.textContent = String(text);
             return div.innerHTML;
+        }
+
+        // Journal Popover functions
+        function showJournalPopover(event, journalId) {
+            event.stopPropagation();
+            console.log('showJournalPopover called with:', journalId);
+
+            const journalData = document.getElementById(journalId);
+            console.log('journalData element:', journalData);
+            if (!journalData) {
+                console.log('ERROR: No journal data found for', journalId);
+                return;
+            }
+
+            const popover = document.getElementById('journal-popover');
+            const content = document.getElementById('journal-popover-content');
+            console.log('Popover element:', popover);
+            console.log('Content element:', content);
+
+            // Copy the journal table HTML to the popover
+            content.innerHTML = journalData.innerHTML;
+
+            // Position the popover near the button but ensure it stays in viewport
+            const btn = event.target;
+            const btnRect = btn.getBoundingClientRect();
+            const popoverWidth = 400;
+            const popoverHeight = 200;
+
+            // Calculate position - prefer left of button, but adjust if needed
+            let left = btnRect.left - popoverWidth - 10;
+            let top = btnRect.top;
+
+            // If popover would go off left edge, show on right side instead
+            if (left < 10) {
+                left = btnRect.right + 10;
+            }
+
+            // If popover would go off right edge, constrain it
+            if (left + popoverWidth > window.innerWidth - 10) {
+                left = window.innerWidth - popoverWidth - 10;
+            }
+
+            // If popover would go off bottom, move it up
+            if (top + popoverHeight > window.innerHeight - 10) {
+                top = window.innerHeight - popoverHeight - 10;
+            }
+
+            // Ensure top is not negative
+            if (top < 10) top = 10;
+
+            popover.style.left = left + 'px';
+            popover.style.top = top + 'px';
+            popover.classList.add('show');
+            console.log('Popover positioned at:', left, top);
+            console.log('Popover classList:', popover.classList);
+            console.log('Popover display style:', window.getComputedStyle(popover).display);
+
+            // Close when clicking outside
+            document.addEventListener('click', closePopoverOnClickOutside);
+        }
+
+        function hideJournalPopover() {
+            const popover = document.getElementById('journal-popover');
+            popover.classList.remove('show');
+            document.removeEventListener('click', closePopoverOnClickOutside);
+        }
+
+        function closePopoverOnClickOutside(event) {
+            const popover = document.getElementById('journal-popover');
+            if (!popover.contains(event.target) && !event.target.classList.contains('journal-btn')) {
+                hideJournalPopover();
+            }
         }
 
         // Helper function to format date as dd/mm/yyyy
@@ -827,18 +968,24 @@
                     // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
-                        journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
+                        // Build the journal table HTML for the popover
+                        let tableHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
                         item.correcting_journal.entries.forEach(entry => {
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
-                            journalHtml += '<tr>';
-                            journalHtml += '<td><strong>' + escapeHtml(entry.account_code || '') + '</strong><br><small>' + escapeHtml(entry.account_name || '') + '</small></td>';
-                            journalHtml += '<td style="text-align:right;">' + dr + '</td>';
-                            journalHtml += '<td style="text-align:right;">' + cr + '</td>';
-                            journalHtml += '<td><small>' + escapeHtml(entry.tax_code || '') + '</small></td>';
-                            journalHtml += '</tr>';
+                            tableHtml += '<tr>';
+                            tableHtml += '<td><strong>' + escapeHtml(entry.account_code || '') + '</strong><br><small>' + escapeHtml(entry.account_name || '') + '</small></td>';
+                            tableHtml += '<td style="text-align:right;">' + dr + '</td>';
+                            tableHtml += '<td style="text-align:right;">' + cr + '</td>';
+                            tableHtml += '<td><small>' + escapeHtml(entry.tax_code || '') + '</small></td>';
+                            tableHtml += '</tr>';
                         });
-                        journalHtml += '</tbody></table>';
+                        tableHtml += '</tbody></table>';
+
+                        // Store journal data for popover
+                        const journalId = 'journal-' + item.row_number;
+                        journalHtml = `<button class="journal-btn" onclick="showJournalPopover(event, '${journalId}')">View Journal</button>`;
+                        journalHtml += `<div id="${journalId}" class="journal-popover-data" style="display:none;">${tableHtml}</div>`;
                         // Add Push to Xero button - store journal data as base64 encoded JSON
                         // Check if account is a revenue/income account based on name only
                         const isRevenueAcct = (accountCode, accountName) => {
@@ -877,19 +1024,19 @@
                         const journalDataStr = btoa(JSON.stringify(journalData));
                         // Only show Push to Xero button if NOT in upload mode (Xero connection required)
                         if (!uploadMode) {
-                            journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-top:8px; padding:4px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero (Draft)</button>`;
+                            journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-left:5px; padding:6px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero</button>`;
                         }
                     } else {
                         // Provide helpful review guidance based on issue type
-                        let reviewMsg = 'Please review';
+                        let reviewMsg = 'Review';
                         if (item.account_coding_suspicious || (item.comments && item.comments.toLowerCase().includes('account'))) {
-                            reviewMsg = 'Please review the account coding';
+                            reviewMsg = 'Review account';
                         } else if (item.missing_gst_error || item.input_taxed_gst_error || (item.comments && (item.comments.toLowerCase().includes('gst') || item.comments.toLowerCase().includes('tax')))) {
-                            reviewMsg = 'Please review the GST coding';
+                            reviewMsg = 'Review GST';
                         } else if (item.comments && item.comments.toLowerCase().includes('capitaliz')) {
-                            reviewMsg = 'Please review - may need to capitalize as asset';
+                            reviewMsg = 'Review asset';
                         } else {
-                            reviewMsg = 'Please review this transaction';
+                            reviewMsg = 'Review';
                         }
                         journalHtml = `<em style="color:#666;">${reviewMsg}</em>`;
                     }
