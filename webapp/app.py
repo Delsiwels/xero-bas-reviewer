@@ -2287,8 +2287,16 @@ def upload_review():
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
                 if transaction.get('life_insurance_personal'):
-                    ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings (not a business expense). Life insurance is NOT deductible. Income protection IS deductible on owner personal tax return.')
+                    desc = transaction.get('description', '').lower()
+                    # Check if it's specifically life insurance or income protection
+                    is_life_ins = any(kw in desc for kw in ['life insurance', 'life cover', 'life policy', 'death cover', 'death benefit', 'tpd', 'trauma', 'critical illness'])
+                    is_income_prot = any(kw in desc for kw in ['income protection', 'ip insurance', 'disability insurance', 'salary continuance'])
+                    if is_life_ins and not is_income_prot:
+                        comments.append('Life insurance - Recode to Owner Drawings. NOT tax deductible (not a business expense, not deductible on personal return either).')
+                    elif is_income_prot and not is_life_ins:
+                        comments.append('Income protection insurance - Recode to Owner Drawings (not a business expense). Owner CAN claim on personal tax return.')
+                    else:
+                        comments.append('Life/income protection insurance - Recode to Owner Drawings. Life insurance NOT deductible. Income protection deductible on owner personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -2298,8 +2306,15 @@ def upload_review():
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
-                    ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed financial supply). Income protection deductible on owner personal tax return.')
+                    desc = transaction.get('description', '').lower()
+                    is_life_ins = any(kw in desc for kw in ['life insurance', 'life cover', 'life policy', 'death cover', 'death benefit', 'tpd', 'trauma', 'critical illness'])
+                    is_income_prot = any(kw in desc for kw in ['income protection', 'ip insurance', 'disability insurance', 'salary continuance'])
+                    if is_life_ins and not is_income_prot:
+                        comments.append('Life insurance - Recode to Owner Drawings. No GST credit (input-taxed). NOT tax deductible anywhere.')
+                    elif is_income_prot and not is_life_ins:
+                        comments.append('Income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed). Owner CAN claim on personal tax return.')
+                    else:
+                        comments.append('Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed). Income protection deductible on owner personal return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
@@ -3127,8 +3142,16 @@ def run_review():
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
                 if transaction.get('life_insurance_personal'):
-                    ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings (not a business expense). Life insurance is NOT deductible. Income protection IS deductible on owner personal tax return.')
+                    desc = transaction.get('description', '').lower()
+                    # Check if it's specifically life insurance or income protection
+                    is_life_ins = any(kw in desc for kw in ['life insurance', 'life cover', 'life policy', 'death cover', 'death benefit', 'tpd', 'trauma', 'critical illness'])
+                    is_income_prot = any(kw in desc for kw in ['income protection', 'ip insurance', 'disability insurance', 'salary continuance'])
+                    if is_life_ins and not is_income_prot:
+                        comments.append('Life insurance - Recode to Owner Drawings. NOT tax deductible (not a business expense, not deductible on personal return either).')
+                    elif is_income_prot and not is_life_ins:
+                        comments.append('Income protection insurance - Recode to Owner Drawings (not a business expense). Owner CAN claim on personal tax return.')
+                    else:
+                        comments.append('Life/income protection insurance - Recode to Owner Drawings. Life insurance NOT deductible. Income protection deductible on owner personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -3138,8 +3161,15 @@ def run_review():
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
-                    ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed financial supply). Income protection deductible on owner personal tax return.')
+                    desc = transaction.get('description', '').lower()
+                    is_life_ins = any(kw in desc for kw in ['life insurance', 'life cover', 'life policy', 'death cover', 'death benefit', 'tpd', 'trauma', 'critical illness'])
+                    is_income_prot = any(kw in desc for kw in ['income protection', 'ip insurance', 'disability insurance', 'salary continuance'])
+                    if is_life_ins and not is_income_prot:
+                        comments.append('Life insurance - Recode to Owner Drawings. No GST credit (input-taxed). NOT tax deductible anywhere.')
+                    elif is_income_prot and not is_life_ins:
+                        comments.append('Income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed). Owner CAN claim on personal tax return.')
+                    else:
+                        comments.append('Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed). Income protection deductible on owner personal return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
