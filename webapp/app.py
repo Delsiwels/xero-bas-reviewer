@@ -2193,8 +2193,13 @@ def upload_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review for all rule-flagged items (batch processing)
-        ai_review_limit = len(rule_flagged)
+        # Second pass: AI review for flagged items (batch processing)
+        # Limit AI review to 100 items to prevent timeout on large datasets
+        MAX_AI_REVIEW = 100
+        ai_review_limit = min(len(rule_flagged), MAX_AI_REVIEW)
+
+        if len(rule_flagged) > MAX_AI_REVIEW:
+            print(f"Large dataset: {len(rule_flagged)} flagged items, limiting AI review to {MAX_AI_REVIEW}")
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
@@ -2381,14 +2386,15 @@ def upload_review():
                 'correcting_journal': correcting_journal
             })
 
-        # Store results for download
+        # Store results for download (only flagged items to save memory on large datasets)
         session['review_results'] = {
-            'transactions': transactions,
+            'transactions': [],  # Don't store all transactions - too large for session
             'flagged_items': flagged_items,
             'from_date': '',
             'to_date': '',
             'tenant_name': company_name,
-            'review_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'review_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'total_count': len(transactions)
         }
 
         return jsonify({
@@ -2915,8 +2921,13 @@ def run_review():
             if has_rule_issues:
                 rule_flagged.append(transaction)
 
-        # Second pass: AI review for all rule-flagged items (batch processing)
-        ai_review_limit = len(rule_flagged)
+        # Second pass: AI review for flagged items (batch processing)
+        # Limit AI review to 100 items to prevent timeout on large datasets
+        MAX_AI_REVIEW = 100
+        ai_review_limit = min(len(rule_flagged), MAX_AI_REVIEW)
+
+        if len(rule_flagged) > MAX_AI_REVIEW:
+            print(f"Large dataset: {len(rule_flagged)} flagged items, limiting AI review to {MAX_AI_REVIEW}")
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
@@ -3098,14 +3109,15 @@ def run_review():
                 'correcting_journal': correcting_journal
             })
 
-        # Store results in session for download
+        # Store results in session for download (only flagged items to save memory)
         session['review_results'] = {
-            'transactions': transactions,
+            'transactions': [],  # Don't store all transactions - too large for session
             'flagged_items': flagged_items,
             'from_date': from_date_str,
             'to_date': to_date_str,
             'tenant_name': session.get('tenant_name', ''),
-            'review_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'review_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'total_count': len(transactions)
         }
 
         # Include pattern debug info (ALL patterns, not just split ones)
