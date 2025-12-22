@@ -2211,7 +2211,9 @@ def upload_review():
             ai_comment = ai_result.get('comments', '').strip()
 
             # Check if AI comment is useful (not empty or too generic)
-            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct']
+            # Include "correctly applied/coded" as generic since AI may miss the actual issue (e.g., capitalization)
+            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct',
+                              'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
             if is_useful_ai_comment:
@@ -2910,7 +2912,9 @@ def run_review():
             ai_comment = ai_result.get('comments', '').strip()
 
             # Check if AI comment is useful (not empty or too generic)
-            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct']
+            # Include "correctly applied/coded" as generic since AI may miss the actual issue (e.g., capitalization)
+            generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct',
+                              'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
             if is_useful_ai_comment:
