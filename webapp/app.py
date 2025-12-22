@@ -2216,9 +2216,11 @@ def upload_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            # ALWAYS show life_insurance_personal explanation (important for user to understand Owner Drawings)
+            # ALWAYS show explanation for items that need to be recoded to Owner Drawings
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+            elif transaction.get('personal_in_business_account'):
+                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             elif is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
@@ -2313,6 +2315,8 @@ def upload_review():
                 comments.append('Life/income protection insurance - NO GST credit claimable')
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+            if transaction.get('personal_in_business_account'):
+                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
@@ -2918,9 +2922,11 @@ def run_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            # ALWAYS show life_insurance_personal explanation (important for user to understand Owner Drawings)
+            # ALWAYS show explanation for items that need to be recoded to Owner Drawings
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+            elif transaction.get('personal_in_business_account'):
+                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             elif is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
@@ -3015,6 +3021,8 @@ def run_review():
                 comments.append('Life/income protection insurance - NO GST credit claimable')
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+            if transaction.get('personal_in_business_account'):
+                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
