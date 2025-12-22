@@ -4547,9 +4547,16 @@ def suggest_asset_account(description):
          {'code': '160', 'name': 'Computer Equipment - At Cost'}),
 
         # Office Equipment & Furniture
-        (['furniture', 'desk', 'chair', 'cabinet', 'shelving', 'table', 'workstation',
+        (['furniture', 'desk', 'chair', 'cabinet', 'table', 'workstation',
           'reception', 'lounge', 'sofa', 'couch'],
          {'code': '161', 'name': 'Office Equipment - At Cost'}),
+
+        # Shop Fittings & Fixtures (retail)
+        (['mannequin', 'display unit', 'display stand', 'display case', 'shop fitting',
+          'shop fixture', 'retail fixture', 'shelving', 'shelf unit', 'gondola',
+          'clothing rack', 'garment rack', 'counter', 'showcase', 'glass cabinet',
+          'point of sale', 'pos stand', 'checkout counter'],
+         {'code': '163', 'name': 'Shop Fittings - At Cost'}),
 
         # Plant & Equipment / Machinery
         (['machinery', 'equipment', 'plant', 'forklift', 'crane', 'excavator', 'tools',
@@ -5301,7 +5308,12 @@ def check_asset_capitalization(transaction):
         'plant' in account or
         'equipment' in account or
         'motor vehicle' in account or
-        'computer' in account
+        'computer' in account or
+        'office equipment' in account or
+        'shop fitting' in account or
+        'shop fixture' in account or
+        'small business pool' in account or
+        'at cost' in account
     )
 
     # ATO instant asset write-off threshold is $20,000 (GST exclusive) for small business
@@ -5332,18 +5344,27 @@ def check_computer_equipment_expense(transaction):
     account = transaction.get('account', '').lower()
     gross_amount = abs(transaction.get('gross', 0))
 
-    # Computer equipment keywords
+    # Computer equipment keywords - be specific to avoid false positives
     computer_keywords = [
         'laptop', 'macbook', 'notebook', 'chromebook',
         'computer', 'desktop', 'imac', 'pc ',
         'tablet', 'ipad', 'surface',
-        'monitor', 'display', 'screen',
+        'monitor', 'computer monitor', 'lcd monitor', 'led monitor',
         'printer', 'scanner', 'copier',
         'server', 'nas ', 'network storage',
         'keyboard', 'mouse', 'webcam',
     ]
 
-    is_computer_equipment = any(keyword in description for keyword in computer_keywords)
+    # Exclusion keywords - if these are present, it's NOT computer equipment
+    # (e.g., "display mannequins", "display units" are shop fixtures, not monitors)
+    not_computer_keywords = [
+        'mannequin', 'shelving', 'shelf', 'fixture', 'fittings',
+        'display unit', 'display stand', 'display case', 'display cabinet',
+        'shop display', 'retail display', 'window display',
+    ]
+
+    is_excluded = any(keyword in description for keyword in not_computer_keywords)
+    is_computer_equipment = any(keyword in description for keyword in computer_keywords) and not is_excluded
 
     if not is_computer_equipment:
         return False
@@ -5363,6 +5384,9 @@ def check_computer_equipment_expense(transaction):
         'asset' in account or
         'computer equipment' in account or
         'office equipment' in account or
+        'shop fitting' in account or
+        'shop fixture' in account or
+        'small business pool' in account or
         'plant' in account or
         'at cost' in account
     )
