@@ -3275,7 +3275,12 @@ def generate_correcting_journal(transaction):
         # Personal items should go to Owner Drawings, not suggested business account
         is_personal = transaction.get('personal_in_business_account')
 
-        if is_travel_account or is_personal:
+        # Skip if this is ENTERTAINMENT - don't recode to different account, just fix tax code
+        is_entertainment = (transaction.get('alcohol_gst_error') or
+                           transaction.get('client_entertainment_gst') or
+                           transaction.get('staff_entertainment_gst'))
+
+        if is_travel_account or is_personal or is_entertainment:
             # Don't suggest recoding - travel accounts are fine, personal items have dedicated handler
             pass
         else:
