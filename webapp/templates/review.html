@@ -268,6 +268,9 @@
             padding: 8px !important;
             position: relative;
             vertical-align: top;
+            width: 280px;
+            min-width: 280px;
+            max-width: 280px;
         }
         .delete-row-btn {
             background: #dc3545;
@@ -344,7 +347,7 @@
             color: #333;
         }
         .journal-table {
-            width: 260px;
+            width: 100%;
             font-size: 13px;
             border-collapse: collapse;
             background: #fff;
@@ -352,6 +355,7 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            table-layout: fixed;
         }
         .journal-table th {
             background: #f8f9fa;
