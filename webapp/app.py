@@ -2255,7 +2255,7 @@ def upload_review():
                 if transaction.get('wages_gst_error'):
                     comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
                 if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
-                    comments.append('Entertainment expense - NO GST credit claimable per ATO rules')
+                    comments.append('Entertainment expense - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
                 if transaction.get('input_taxed_gst_error'):
@@ -2341,9 +2341,9 @@ def upload_review():
             if transaction.get('government_charges_gst'):
                 comments.append('Government charge - NO GST applies')
             if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable')
+                comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
             if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT paid')
+                comments.append('Staff entertainment - NO GST credit unless FBT is paid on the benefit per GSTR 2001/6. If exempt from FBT (e.g. minor benefit <$300), no GST credit available.')
             if transaction.get('residential_premises_gst'):
                 comments.append('Residential property expense - NO GST credit claimable')
             if transaction.get('insurance_gst_error'):
@@ -2987,7 +2987,7 @@ def run_review():
                 if transaction.get('wages_gst_error'):
                     comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
                 if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
-                    comments.append('Entertainment expense - NO GST credit claimable per ATO rules')
+                    comments.append('Entertainment expense - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
                 if transaction.get('input_taxed_gst_error'):
@@ -3073,9 +3073,9 @@ def run_review():
             if transaction.get('government_charges_gst'):
                 comments.append('Government charge - NO GST applies')
             if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable')
+                comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
             if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT paid')
+                comments.append('Staff entertainment - NO GST credit unless FBT is paid on the benefit per GSTR 2001/6. If exempt from FBT (e.g. minor benefit <$300), no GST credit available.')
             if transaction.get('residential_premises_gst'):
                 comments.append('Residential property expense - NO GST credit claimable')
             if transaction.get('insurance_gst_error'):
