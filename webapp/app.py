@@ -7427,16 +7427,17 @@ Pre-checks (VERIFIED - do not contradict these):
 
 ATO GST Rules to check:
 1. GST-FREE (no GST, but CAN claim input credits): Basic food, health/medical, education, childcare, exports
-2. INPUT-TAXED (no GST, CANNOT claim input credits): Bank ACCOUNT fees (monthly fees, overdraft fees), interest, residential rent, life insurance, super
-3. TAXABLE (10% GST applies): Office supplies, utilities, parking, fuel, professional services, commercial rent
-4. MERCHANT FEES (TAXABLE - GST INCLUDED): Bank merchant fees, EFTPOS fees, credit card processing fees, merchant facility fees - these are NOT input-taxed! Businesses CAN claim GST credits on merchant fees. Source: ATO Financial Services Q&A.
-5. OVERSEAS DIGITAL SERVICES (GST FREE IS CORRECT): Adobe, Slack, Zoom, Canva, Google Ads, Facebook Ads, Microsoft 365, AWS, Dropbox, and other overseas SaaS - when billed from USA/Ireland/Singapore WITHOUT GST, code as GST Free. Do NOT flag these as missing GST. Reverse charge may apply but results in net zero for most businesses.
-6. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
-7. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
-8. Software subscriptions should be coded to Subscriptions, NOT Consulting
-9. Parking should be coded to Motor Vehicle, NOT Legal Expenses
-10. Office supplies (toner, cartridges) MUST include GST (10%)
-11. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
+2. INPUT-TAXED (no GST, CANNOT claim input credits): Bank ACCOUNT fees (monthly fees, overdraft fees), interest income/expense, residential rent, life insurance
+3. BAS EXCLUDED (outside the GST system - not reportable on BAS): Wages, salaries, superannuation, PAYG withholding, allowances - these are NOT "input-taxed", they are simply outside the GST system entirely. Should have $0 GST.
+4. TAXABLE (10% GST applies): Office supplies, utilities, parking, fuel, professional services, commercial rent
+5. MERCHANT FEES (TAXABLE - GST INCLUDED): Bank merchant fees, EFTPOS fees, credit card processing fees, merchant facility fees - these are NOT input-taxed! Businesses CAN claim GST credits on merchant fees. Source: ATO Financial Services Q&A.
+6. OVERSEAS DIGITAL SERVICES (GST FREE IS CORRECT): Adobe, Slack, Zoom, Canva, Google Ads, Facebook Ads, Microsoft 365, AWS, Dropbox, and other overseas SaaS - when billed from USA/Ireland/Singapore WITHOUT GST, code as GST Free. Do NOT flag these as missing GST. Reverse charge may apply but results in net zero for most businesses.
+7. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
+8. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
+9. Software subscriptions should be coded to Subscriptions, NOT Consulting
+10. Parking should be coded to Motor Vehicle, NOT Legal Expenses
+11. Office supplies (toner, cartridges) MUST include GST (10%)
+12. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
