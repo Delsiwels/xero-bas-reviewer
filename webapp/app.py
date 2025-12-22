@@ -4574,6 +4574,10 @@ def suggest_correct_account(description):
     """Suggest the correct account based on transaction description"""
     description = description.lower()
 
+    # Check business context for industry-specific handling
+    business_context = get_business_context()
+    is_hospitality = business_context.get('industry') == 'hospitality'
+
     # Mapping of keywords to suggested accounts
     account_mappings = [
         # Travel
@@ -4586,11 +4590,18 @@ def suggest_correct_account(description):
         (['stationery', 'officeworks', 'office supplies'], {'code': '453', 'name': 'Printing & Stationery'}),
         (['toner', 'ink', 'cartridge', 'printer'], {'code': '453', 'name': 'Printing & Stationery'}),
         (['postage', 'stamps', 'auspost'], {'code': '458', 'name': 'Postage'}),
+    ]
 
-        # Meals & Entertainment
-        (['restaurant', 'cafe', 'lunch', 'dinner', 'catering'], {'code': '424', 'name': 'Entertainment'}),
-        (['dan murphy', 'bws', 'liquorland', 'wine', 'alcohol'], {'code': '424', 'name': 'Entertainment'}),
+    # Meals & Entertainment - Only suggest for non-hospitality businesses
+    # For hospitality, food/alcohol is stock, not entertainment
+    if not is_hospitality:
+        account_mappings.extend([
+            (['restaurant', 'cafe', 'lunch', 'dinner', 'catering'], {'code': '424', 'name': 'Entertainment'}),
+            (['dan murphy', 'bws', 'liquorland', 'wine', 'alcohol'], {'code': '424', 'name': 'Entertainment'}),
+        ])
 
+    # Add remaining mappings
+    account_mappings.extend([
         # Professional Services
         (['legal', 'lawyer', 'solicitor'], {'code': '440', 'name': 'Legal Expenses'}),
         (['accounting', 'accountant', 'bookkeep'], {'code': '404', 'name': 'Accounting & Audit'}),
@@ -4728,12 +4739,22 @@ def check_account_coding(transaction):
             return True
 
     # Check for alcohol in wrong accounts - should ONLY be in Entertainment or Gift accounts
+    # EXCEPTION: For hospitality businesses, alcohol in Sales/COGS/Stock accounts is legitimate inventory
     alcohol_keywords = ['dan murphy', 'bws', 'liquorland', 'wine', 'beer', 'spirits', 'alcohol', 'champagne', 'liquor',
                         'vintage cellar', 'cellarbrations', 'bottlemart', 'liquor barn', 'first choice']
     valid_alcohol_accounts = ['entertainment', 'gift', 'staff amenities']
 
+    # Hospitality businesses can have alcohol in stock/sales accounts
+    business_context = get_business_context()
+    is_hospitality = business_context.get('industry') == 'hospitality'
+    hospitality_alcohol_accounts = ['sales', 'revenue', 'income', 'cost of goods', 'cogs', 'cost of sales',
+                                    'stock', 'inventory', 'purchases', 'food', 'beverage', 'bar', 'liquor', 'drinks']
+
     if any(keyword in description for keyword in alcohol_keywords):
-        if not any(valid_acct in account for valid_acct in valid_alcohol_accounts):
+        # Skip for hospitality businesses with alcohol in valid stock/sales accounts
+        if is_hospitality and any(acct in account for acct in hospitality_alcohol_accounts):
+            pass  # Valid hospitality stock - don't flag
+        elif not any(valid_acct in account for valid_acct in valid_alcohol_accounts):
             return True
 
     # Check for parking expenses coded to wrong accounts (e.g., Legal)
@@ -4783,11 +4804,33 @@ def check_alcohol_gst(transaction):
     Check if alcohol/entertainment purchases have incorrect GST coding.
     Entertainment alcohol should be GST Free Expenses.
     BWS, Dan Murphy, wine etc. are ONLY acceptable in Entertainment or Gift accounts.
+
+    EXCEPTION: For hospitality businesses (restaurants, bars, cafes), alcohol
+    purchases in Sales or COGS accounts are legitimate stock for resale.
     """
     description = transaction.get('description', '').lower()
     account = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
     gst_rate_name = transaction.get('gst_rate_name', '').lower()
+
+    # Check if this is a hospitality business with alcohol as stock/sales
+    # Skip flagging for legitimate hospitality inventory
+    business_context = get_business_context()
+    is_hospitality = business_context.get('industry') == 'hospitality'
+
+    # Hospitality-specific accounts where alcohol is legitimate stock
+    hospitality_stock_accounts = [
+        'sales', 'revenue', 'income',  # Sales accounts
+        'cost of goods', 'cogs', 'cost of sales',  # COGS accounts
+        'stock', 'inventory', 'purchases',  # Inventory accounts
+        'food', 'beverage', 'bar', 'liquor', 'drinks',  # Hospitality-specific
+        'food cost', 'beverage cost', 'bar cost',
+    ]
+    is_hospitality_stock_account = any(kw in account for kw in hospitality_stock_accounts)
+
+    # If hospitality business AND in a stock/sales account, skip alcohol flagging
+    if is_hospitality and is_hospitality_stock_account:
+        return False  # Legitimate hospitality stock - don't flag
 
     # Alcohol retailer keywords
     alcohol_retailers = ['dan murphy', 'bws', 'liquorland', 'first choice', 'aldi liquor',
