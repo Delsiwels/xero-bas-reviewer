@@ -4628,7 +4628,7 @@ def suggest_correct_account(description):
 
         # Freight & Courier
         (['freight', 'courier', 'delivery', 'shipping'], {'code': '425', 'name': 'Freight & Courier'}),
-    ]
+    ])
 
     for keywords, account in account_mappings:
         if any(keyword in description for keyword in keywords):
