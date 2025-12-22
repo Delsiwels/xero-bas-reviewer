@@ -5238,13 +5238,9 @@ def check_drawings_loan_error(transaction):
                      'loan account', 'loan payable', 'loan receivable']
     is_loan = any(keyword in account for keyword in loan_accounts)
 
-    # Also check account codes commonly used for drawings (800-899 range often)
-    try:
-        code_num = int(account_code)
-        if 800 <= code_num < 900:  # Common range for equity/drawings
-            is_drawings = True
-    except:
-        pass
+    # Note: Removed account code range check (800-899) as this varies by business
+    # Some use 800s for equity/drawings, others use it for professional fees
+    # Only rely on account NAME to identify drawings accounts
 
     # Check if it's correctly coded as BAS Excluded
     is_bas_excluded = 'bas excluded' in gst_rate_name or 'out of scope' in gst_rate_name
