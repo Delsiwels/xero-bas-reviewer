@@ -16,7 +16,7 @@
             min-height: 100vh;
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f7931e 0%, #f15a24 100%);
             color: white;
             padding: 20px 40px;
             display: flex;
@@ -75,7 +75,7 @@
             font-size: 1em;
         }
         .form-group input:focus {
-            border-color: #667eea;
+            border-color: #f7931e;
             outline: none;
         }
         .form-row {
@@ -95,7 +95,7 @@
             transition: all 0.3s ease;
         }
         .btn-primary {
-            background: #667eea;
+            background: #f7931e;
             color: white;
         }
         .btn-primary:hover {
@@ -125,7 +125,7 @@
         }
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #f7931e, #f15a24);
             width: 0%;
             transition: width 0.3s ease;
         }
@@ -378,7 +378,7 @@
             transition: all 0.3s ease;
         }
         .upload-area:hover, .upload-area.dragover {
-            border-color: #667eea;
+            border-color: #f7931e;
             background: #f8f9ff;
         }
         .upload-icon {
@@ -441,7 +441,7 @@
                             <div style="font-size: 0.85em; color: #666;">Standard review of selected period</div>
                         </div>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #764ba2; border-radius: 8px; background: white;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px 15px; border: 2px solid #f15a24; border-radius: 8px; background: white;">
                         <input type="radio" name="review-mode" value="deep" style="width: 18px; height: 18px;">
                         <div>
                             <div style="font-weight: 600; color: #333;">Deep Scan</div>
@@ -449,7 +449,7 @@
                         </div>
                     </label>
                 </div>
-                <p id="deep-scan-note" style="display: none; margin-top: 10px; font-size: 0.9em; color: #764ba2;">
+                <p id="deep-scan-note" style="display: none; margin-top: 10px; font-size: 0.9em; color: #f15a24;">
                     Deep scan will analyze 12 months of history to detect allocation patterns. This takes longer but reduces false positives.
                 </p>
             </div>
@@ -470,7 +470,7 @@
                 <p>Drag and drop your Excel file here, or click to browse</p>
                 <input type="file" id="file-input" accept=".xlsx,.xls" style="display: none;">
             </div>
-            <div id="file-name" style="margin-top: 15px; color: #667eea; display: none;"></div>
+            <div id="file-name" style="margin-top: 15px; color: #f7931e; display: none;"></div>
             <button class="btn btn-primary" id="upload-btn" onclick="uploadFile()" style="margin-top: 20px;" disabled>
                 Review Uploaded File
             </button>
@@ -605,7 +605,7 @@
                 if (this.value === 'deep') {
                     deepScanNote.style.display = 'block';
                     reviewBtn.textContent = 'Start Deep Scan';
-                    reviewBtn.style.background = '#764ba2';
+                    reviewBtn.style.background = '#f15a24';
                 } else {
                     deepScanNote.style.display = 'none';
                     reviewBtn.textContent = 'Start Review';
