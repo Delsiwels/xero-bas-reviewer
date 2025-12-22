@@ -2275,7 +2275,7 @@ def upload_review():
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                    comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                    comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
 
@@ -2355,7 +2355,7 @@ def upload_review():
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
             if transaction.get('wages_gst_error'):
                 comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
@@ -3007,7 +3007,7 @@ def run_review():
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                    comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                    comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
 
@@ -3087,7 +3087,7 @@ def run_review():
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
             if transaction.get('wages_gst_error'):
                 comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
@@ -7395,6 +7395,7 @@ ATO GST Rules to check:
 8. Software subscriptions should be coded to Subscriptions, NOT Consulting
 9. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 10. Office supplies (toner, cartridges) MUST include GST (10%)
+11. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
@@ -7496,6 +7497,7 @@ ATO GST Rules:
 3. TAXABLE (10% GST): Office supplies, utilities, parking, fuel, professional services
 4. ENTERTAINMENT: Non-deductible, NO GST credits
 5. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit
+6. GRANTS (GSTR 2012/2): "Other Income" is VALID for grants - do NOT flag account. Grants typically GST-FREE unless binding supply obligation exists.
 
 TRANSACTIONS TO REVIEW:
 """
