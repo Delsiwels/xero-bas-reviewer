@@ -2290,7 +2290,8 @@ def upload_review():
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
-                if transaction.get('insurance_gst_error'):
+                if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
+                    # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     ato_comment = generate_ato_comment('life_insurance_personal')
                     comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
                 if transaction.get('wages_gst_error'):
@@ -2406,12 +2407,10 @@ def upload_review():
             if transaction.get('residential_premises_gst'):
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
-            if transaction.get('insurance_gst_error'):
+            if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
+                # Combine both flags - only add one comment for life insurance
                 ato_comment = generate_ato_comment('life_insurance_personal')
                 comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
-            if transaction.get('life_insurance_personal'):
-                ato_comment = generate_ato_comment('life_insurance_personal')
-                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
@@ -3097,7 +3096,8 @@ def run_review():
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
-                if transaction.get('insurance_gst_error'):
+                if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
+                    # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     ato_comment = generate_ato_comment('life_insurance_personal')
                     comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
                 if transaction.get('wages_gst_error'):
@@ -3213,12 +3213,10 @@ def run_review():
             if transaction.get('residential_premises_gst'):
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
-            if transaction.get('insurance_gst_error'):
+            if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
+                # Combine both flags - only add one comment for life insurance
                 ato_comment = generate_ato_comment('life_insurance_personal')
                 comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
-            if transaction.get('life_insurance_personal'):
-                ato_comment = generate_ato_comment('life_insurance_personal')
-                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
