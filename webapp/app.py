@@ -2216,15 +2216,15 @@ def upload_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            # ALWAYS show explanation for items that need to be recoded to Owner Drawings
-            if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
-            elif transaction.get('personal_in_business_account'):
-                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
-            elif is_useful_ai_comment:
+            # Always prioritize AI comments, use rule-based as fallback only
+            if is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
+                if transaction.get('life_insurance_personal'):
+                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                if transaction.get('personal_in_business_account'):
+                    comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 if transaction.get('asset_capitalization_error'):
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense'):
@@ -2247,6 +2247,8 @@ def upload_review():
                     comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
                     comments.append('Government charge - GST Free (no GST applies)')
+                if transaction.get('donations_gst'):
+                    comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
 
             # Generate correcting journal entry
             try:
@@ -2922,15 +2924,15 @@ def run_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            # ALWAYS show explanation for items that need to be recoded to Owner Drawings
-            if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
-            elif transaction.get('personal_in_business_account'):
-                comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
-            elif is_useful_ai_comment:
+            # Always prioritize AI comments, use rule-based as fallback only
+            if is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
+                if transaction.get('life_insurance_personal'):
+                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                if transaction.get('personal_in_business_account'):
+                    comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 if transaction.get('asset_capitalization_error'):
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense'):
@@ -2953,6 +2955,8 @@ def run_review():
                     comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
                     comments.append('Government charge - GST Free (no GST applies)')
+                if transaction.get('donations_gst'):
+                    comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
 
             # Generate correcting journal entry
             try:
