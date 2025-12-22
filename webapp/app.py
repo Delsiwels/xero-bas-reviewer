@@ -2302,7 +2302,8 @@ def upload_review():
                     comments.append(ato_comment or 'Entertainment expense - NO GST credit claimable. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
-                if transaction.get('input_taxed_gst_error'):
+                if transaction.get('input_taxed_gst_error') and not transaction.get('life_insurance_personal'):
+                    # Skip if life insurance already flagged (has its own specific comment)
                     ato_comment = generate_ato_comment('input_taxed_gst_error')
                     comments.append(ato_comment or 'Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
                 if transaction.get('general_expenses'):
@@ -2369,7 +2370,7 @@ def upload_review():
                 comments.append('Account coding may be incorrect')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
-            if transaction['input_taxed_gst_error']:
+            if transaction['input_taxed_gst_error'] and not transaction.get('life_insurance_personal'):
                 comments.append('Input-taxed supply - GST incorrectly claimed (ATO: no GST on financial supplies)')
             if transaction['missing_gst_error']:
                 comments.append('Should include GST (10%) - currently coded as GST Free')
@@ -3116,7 +3117,8 @@ def run_review():
                     comments.append(ato_comment or 'Entertainment expense - NO GST credit claimable. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
-                if transaction.get('input_taxed_gst_error'):
+                if transaction.get('input_taxed_gst_error') and not transaction.get('life_insurance_personal'):
+                    # Skip if life insurance already flagged (has its own specific comment)
                     ato_comment = generate_ato_comment('input_taxed_gst_error')
                     comments.append(ato_comment or 'Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
                 if transaction.get('general_expenses'):
@@ -3183,7 +3185,7 @@ def run_review():
                 comments.append('Account coding may be incorrect')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
-            if transaction['input_taxed_gst_error']:
+            if transaction['input_taxed_gst_error'] and not transaction.get('life_insurance_personal'):
                 comments.append('Input-taxed supply - GST incorrectly claimed (ATO: no GST on financial supplies)')
             if transaction['missing_gst_error']:
                 comments.append('Should include GST (10%) - currently coded as GST Free')
