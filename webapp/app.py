@@ -2292,8 +2292,7 @@ def upload_review():
                 comments.append('Export sale with GST charged - exports are GST-FREE (no GST, but CAN claim input credits). Must be exported within 60 days. Use GST Free or Export tax code. Source: ATO exports and GST rules')
             if transaction.get('borrowing_expenses_error'):
                 comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (ATO s25.25)')
-            if ai_result.get('comments'):
-                comments.append(ai_result.get('comments', ''))
+            # Note: AI comments removed as they duplicate the rule-based comments above
 
             # Generate correcting journal entry
             try:
@@ -2306,7 +2305,7 @@ def upload_review():
                 **transaction,
                 'severity': ai_result.get('severity', 'high'),
                 'comments': ' | '.join(comments) if comments else 'Requires review',
-                'issues': ai_result.get('issues', []),
+                'issues': [],  # AI issues removed as they duplicate rule-based comments
                 'correcting_journal': correcting_journal
             })
 
@@ -3041,8 +3040,7 @@ def run_review():
                 comments.append('Export sale with GST charged - exports are GST-FREE (no GST, but CAN claim input credits). Must be exported within 60 days. Use GST Free or Export tax code. Source: ATO exports and GST rules')
             if transaction.get('borrowing_expenses_error'):
                 comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (ATO s25.25)')
-            if ai_result.get('comments'):
-                comments.append(ai_result.get('comments', ''))
+            # Note: AI comments removed as they duplicate the rule-based comments above
 
             # Generate correcting journal entry
             try:
@@ -3055,7 +3053,7 @@ def run_review():
                 **transaction,
                 'severity': ai_result.get('severity', 'high'),
                 'comments': ' | '.join(comments) if comments else 'Requires review',
-                'issues': ai_result.get('issues', []),
+                'issues': [],  # AI issues removed as they duplicate rule-based comments
                 'correcting_journal': correcting_journal
             })
 
