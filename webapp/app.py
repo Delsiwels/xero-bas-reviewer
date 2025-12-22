@@ -3664,6 +3664,34 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
+    if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
+        # Grant income incorrectly charged GST - grants typically GST-FREE per GSTR 2012/2
+        # Unless there's a binding obligation to provide specific services/goods in return
+        original_tax_code = transaction.get('gst_rate_name', '') or 'GST on Income'
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment (grant) - {trans_desc}"
+
+        if gross > 0:
+            # Reverse original GST on Income entry and re-enter as GST Free Income
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': gross,
+                'credit': 0,
+                'tax_code': original_tax_code,
+                'description': std_desc
+            })
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': 0,
+                'credit': gross,
+                'tax_code': 'GST Free Income',
+                'description': std_desc
+            })
+
     if transaction.get('motor_vehicle_gst_limit'):
         # Motor vehicle GST exceeds ATO car limit - need to reverse excess GST claimed
         car_limit = 69674
