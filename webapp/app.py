@@ -2268,6 +2268,9 @@ def upload_review():
                 # Wages GST errors - always use rule-based for consistent BAS Excluded reference
                 if transaction.get('wages_gst_error'):
                     is_useful_ai_comment = False
+                # Fines/penalties - always use rule-based for consistent Section 9-5 reference
+                if transaction.get('fines_penalties_gst'):
+                    is_useful_ai_comment = False
                 # International/domestic travel GST - always use rule-based for consistent Division 38 reference
                 if transaction.get('travel_gst'):
                     is_useful_ai_comment = False
@@ -2316,7 +2319,8 @@ def upload_review():
                 if transaction.get('fines_penalties_gst'):
                     ato_comment = generate_ato_comment('fines_penalties_gst')
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
-                if transaction.get('government_charges_gst'):
+                # Skip government_charges_gst if fines_penalties_gst already handled (fines are specific)
+                if transaction.get('government_charges_gst') and not transaction.get('fines_penalties_gst'):
                     govt_type = transaction.get('government_charges_gst')
                     if govt_type == 'court_fees':
                         ato_comment = generate_ato_comment('court_filing_fees')
@@ -2399,7 +2403,8 @@ def upload_review():
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
             if transaction.get('computer_equipment_expense') and not is_personal:
                 comments.append('Computer equipment over $300 - should be capitalized as asset')
-            if transaction.get('interest_gst_error'):
+            # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
+            if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
@@ -2420,7 +2425,8 @@ def upload_review():
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334')
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
-            if transaction.get('government_charges_gst'):
+            # Skip government_charges_gst if fines_penalties_gst already handled
+            if transaction.get('government_charges_gst') and not transaction.get('fines_penalties_gst'):
                 govt_type = transaction.get('government_charges_gst')
                 if govt_type == 'court_fees':
                     ato_comment = generate_ato_comment('court_filing_fees')
@@ -2433,19 +2439,11 @@ def upload_review():
                     comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
                 else:
                     comments.append('Government fee/charge - NO GST.')
-            if transaction.get('client_entertainment_gst'):
-                ato_comment = generate_ato_comment('entertainment')
-                comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
-            if transaction.get('staff_entertainment_gst'):
-                ato_comment = generate_ato_comment('entertainment')
-                comments.append(ato_comment or 'Staff entertainment - NO GST credit unless FBT is paid on the benefit.')
+            # NOTE: client_entertainment_gst and staff_entertainment_gst already handled in combined entertainment check above
             if transaction.get('residential_premises_gst'):
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
-            if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
-                # Combine both flags - only add one comment for life insurance
-                ato_comment = generate_ato_comment('life_insurance_personal')
-                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
+            # NOTE: life_insurance_personal and insurance_gst_error already handled above (lines ~2289-2302)
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
@@ -2456,7 +2454,8 @@ def upload_review():
             if transaction.get('wages_gst_error'):
                 ato_comment = generate_ato_comment('wages_gst_error')
                 comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
-            if transaction.get('allowance_gst_error'):
+            # Skip allowance_gst_error if wages_gst_error already handled (allowance is in wage keywords)
+            if transaction.get('allowance_gst_error') and not transaction.get('wages_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
                 comments.append('Reimbursement > $82.50 - verify tax invoice exists for GST credit')
@@ -3109,6 +3108,9 @@ def run_review():
                 # Wages GST errors - always use rule-based for consistent BAS Excluded reference
                 if transaction.get('wages_gst_error'):
                     is_useful_ai_comment = False
+                # Fines/penalties - always use rule-based for consistent Section 9-5 reference
+                if transaction.get('fines_penalties_gst'):
+                    is_useful_ai_comment = False
                 # International/domestic travel GST - always use rule-based for consistent Division 38 reference
                 if transaction.get('travel_gst'):
                     is_useful_ai_comment = False
@@ -3157,7 +3159,8 @@ def run_review():
                 if transaction.get('fines_penalties_gst'):
                     ato_comment = generate_ato_comment('fines_penalties_gst')
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
-                if transaction.get('government_charges_gst'):
+                # Skip government_charges_gst if fines_penalties_gst already handled (fines are specific)
+                if transaction.get('government_charges_gst') and not transaction.get('fines_penalties_gst'):
                     govt_type = transaction.get('government_charges_gst')
                     if govt_type == 'court_fees':
                         ato_comment = generate_ato_comment('court_filing_fees')
@@ -3240,7 +3243,8 @@ def run_review():
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
             if transaction.get('computer_equipment_expense') and not is_personal:
                 comments.append('Computer equipment over $300 - should be capitalized as asset')
-            if transaction.get('interest_gst_error'):
+            # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
+            if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
@@ -3261,7 +3265,8 @@ def run_review():
                 comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334')
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
-            if transaction.get('government_charges_gst'):
+            # Skip government_charges_gst if fines_penalties_gst already handled
+            if transaction.get('government_charges_gst') and not transaction.get('fines_penalties_gst'):
                 govt_type = transaction.get('government_charges_gst')
                 if govt_type == 'court_fees':
                     ato_comment = generate_ato_comment('court_filing_fees')
@@ -3274,19 +3279,11 @@ def run_review():
                     comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
                 else:
                     comments.append('Government fee/charge - NO GST.')
-            if transaction.get('client_entertainment_gst'):
-                ato_comment = generate_ato_comment('entertainment')
-                comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
-            if transaction.get('staff_entertainment_gst'):
-                ato_comment = generate_ato_comment('entertainment')
-                comments.append(ato_comment or 'Staff entertainment - NO GST credit unless FBT is paid on the benefit.')
+            # NOTE: client_entertainment_gst and staff_entertainment_gst already handled in combined entertainment check above
             if transaction.get('residential_premises_gst'):
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
-            if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
-                # Combine both flags - only add one comment for life insurance
-                ato_comment = generate_ato_comment('life_insurance_personal')
-                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
+            # NOTE: life_insurance_personal and insurance_gst_error already handled above (lines ~2289-2302)
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
@@ -3297,7 +3294,8 @@ def run_review():
             if transaction.get('wages_gst_error'):
                 ato_comment = generate_ato_comment('wages_gst_error')
                 comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
-            if transaction.get('allowance_gst_error'):
+            # Skip allowance_gst_error if wages_gst_error already handled (allowance is in wage keywords)
+            if transaction.get('allowance_gst_error') and not transaction.get('wages_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
                 comments.append('Reimbursement > $82.50 - verify tax invoice exists for GST credit')
@@ -3484,7 +3482,7 @@ def generate_correcting_journal(transaction):
           transaction.get('insurance_gst_error') or
           transaction.get('input_taxed_gst_error')):
         correct_tax_code = 'Input Taxed'
-    # Priority 3: GST Free items (entertainment, government charges, international travel, donations)
+    # Priority 3: GST Free EXPENSE items (entertainment, government charges, international travel, donations)
     elif (transaction.get('alcohol_gst_error') or
           transaction.get('client_entertainment_gst') or
           transaction.get('staff_entertainment_gst') or
@@ -3492,6 +3490,10 @@ def generate_correcting_journal(transaction):
           transaction.get('donations_gst') or
           transaction.get('travel_gst') == 'international_with_gst'):
         correct_tax_code = 'GST Free Expenses'
+    # Priority 4: GST Free INCOME items (exports, grants)
+    elif (transaction.get('export_gst_error') or
+          transaction.get('grants_sponsorship_gst') == 'grant_with_gst'):
+        correct_tax_code = 'GST Free Income'
 
     # Check what type of error this is
     if transaction.get('account_coding_suspicious'):
@@ -3637,7 +3639,7 @@ def generate_correcting_journal(transaction):
                     'description': std_desc
                 })
 
-    if transaction.get('missing_gst_error'):
+    if transaction.get('missing_gst_error') and not gst_correction_done:
         # Item coded as GST Free but should include GST (e.g., toner, stationery)
         # Correcting journal: reverse GST Free entry and re-enter with GST on Expenses
         # Same account, just changing the tax code
@@ -3666,9 +3668,11 @@ def generate_correcting_journal(transaction):
                 'tax_code': original_tax_code,
                 'description': std_desc
             })
+            gst_correction_done = True
 
     # Skip input_taxed_gst_error if life_insurance_personal (whole expense moving to Drawings)
-    if transaction.get('input_taxed_gst_error') and not transaction.get('life_insurance_personal'):
+    # Also skip if GST correction already done (e.g., by recode)
+    if transaction.get('input_taxed_gst_error') and not transaction.get('life_insurance_personal') and not gst_correction_done:
         # GST incorrectly claimed on input-taxed supply (e.g., bank fees, interest)
         # Per ATO: Input-taxed supplies have NO GST and you CANNOT claim GST credits
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3695,8 +3699,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('drawings_loan_error'):
+    if transaction.get('drawings_loan_error') and not gst_correction_done:
         # Personal expense coded to Drawings/Loan with GST claimed
         # Drawings should be BAS Excluded - reverse the incorrect GST claim
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3723,9 +3728,11 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('wages_gst_error') or transaction.get('allowance_gst_error'):
-        # Wages/Salaries/Superannuation/Allowances - NO GST applies
+    # Note: allowance_gst_error is handled separately below with gst_correction_done guard
+    if transaction.get('wages_gst_error') and not gst_correction_done:
+        # Wages/Salaries/Superannuation - NO GST applies
         # These are NOT supplies and should be BAS Excluded (not reportable on BAS)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
@@ -3754,9 +3761,10 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    # Skip interest_gst_error journal if input_taxed_gst_error already handled it (avoid duplicates)
-    if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
+    # Skip interest_gst_error journal if input_taxed_gst_error already handled it or GST already corrected
+    if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error') and not gst_correction_done:
         # Interest incorrectly coded - should be Input Taxed (no GST credit)
         original_tax_code = transaction.get('gst_rate_name', '') or 'Unknown'
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3803,7 +3811,7 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('sales_gst_error'):
+    if transaction.get('sales_gst_error') and not gst_correction_done:
         # Sales incorrectly coded - should be GST on Income or valid GST Free Income
         original_tax_code = transaction.get('gst_rate_name', '') or 'Unknown'
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3828,8 +3836,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Income',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('other_income_error'):
+    if transaction.get('other_income_error') and not gst_correction_done:
         # Other Income incorrectly coded as BAS Excluded
         original_tax_code = transaction.get('gst_rate_name', '') or 'BAS Excluded'
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3854,8 +3863,10 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Income',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('export_gst_error'):
+    # Skip export_gst_error journal if recode already applied with correct tax code (GST Free Income)
+    if transaction.get('export_gst_error') and not recode_done:
         # Export sale incorrectly charged GST - exports should be GST-FREE
         # Per ATO: Exports are GST-free (no GST charged, but CAN claim input credits)
         original_tax_code = transaction.get('gst_rate_name', '') or 'GST on Income'
@@ -3882,7 +3893,8 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
+    # Skip grants_sponsorship_gst journal if recode already applied with correct tax code (GST Free Income)
+    if transaction.get('grants_sponsorship_gst') == 'grant_with_gst' and not recode_done:
         # Grant income incorrectly charged GST - grants typically GST-FREE per GSTR 2012/2
         # Unless there's a binding obligation to provide specific services/goods in return
         original_tax_code = transaction.get('gst_rate_name', '') or 'GST on Income'
@@ -4215,7 +4227,7 @@ def generate_correcting_journal(transaction):
                 'description': f"Reverse GST Free coding on domestic travel"
             })
 
-    if transaction.get('payment_processor_fees') == 'paypal_with_gst':
+    if transaction.get('payment_processor_fees') == 'paypal_with_gst' and not gst_correction_done:
         # PayPal fees with GST claimed - should be Input Taxed (no GST)
         # PayPal fees are GST exempt financial supplies
         if gst > 0:
@@ -4240,7 +4252,7 @@ def generate_correcting_journal(transaction):
                 'description': f"Reverse GST claimed on PayPal fees"
             })
 
-    if transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
+    if transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst'] and not gst_correction_done:
         # Stripe/Bank merchant fees without GST - should include GST
         if gross > 0:
             # Debit: Same account with GST on Expenses (correct - includes GST)
@@ -4264,7 +4276,7 @@ def generate_correcting_journal(transaction):
                 'description': f"Reverse GST Free coding on merchant fees"
             })
 
-    if transaction.get('livestock_gst'):
+    if transaction.get('livestock_gst') and not gst_correction_done:
         # Livestock sale incorrectly coded as GST-free - should be taxable
         # Live animals are subject to GST (meat only becomes GST-free after inspection)
         original_tax_code = transaction.get('gst_rate_name', '') or 'GST Free Income'
@@ -4292,7 +4304,7 @@ def generate_correcting_journal(transaction):
                 'description': f"Re-enter with GST on Income - livestock sales are taxable"
             })
 
-    if transaction.get('asset_disposal_gst'):
+    if transaction.get('asset_disposal_gst') and not gst_correction_done:
         # Asset disposal incorrectly coded as BAS Excluded - should be taxable
         # Business asset sales must include GST (report at G1, remit GST at 1A)
         original_tax_code = transaction.get('gst_rate_name', '') or 'BAS Excluded'
@@ -4320,7 +4332,7 @@ def generate_correcting_journal(transaction):
                 'description': f"Re-enter with GST on Income - asset disposal is taxable"
             })
 
-    if transaction.get('asset_capitalization_error'):
+    if transaction.get('asset_capitalization_error') and not recode_done:
         # Asset should be capitalized instead of expensed (over $20,000 threshold)
         # This is an account coding error - need to move from expense to asset account
         suggested_asset = suggest_asset_account(description)
@@ -4602,7 +4614,33 @@ def check_account_coding(transaction):
                                     # Training/education as a service
                                     'training', 'workshop', 'course', 'session', 'coaching',
                                     'microsoft', 'ms office', 'excel', 'word', 'powerpoint',
-                                    'instruction', 'tutoring', 'lesson', 'seminar', 'webinar']
+                                    'instruction', 'tutoring', 'lesson', 'seminar', 'webinar',
+                                    # Export/freight/logistics revenue
+                                    'export', 'freight revenue', 'freight income', 'courier revenue',
+                                    'shipping revenue', 'delivery income', 'transport revenue', 'postage revenue',
+                                    # Software/license revenue
+                                    'license fee', 'licence fee', 'software revenue', 'subscription revenue',
+                                    'saas', 'license income', 'royalty', 'royalties',
+                                    # Property/rental revenue
+                                    'rental income', 'rent received', 'lease income', 'tenancy',
+                                    'property income', 'accommodation revenue', 'room revenue',
+                                    'airbnb', 'booking.com', 'stayz', 'hotel revenue',
+                                    # Hospitality/catering revenue
+                                    'catering revenue', 'event catering', 'function', 'banquet',
+                                    'restaurant revenue', 'cafe revenue', 'food sales', 'beverage sales',
+                                    # Parking revenue
+                                    'parking revenue', 'parking income', 'car park revenue',
+                                    # Trade/repair service revenue
+                                    'repair revenue', 'service revenue', 'labour', 'labor',
+                                    'maintenance revenue', 'maintenance contract', 'service contract',
+                                    # Professional service revenue (for law firms, accountants)
+                                    'legal fee', 'legal services', 'accounting fee', 'audit fee',
+                                    'bookkeeping', 'tax return', 'bas preparation',
+                                    # Insurance broker revenue
+                                    'commission', 'brokerage', 'insurance commission',
+                                    # Event/conference revenue
+                                    'conference revenue', 'event revenue', 'ticket sales', 'registration fee',
+                                    'sponsorship', 'exhibition']
         is_service_revenue = any(keyword in description for keyword in service_revenue_keywords)
         if is_service_revenue:
             return False  # This is legitimate service income
@@ -5355,9 +5393,10 @@ def check_government_charges_gst(transaction):
         return 'government_tax'
 
     # Other regulatory fees - general Division 81
+    # Note: 'infringement' removed - fines/penalties handled by check_fines_penalties_gst
     other_keywords = [
         'government fee', 'govt fee', 'lodgement fee', 'license fee', 'licence fee',
-        'workers comp levy', 'epa levy', 'infringement',
+        'workers comp levy', 'epa levy',
     ]
     if any(keyword in description for keyword in other_keywords):
         return 'regulatory_fee'
@@ -6886,23 +6925,34 @@ def check_travel_gst(transaction):
     gst_rate_name = transaction.get('gst_rate_name', '').lower()
     gross = abs(transaction.get('gross', 0))
 
-    # International travel keywords (should be GST-FREE, no GST credits)
-    international_keywords = [
-        # International flights
+    # International travel - EXPLICIT keywords (clearly travel, should be GST-FREE)
+    international_explicit_keywords = [
+        # International flights - explicit
         'international flight', 'overseas flight', 'international airfare',
         'flight to usa', 'flight to uk', 'flight to europe', 'flight to asia',
         'flight to nz', 'flight to new zealand', 'flight to singapore',
         'flight to bali', 'flight to fiji', 'flight to japan', 'flight to china',
-        'los angeles', 'london', 'new york', 'singapore', 'hong kong', 'tokyo',
-        'auckland', 'wellington', 'christchurch', 'denpasar', 'bali',
-        # Overseas accommodation
+        # Overseas accommodation - explicit
         'overseas hotel', 'overseas accommodation', 'international hotel',
         'hotel london', 'hotel singapore', 'hotel usa', 'hotel nz',
         'overseas accom', 'foreign hotel', 'international accom',
-        # Overseas expenses
+        # Overseas expenses - explicit
         'overseas expense', 'international expense', 'foreign expense',
         'overseas car hire', 'international car rental',
         'overseas meal', 'overseas tour', 'international tour',
+    ]
+
+    # International locations (must be combined with travel keywords to flag)
+    international_locations = [
+        'los angeles', 'london', 'new york', 'singapore', 'hong kong', 'tokyo',
+        'auckland', 'wellington', 'christchurch', 'denpasar', 'bali', 'fiji',
+        'kuala lumpur', 'bangkok', 'jakarta', 'manila', 'seoul', 'taipei',
+    ]
+
+    # Travel-related keywords (combine with international locations)
+    travel_keywords = [
+        'flight', 'airfare', 'hotel', 'accommodation', 'accom', 'travel',
+        'trip', 'tour', 'car hire', 'car rental', 'taxi', 'transport',
     ]
 
     # Domestic travel keywords (should be TAXABLE with GST)
@@ -6933,7 +6983,17 @@ def check_travel_gst(transaction):
         'hotel' in account
     )
 
-    is_international = any(keyword in description for keyword in international_keywords)
+    # Check for explicit international travel keywords (clear cases)
+    is_explicit_international = any(keyword in description for keyword in international_explicit_keywords)
+
+    # Check for international location + travel keyword combination
+    has_international_location = any(loc in description for loc in international_locations)
+    has_travel_keyword = any(kw in description for kw in travel_keywords)
+    is_location_based_international = has_international_location and (has_travel_keyword or is_travel_account)
+
+    # Combined international check - must be clearly travel-related
+    is_international = is_explicit_international or is_location_based_international
+
     is_domestic = any(keyword in description for keyword in domestic_keywords)
 
     # Check GST coding
@@ -7694,12 +7754,12 @@ ATO_RULING_QUERIES = {
         }
     },
     'fines_penalties_gst': {
-        'query': 'fines penalties BAS excluded GST site:ato.gov.au',
+        'query': 'fines penalties BAS excluded GST section 9-5 site:ato.gov.au',
         'fallback': {
-            'ruling': 'GST Act - Section 9-10',
-            'title': 'Fines and penalties are not taxable supplies',
-            'summary': 'Fines and penalties are not consideration for a supply and are BAS Excluded. No GST applies.',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-is-gst'
+            'ruling': 'GST Act - Section 9-5',
+            'title': 'Fines and penalties are not consideration for a supply',
+            'summary': 'Fines do not satisfy section 9-5 requirements. BAS Excluded, not GST-Free.',
+            'url': 'https://www.ato.gov.au/law/view/document?docid=CLR/CR201332/NAT/ATO/00001'
         }
     },
     'asset_capitalization_error': {
