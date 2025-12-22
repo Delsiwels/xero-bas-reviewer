@@ -686,10 +686,14 @@
                 if (response.ok) {
                     displayResults(data);
                 } else {
-                    let errorMsg = data.error || 'Review failed';
+                    let errorMsg = data.error || 'Review failed (no error details)';
                     if (data.hint) errorMsg += '\n\nHint: ' + data.hint;
                     if (data.first_rows) errorMsg += '\n\nFirst rows:\n' + data.first_rows;
-                    if (data.trace) console.error('Trace:', data.trace);
+                    if (data.trace) {
+                        console.error('Server Error Trace:', data.trace);
+                        errorMsg += '\n\n(Check browser console for details)';
+                    }
+                    console.error('Review error response:', data);
                     alert('Error: ' + errorMsg);
                     document.getElementById('progress-section').style.display = 'none';
                 }

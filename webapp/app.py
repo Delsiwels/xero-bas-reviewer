@@ -95,6 +95,14 @@ login_manager.login_message_category = 'info'
 def load_user(user_id):
     return User.query.get(user_id)
 
+@login_manager.unauthorized_handler
+def unauthorized():
+    """Handle unauthorized access - return JSON for API routes, redirect otherwise"""
+    from flask import request, jsonify
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Please log in to access this feature'}), 401
+    return redirect(url_for('auth.login'))
+
 # Register blueprints
 from blueprints.auth import auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -2420,7 +2428,10 @@ def upload_review():
 
     except Exception as e:
         import traceback
-        return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+        error_msg = str(e) if str(e) else f"Unexpected error: {type(e).__name__}"
+        print(f"Upload review error: {error_msg}")
+        print(f"Traceback: {traceback.format_exc()}")
+        return jsonify({'error': error_msg, 'trace': traceback.format_exc()}), 500
 
 
 @app.route('/api/accounts')
