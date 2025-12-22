@@ -3253,11 +3253,19 @@ def run_review():
 def generate_correcting_journal(transaction):
     """Generate suggested correcting journal entry for flagged transaction"""
     description = transaction.get('description', '').lower()
-    account_code = str(transaction.get('account_code', ''))
-    account_name = transaction.get('account', '')
-    gross = abs(transaction.get('gross', 0))
-    gst = abs(transaction.get('gst', 0))
-    net = abs(transaction.get('net', 0))
+    account_code = str(transaction.get('account_code', '') or '').strip()
+    account_name = str(transaction.get('account', '') or '').strip()
+    gross = abs(float(transaction.get('gross', 0) or 0))
+    gst = abs(float(transaction.get('gst', 0) or 0))
+    net = abs(float(transaction.get('net', 0) or 0))
+
+    # Debug: Log if account info is missing
+    if not account_code:
+        print(f"WARNING: Empty account_code for transaction: {transaction.get('description', 'Unknown')}")
+        print(f"  Full transaction: account_code={transaction.get('account_code')}, account={transaction.get('account')}")
+        # Use placeholder to prevent blank entries in Xero
+        account_code = '999'  # Suspense/Unknown account
+        account_name = account_name or 'Unknown Account'
 
     journal_entries = []
     narration = f"Reallocate: {transaction.get('description', '')}"
