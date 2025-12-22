@@ -2338,7 +2338,7 @@ def upload_review():
             if transaction.get('fines_penalties_gst'):
                 comments.append('Fine/penalty - NO GST (non-reportable)')
             if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST (non-reportable)')
+                comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
             if transaction.get('property_gst_withholding'):
                 comments.append('Property purchase - check GST withholding obligations')
             if transaction.get('livestock_gst'):
@@ -3044,7 +3044,7 @@ def run_review():
             if transaction.get('fines_penalties_gst'):
                 comments.append('Fine/penalty - NO GST (non-reportable)')
             if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST (non-reportable)')
+                comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
             if transaction.get('property_gst_withholding'):
                 comments.append('Property purchase - check GST withholding obligations')
             if transaction.get('livestock_gst'):
@@ -3192,9 +3192,8 @@ def generate_correcting_journal(transaction):
     # This ensures we use the right tax code when recoding AND avoid duplicate GST fix journals
     correct_tax_code = 'GST on Expenses' if gst > 0 else 'GST Free'  # default
 
-    # Priority 1: BAS Excluded items (fines, donations, wages, allowances)
+    # Priority 1: BAS Excluded items (fines, wages, allowances) - NOT reportable on BAS
     if (transaction.get('fines_penalties_gst') or
-        transaction.get('donations_gst') or
         transaction.get('wages_gst_error') or
         transaction.get('allowance_gst_error')):
         correct_tax_code = 'BAS Excluded'
@@ -3203,11 +3202,12 @@ def generate_correcting_journal(transaction):
           transaction.get('insurance_gst_error') or
           transaction.get('input_taxed_gst_error')):
         correct_tax_code = 'Input Taxed'
-    # Priority 3: GST Free items (entertainment, government charges, international travel)
+    # Priority 3: GST Free items (entertainment, government charges, international travel, donations)
     elif (transaction.get('alcohol_gst_error') or
           transaction.get('client_entertainment_gst') or
           transaction.get('staff_entertainment_gst') or
           transaction.get('government_charges_gst') or
+          transaction.get('donations_gst') or
           transaction.get('travel_gst') == 'international_with_gst'):
         correct_tax_code = 'GST Free Expenses'
 
@@ -3787,18 +3787,19 @@ def generate_correcting_journal(transaction):
     # NOTE: fines_penalties_gst is now handled in the combined is_gov_charge_or_fine block above
 
     if transaction.get('donations_gst') and not gst_correction_done:
-        # Donations - NO GST applies (non-reportable)
-        # Use same account with different tax codes - GST adjusts automatically via tax code
+        # Donations - NO GST applies
+        # For P&L expense accounts, use GST Free Expenses (not BAS Excluded)
+        # GST Free Expenses is correct for donations as they are GST-free, not out of scope
         if gst > 0:
-            # Debit: Same account with BAS Excluded (donations have no GST)
+            # Debit: Same account with GST Free Expenses (donations have no GST)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': gst,
                 'credit': 0,
-                'tax_code': 'BAS Excluded',
-                'description': f"Adjust donation - no GST applies (non-reportable)"
+                'tax_code': 'GST Free Expenses',
+                'description': f"Adjust donation - no GST applies"
             })
             # Credit: Same account with GST on Expenses (reverse GST claimed via tax code)
             journal_entries.append({
