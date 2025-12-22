@@ -780,6 +780,13 @@
             fileNameDiv.textContent = 'Selected: ' + file.name;
             fileNameDiv.style.display = 'block';
             uploadBtn.disabled = false;
+
+            // Change folder icon to green checkmark when file is selected
+            const uploadIcon = document.querySelector('.upload-icon');
+            if (uploadIcon) {
+                uploadIcon.textContent = '✅';
+                uploadIcon.style.color = '#16a34a';
+            }
         }
 
         async function uploadFile() {
