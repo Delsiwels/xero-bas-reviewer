@@ -974,6 +974,9 @@
                 const mediumCount = flaggedItems.filter(i => i.severity === 'medium').length;
                 const lowCount = flaggedItems.filter(i => i.severity === 'low').length;
 
+                // Get all transactions for complete audit trail
+                const allTransactions = reviewResults.all_transactions || [];
+
                 const reviewData = {
                     period_start: document.getElementById('start-date').value || '',
                     period_end: document.getElementById('end-date').value || '',
@@ -986,7 +989,8 @@
                         company_name: reviewResults.company_name || '',
                         review_date: new Date().toISOString()
                     },
-                    flagged_items: flaggedItems
+                    flagged_items: flaggedItems,
+                    all_transactions: allTransactions
                 };
 
                 const response = await fetch('/api/save-review', {

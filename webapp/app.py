@@ -541,6 +541,16 @@ def save_review():
         if not data:
             return jsonify({'success': False, 'error': 'No review data provided'}), 400
 
+        # Try to fetch BAS report from Xero if connected
+        bas_report_data = data.get('bas_report_data', {})
+        if 'access_token' in session and not bas_report_data:
+            try:
+                bas_report = fetch_xero_bas_report()
+                if bas_report:
+                    bas_report_data = bas_report
+            except Exception as e:
+                print(f"Could not fetch BAS report: {e}")
+
         # Add tenant and user info from session
         review_data = {
             'tenant_id': session.get('tenant_id', ''),
@@ -553,9 +563,10 @@ def save_review():
             'high_severity_count': data.get('high_severity_count', 0),
             'medium_severity_count': data.get('medium_severity_count', 0),
             'low_severity_count': data.get('low_severity_count', 0),
-            'bas_report_data': data.get('bas_report_data', {}),
+            'bas_report_data': bas_report_data,
             'review_summary': data.get('review_summary', {}),
-            'flagged_items': data.get('flagged_items', [])
+            'flagged_items': data.get('flagged_items', []),
+            'all_transactions': data.get('all_transactions', [])
         }
 
         result = save_review_to_d1(review_data)
@@ -1159,19 +1170,52 @@ def init_cloudflare_d1_tables():
     )
     """
 
+    # Create all_transactions table (complete audit trail)
+    create_all_transactions_sql = """
+    CREATE TABLE IF NOT EXISTS all_transactions (
+        id TEXT PRIMARY KEY,
+        statement_id TEXT NOT NULL,
+        row_number INTEGER,
+        date TEXT,
+        account_code TEXT,
+        account_name TEXT,
+        description TEXT,
+        gross REAL,
+        gst REAL,
+        net REAL,
+        gst_rate_name TEXT,
+        source TEXT,
+        reference TEXT,
+        contact TEXT,
+        xero_url TEXT,
+        is_flagged INTEGER DEFAULT 0,
+        severity TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (statement_id) REFERENCES reviewed_statements(id)
+    )
+    """
+
     # Create index for faster lookups
     create_index_sql = """
     CREATE INDEX IF NOT EXISTS idx_statements_tenant ON reviewed_statements(tenant_id)
     """
 
+    create_index_transactions_sql = """
+    CREATE INDEX IF NOT EXISTS idx_transactions_statement ON all_transactions(statement_id)
+    """
+
     result1 = cloudflare_d1_query(create_statements_sql)
     result2 = cloudflare_d1_query(create_items_sql)
-    result3 = cloudflare_d1_query(create_index_sql)
+    result3 = cloudflare_d1_query(create_all_transactions_sql)
+    result4 = cloudflare_d1_query(create_index_sql)
+    result5 = cloudflare_d1_query(create_index_transactions_sql)
 
     return {
         'statements_table': result1,
-        'items_table': result2,
-        'index': result3
+        'flagged_items_table': result2,
+        'all_transactions_table': result3,
+        'index_statements': result4,
+        'index_transactions': result5
     }
 
 
@@ -1251,6 +1295,53 @@ def save_review_to_d1(review_data):
         ]
 
         cloudflare_d1_query(insert_item_sql, item_params)
+
+    # Insert all transactions (complete audit trail)
+    all_transactions = review_data.get('all_transactions', [])
+    flagged_row_numbers = set(item.get('row_number', 0) for item in flagged_items)
+
+    for txn in all_transactions:
+        txn_id = str(uuid.uuid4())
+        row_num = txn.get('row_number', 0)
+        is_flagged = 1 if row_num in flagged_row_numbers else 0
+
+        # Find severity if flagged
+        severity = ''
+        if is_flagged:
+            for fi in flagged_items:
+                if fi.get('row_number') == row_num:
+                    severity = fi.get('severity', '')
+                    break
+
+        insert_txn_sql = """
+        INSERT INTO all_transactions (
+            id, statement_id, row_number, date, account_code, account_name,
+            description, gross, gst, net, gst_rate_name, source, reference,
+            contact, xero_url, is_flagged, severity
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """
+
+        txn_params = [
+            txn_id,
+            statement_id,
+            row_num,
+            txn.get('date', ''),
+            txn.get('account_code', ''),
+            txn.get('account', ''),
+            txn.get('description', ''),
+            txn.get('gross', 0),
+            txn.get('gst', 0),
+            txn.get('net', 0),
+            txn.get('gst_rate_name', ''),
+            txn.get('source', ''),
+            txn.get('reference', ''),
+            txn.get('contact', ''),
+            txn.get('xero_url', ''),
+            is_flagged,
+            severity
+        ]
+
+        cloudflare_d1_query(insert_txn_sql, txn_params)
 
     return {'success': True, 'statement_id': statement_id}
 
@@ -3070,11 +3161,32 @@ def run_review():
                 'is_split': pattern.get('is_split_allocation', False)
             }
 
+        # Prepare all transactions for complete audit trail
+        all_transactions_data = []
+        for i, txn in enumerate(transactions):
+            all_transactions_data.append({
+                'row_number': i + 1,
+                'date': txn.get('date'),
+                'account_code': txn.get('account_code'),
+                'account_name': txn.get('account', ''),
+                'description': txn.get('description', ''),
+                'gross': txn.get('gross', 0),
+                'gst': txn.get('gst', 0),
+                'net': txn.get('net', 0),
+                'gst_rate_name': txn.get('gst_rate_name', ''),
+                'source': txn.get('source', ''),
+                'reference': txn.get('reference', ''),
+                'contact': txn.get('contact', ''),
+                'xero_url': txn.get('xero_url', '')
+            })
+
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
-            'patterns_detected': pattern_debug
+            'all_transactions': all_transactions_data,
+            'patterns_detected': pattern_debug,
+            'company_name': session.get('tenant_name', '')
         })
     except Exception as e:
         import traceback
