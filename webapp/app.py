@@ -2050,6 +2050,12 @@ def upload_review():
                 transaction['insurance_gst_error'] = False
 
             try:
+                transaction['life_insurance_personal'] = check_life_insurance_personal(transaction)
+            except Exception as e:
+                print(f"Error in check_life_insurance_personal: {e}")
+                transaction['life_insurance_personal'] = False
+
+            try:
                 transaction['grants_sponsorship_gst'] = check_grants_sponsorship_gst(transaction)
             except Exception as e:
                 print(f"Error in check_grants_sponsorship_gst: {e}")
@@ -2161,6 +2167,7 @@ def upload_review():
                 transaction['staff_entertainment_gst'] or
                 transaction['residential_premises_gst'] or
                 transaction['insurance_gst_error'] or
+                transaction['life_insurance_personal'] or
                 transaction['grants_sponsorship_gst'] or
                 transaction['wages_gst_error'] or
                 transaction['allowance_gst_error'] or
@@ -2269,6 +2276,8 @@ def upload_review():
                 comments.append('Residential property expense - NO GST credit claimable')
             if transaction.get('insurance_gst_error'):
                 comments.append('Life/income protection insurance - NO GST credit claimable')
+            if transaction.get('life_insurance_personal'):
+                comments.append('Life/income protection insurance - NOT a business expense. Recode to Owner Drawings (owner can claim on personal tax return)')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
@@ -2708,6 +2717,12 @@ def run_review():
                 transaction['insurance_gst_error'] = False
 
             try:
+                transaction['life_insurance_personal'] = check_life_insurance_personal(transaction)
+            except Exception as e:
+                print(f"Error in check_life_insurance_personal: {e}")
+                transaction['life_insurance_personal'] = False
+
+            try:
                 transaction['grants_sponsorship_gst'] = check_grants_sponsorship_gst(transaction)
             except Exception as e:
                 print(f"Error in check_grants_sponsorship_gst: {e}")
@@ -2819,6 +2834,7 @@ def run_review():
                 transaction['staff_entertainment_gst'] or
                 transaction['residential_premises_gst'] or
                 transaction['insurance_gst_error'] or
+                transaction['life_insurance_personal'] or
                 transaction['grants_sponsorship_gst'] or
                 transaction['wages_gst_error'] or
                 transaction['allowance_gst_error'] or
@@ -2927,6 +2943,8 @@ def run_review():
                 comments.append('Residential property expense - NO GST credit claimable')
             if transaction.get('insurance_gst_error'):
                 comments.append('Life/income protection insurance - NO GST credit claimable')
+            if transaction.get('life_insurance_personal'):
+                comments.append('Life/income protection insurance - NOT a business expense. Recode to Owner Drawings (owner can claim on personal tax return)')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income - GST should apply')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
@@ -3634,6 +3652,33 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
             gst_correction_done = True
+
+    if transaction.get('life_insurance_personal'):
+        # Life/income protection insurance - NOT a business expense
+        # Should be recoded to Owner Drawings (owner can claim on personal tax return)
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"Recode to Owner Drawings - {trans_desc}"
+        if gross > 0:
+            # Debit: Owner A Drawings (880) with BAS Excluded
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': '880',
+                'account_name': 'Owner A Drawings',
+                'debit': gross,
+                'credit': 0,
+                'tax_code': 'BAS Excluded',
+                'description': std_desc
+            })
+            # Credit: Reverse the original expense account
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': 0,
+                'credit': gross,
+                'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free Expenses',
+                'description': std_desc
+            })
 
     if transaction.get('allowance_gst_error') and not gst_correction_done:
         # Employee allowance - GST not claimable (not a purchase from supplier)
@@ -5916,6 +5961,55 @@ def check_insurance_gst_error(transaction):
 
     # Flag if GST is claimed on input-taxed insurance
     if is_input_taxed_insurance and gst_amount > 0:
+        return True
+
+    return False
+
+
+def check_life_insurance_personal(transaction):
+    """
+    Check if life/income protection insurance is incorrectly coded as a business expense.
+
+    Per ATO rules:
+    - Life insurance, TPD, trauma insurance are NOT deductible business expenses
+    - Income protection MAY be deductible on the OWNER'S personal tax return, not business
+    - If paid through the business, should be coded to Owner Drawings (personal expense)
+    - Exception: Employer-paid insurance for EMPLOYEES may be deductible
+
+    The owner can claim income protection on their personal tax return.
+    Life insurance is generally not deductible at all.
+
+    Source: https://www.ato.gov.au/individuals-and-families/your-tax-return/instructions-to-complete-your-tax-return/mytax-instructions/2025/deductions/other-deductions/other-deductions
+    """
+    description = transaction.get('description', '').lower()
+    account = transaction.get('account', '').lower()
+
+    # Life/personal insurance types - NOT business deductible
+    personal_insurance_keywords = [
+        'life insurance', 'life cover', 'life policy', 'life premium',
+        'income protection', 'income protection insurance', 'ip insurance',
+        'disability insurance', 'tpd', 'total permanent disability',
+        'trauma insurance', 'critical illness', 'critical care',
+        'death cover', 'death benefit',
+    ]
+
+    # Check if it's personal insurance
+    is_personal_insurance = any(keyword in description for keyword in personal_insurance_keywords)
+
+    # Skip if already in Drawings/Loan account (correctly coded)
+    drawings_accounts = ['drawing', 'drawings', 'loan', 'director loan', 'shareholder', 'owner']
+    is_drawings_account = any(keyword in account for keyword in drawings_accounts)
+    if is_drawings_account:
+        return False
+
+    # Skip if description mentions "employee" or "staff" (may be valid business expense)
+    employee_keywords = ['employee', 'staff', 'worker', 'team member']
+    is_employee_insurance = any(keyword in description for keyword in employee_keywords)
+    if is_employee_insurance:
+        return False
+
+    # Flag if personal insurance is in a business expense account
+    if is_personal_insurance:
         return True
 
     return False
