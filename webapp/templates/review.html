@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BAS Review{% if tenant_name %} - {{ tenant_name }}{% endif %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -11,7 +14,7 @@
             box-sizing: border-box;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
             min-height: 100vh;
         }
@@ -189,24 +192,29 @@
         .severity-badge {
             display: inline-block;
             padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.8em;
+            border-radius: 6px;
+            font-size: 11px;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
         .severity-badge.high {
-            background: #dc3545;
-            color: white;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
         }
         .severity-badge.medium {
-            background: #ffc107;
-            color: #333;
+            background: #fffbeb;
+            color: #d97706;
+            border: 1px solid #fde68a;
         }
         .severity-badge.low {
-            background: #28a745;
-            color: white;
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
         }
         .comment-cell {
-            font-size: 12px;
+            font-size: 13px;
             color: #444;
             line-height: 1.5;
         }
@@ -225,24 +233,33 @@
         .flagged-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.9em;
+            font-size: 13px;
         }
         .flagged-table th {
             position: sticky;
             top: 0;
-            background: #f8f9fa;
+            background: #f9fafb;
             z-index: 1;
+            padding: 12px 10px;
+            font-weight: 600;
+            color: #374151;
+            text-align: left;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .flagged-table td {
             vertical-align: top;
-            padding: 10px 8px;
-            border-bottom: 1px solid #e0e0e0;
+            padding: 12px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
         }
         .flagged-table tbody tr {
-            border-bottom: 1px solid #dee2e6;
+            transition: background-color 0.15s ease;
         }
         .flagged-table tbody tr:hover {
-            background-color: #f8f9fa;
+            background-color: #f9fafb;
         }
         .flagged-table small {
             color: #666;
@@ -328,40 +345,42 @@
         }
         .journal-table {
             width: 260px;
-            font-size: 11px;
+            font-size: 13px;
             border-collapse: collapse;
             background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
             overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         .journal-table th {
-            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
-            padding: 6px 8px;
+            background: #f8f9fa;
+            padding: 8px 10px;
             font-weight: 600;
             text-align: left;
-            border-bottom: 2px solid #dee2e6;
-            color: #495057;
+            border-bottom: 1px solid #e5e5e5;
+            color: #374151;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         .journal-table td {
-            padding: 5px 8px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 8px 10px;
+            border-bottom: 1px solid #f3f4f6;
             vertical-align: middle;
         }
         .journal-table tr:last-child td {
             border-bottom: none;
         }
-        .journal-table tr:nth-child(even) {
-            background: #fafafa;
-        }
         .journal-table td:nth-child(2),
         .journal-table td:nth-child(3) {
             text-align: right;
-            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
-            color: #28a745;
+            font-family: 'Inter', -apple-system, sans-serif;
+            font-weight: 500;
+            color: #059669;
         }
         .journal-table td:nth-child(3) {
-            color: #dc3545;
+            color: #dc2626;
         }
         .no-issues {
             text-align: center;
