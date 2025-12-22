@@ -3180,13 +3180,59 @@ def run_review():
                 'xero_url': txn.get('xero_url', '')
             })
 
+        # Auto-save review to Cloudflare D1 (if configured)
+        saved_to_cloud = False
+        statement_id = None
+        try:
+            config = get_cloudflare_config()
+            if config['account_id'] and config['api_token'] and config['database_id']:
+                # Fetch BAS report data if available
+                bas_report_data = {}
+                try:
+                    bas_report = fetch_xero_bas_report(from_date_str, to_date_str)
+                    if bas_report:
+                        bas_report_data = bas_report
+                except Exception as e:
+                    print(f"Could not fetch BAS report for auto-save: {e}")
+
+                # Prepare review data for saving
+                review_data = {
+                    'tenant_id': session.get('tenant_id', ''),
+                    'tenant_name': session.get('tenant_name', ''),
+                    'user_email': current_user.email if current_user else '',
+                    'period_start': from_date_str,
+                    'period_end': to_date_str,
+                    'total_transactions': len(transactions),
+                    'flagged_count': len(flagged_items),
+                    'high_severity_count': len([f for f in flagged_items if f.get('severity') == 'high']),
+                    'medium_severity_count': len([f for f in flagged_items if f.get('severity') == 'medium']),
+                    'low_severity_count': len([f for f in flagged_items if f.get('severity') == 'low']),
+                    'bas_report_data': bas_report_data,
+                    'review_summary': {
+                        'review_mode': review_mode,
+                        'patterns_detected': len(pattern_debug)
+                    },
+                    'flagged_items': flagged_items,
+                    'all_transactions': all_transactions_data
+                }
+
+                save_result = save_review_to_d1(review_data)
+                if save_result.get('success'):
+                    saved_to_cloud = True
+                    statement_id = save_result.get('statement_id')
+                    print(f"Auto-saved review to D1: {statement_id}")
+        except Exception as e:
+            print(f"Auto-save to D1 failed (non-blocking): {e}")
+
         return jsonify({
             'total_transactions': len(transactions),
             'flagged_count': len(flagged_items),
             'flagged_items': flagged_items,
             'all_transactions': all_transactions_data,
             'patterns_detected': pattern_debug,
-            'company_name': session.get('tenant_name', '')
+            'company_name': session.get('tenant_name', ''),
+            'saved_to_cloud': saved_to_cloud,
+            'statement_id': statement_id
         })
     except Exception as e:
         import traceback

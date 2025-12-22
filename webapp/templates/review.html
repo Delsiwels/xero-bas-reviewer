@@ -918,9 +918,22 @@
                 }
             }
 
-            // Always show download and save buttons (even if no issues, user might want the report)
+            // Always show download button (even if no issues, user might want the report)
             document.getElementById('download-btn').style.display = 'inline-block';
-            document.getElementById('save-review-btn').style.display = 'inline-block';
+
+            // Update save button based on auto-save status
+            const saveBtn = document.getElementById('save-review-btn');
+            if (data.saved_to_cloud) {
+                saveBtn.textContent = 'Saved to Cloud';
+                saveBtn.style.background = '#28a745';
+                saveBtn.disabled = true;
+                saveBtn.style.cursor = 'default';
+            } else {
+                saveBtn.textContent = 'Save Review to Cloud';
+                saveBtn.style.background = '#7c3aed';
+                saveBtn.disabled = false;
+            }
+            saveBtn.style.display = 'inline-block';
         }
 
         async function downloadReport() {
