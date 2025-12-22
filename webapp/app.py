@@ -2199,100 +2199,10 @@ def upload_review():
         for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
             ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
-            # Build comment based on what was flagged (with ATO rule references)
+            # Use simplified AI-generated comment instead of detailed rule-based comments
             comments = []
-            if transaction['account_coding_suspicious']:
-                comments.append('Account coding may be incorrect')
-            if transaction['alcohol_gst_error']:
-                comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
-            if transaction['input_taxed_gst_error']:
-                comments.append('Input-taxed supply - GST incorrectly claimed (ATO: no GST on financial supplies)')
-            if transaction['missing_gst_error']:
-                comments.append('Should include GST (10%) - currently coded as GST Free')
-            if not transaction['gst_calculation_correct']:
-                comments.append('GST calculation error')
-            if transaction.get('drawings_loan_error'):
-                comments.append('Drawings/Loan account - should be BAS Excluded (personal/owner expense)')
-            if transaction.get('personal_in_business_account'):
-                comments.append('ISSUE: "personal" expense is coded to a business account. Should be in Owner Drawings with BAS Excluded (no GST claim on personal expenses)')
-            if transaction.get('asset_capitalization_error'):
-                comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules')
-            if transaction.get('computer_equipment_expense'):
-                comments.append('Computer equipment over $300 - should be capitalized as asset (ATO depreciation: laptops 2 yrs, computers 4 yrs)')
-            if transaction.get('interest_gst_error'):
-                comments.append('Interest should be GST Free Income or Input Taxed only')
-            if transaction.get('other_income_error'):
-                comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
-            if transaction.get('sales_gst_error'):
-                # Check if it's a commercial service coded as GST Free (specific error)
-                desc = transaction.get('description', '').lower()
-                gst_rate = transaction.get('gst_rate_name', '').lower()
-                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
-                is_commercial = any(kw in desc for kw in commercial_keywords)
-                is_bas_excluded = 'bas excluded' in gst_rate
-                if is_bas_excluded:
-                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
-                elif is_commercial:
-                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
-                else:
-                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
-            if transaction.get('motor_vehicle_gst_limit'):
-                comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334 (ATO 2025-26 car limit $69,674)')
-            if transaction.get('overseas_subscription_gst'):
-                comments.append('Overseas digital service/subscription - GST credit may be INVALID. Overseas suppliers should NOT charge GST to GST-registered businesses. Provide your ABN to seek a refund from supplier. If no GST charged, reverse charge applies (self-assess GST, usually net zero for business use). Source: ATO imported services rules')
-            if transaction.get('government_charges_gst'):
-                comments.append('Government charge - NO GST applies (stamp duty, rates, ASIC fees, rego are GST-free)')
-            if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable (ATO entertainment rules)')
-            if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT is paid (ATO FBT entertainment rules)')
-            if transaction.get('residential_premises_gst'):
-                comments.append('Residential property expense - NO GST credit claimable (input-taxed supply per ATO)')
-            if transaction.get('insurance_gst_error'):
-                comments.append('Life/income protection insurance - NO GST credit claimable (input-taxed per ATO)')
-            if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
-                comments.append('Sponsorship income - GST should apply (you provide advertising/promotion in return per ATO)')
-            if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST - verify if supply made in return (grants typically GST-free per ATO)')
-            if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries - NO GST applies (wages are not a supply per ATO)')
-            if transaction.get('allowance_gst_error'):
-                comments.append('Employee allowance - NO GST credit claimable. Allowances (cents/km, travel, meal) are payments to employees, NOT purchases from suppliers. Only REIMBURSEMENTS of actual expenses with tax invoices can claim GST. Source: ATO special rules for GST credits')
-            if transaction.get('reimbursement_gst'):
-                comments.append('Employee reimbursement > $82.50 - VERIFY TAX INVOICE EXISTS. To claim GST credit, employer MUST hold valid tax invoice showing supplier ABN. Invoice should be in employer name (or could have obtained one). Without tax invoice, GST credit is INVALID. Source: ATO GST and employee reimbursements (TR 1999/10)')
-            if transaction.get('voucher_gst') == 'face_value_with_gst':
-                comments.append('Face value voucher/gift card with GST - INCORRECT. Face value vouchers (gift cards, store credits) should have NO GST at time of sale. GST only applies when voucher is REDEEMED for goods/services. If voucher expires unredeemed, make 1/11th GST adjustment. Source: ATO GSTR 2003/5')
-            if transaction.get('voucher_gst') == 'voucher_gst_review':
-                comments.append('Voucher/gift card sale with GST - VERIFY VOUCHER TYPE. Face value vouchers (redeemable for range of items): NO GST at sale. Non-face value vouchers (specific goods/services): GST applies at sale. Check if this is face value (defer GST) or non-face value (GST correct). Source: ATO GSTR 2003/5')
-            if transaction.get('general_expenses'):
-                comments.append('General/Sundry Expenses - AUDIT RISK & POOR PRACTICE. Tax authorities view large general expense accounts as a red flag. Recode to specific expense categories (Motor Vehicle, Office Supplies, Travel, etc.) for: 1) Better substantiation of deductions, 2) Correct GST treatment verification, 3) Reduced audit risk. If sundry expenses exceed 5% of total, indicates poor internal controls.')
-            if transaction.get('travel_gst') == 'international_with_gst':
-                comments.append('International travel with GST claimed - INCORRECT. International flights are GST-FREE, overseas accommodation/expenses have NO Australian GST. You CANNOT claim GST credits on international travel. Remove GST and code as GST-Free. Source: ATO GST and international travel')
-            if transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel coded as GST-Free - CHECK IF CORRECT. Domestic flights, hotels, car hire, taxis are TAXABLE (GST applies). You SHOULD claim GST credits on domestic business travel. Exception: domestic legs of international journey (booked together) are GST-free. Source: ATO GST and international travel')
-            if transaction.get('payment_processor_fees') == 'paypal_with_gst':
-                comments.append('PayPal fee with GST claimed - INCORRECT. PayPal fees are GST EXEMPT (input-taxed financial supply). You CANNOT claim GST credits on PayPal transaction fees. Remove GST and code as Input Taxed or GST Free. Source: PayPal Australia PDS')
-            if transaction.get('payment_processor_fees') == 'stripe_no_gst':
-                comments.append('Stripe fee without GST - MISSING CREDITS. Stripe fees INCLUDE 10% GST. You SHOULD claim GST credits on Stripe processing fees. Add GST component (divide by 11). Source: Stripe Australia pricing')
-            if transaction.get('payment_processor_fees') == 'ebay_check_gst':
-                comments.append('eBay fee without GST - CHECK ABN EXEMPTION STATUS. If you have ABN tax exemption with eBay, fees are NET of GST (no credits). If NO exemption, eBay charges GST and you CAN claim credits. Check your eBay seller invoice. Source: eBay Australia Tax Policy')
-            if transaction.get('payment_processor_fees') == 'merchant_no_gst':
-                comments.append('Bank/merchant fee without GST - LIKELY MISSING CREDITS. Bank EFTPOS and card processing fees generally INCLUDE GST. You SHOULD claim GST credits. Check invoice for GST component. Source: ATO merchant fee guidance')
-            if transaction.get('fines_penalties_gst'):
-                comments.append('Fine/penalty - NO GST applies (non-reportable). Fines, penalties, ATO charges, and GIC have no GST regardless of tax deductibility. Source: ATO Simpler BAS bookkeeping guide')
-            if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST applies (non-reportable). All donations have no GST regardless of DGR status. If you receive something in return, it may be sponsorship (GST applies). Source: ATO Simpler BAS bookkeeping guide')
-            if transaction.get('property_gst_withholding'):
-                comments.append('Property purchase - CHECK GST WITHHOLDING OBLIGATIONS. For new residential premises or potential residential land, buyer must withhold 1/11th (or 7% if margin scheme) and pay directly to ATO at settlement. Seller must provide notification. Lodge ATO Forms 1 & 2. Source: ATO GST at settlement rules')
-            if transaction.get('livestock_gst'):
-                comments.append('Livestock sale coded as GST-free - LIVE ANIMALS ARE TAXABLE. Sales of livestock/game to processors, other producers, or at auction are subject to GST. Meat only becomes GST-free AFTER inspection and passing for human consumption. Source: ATO GST on livestock and game sales')
-            if transaction.get('asset_disposal_gst'):
-                comments.append('Asset disposal coded as BAS Excluded - BUSINESS ASSET SALES ARE TAXABLE. Must report at G1 and remit GST (1/11th) at 1A. Includes equipment, vehicles, machinery, furniture trade-ins. Exceptions: private assets, going concern, farmland. Source: ATO GST and disposal of capital assets')
-            if transaction.get('export_gst_error'):
-                comments.append('Export sale with GST charged - exports are GST-FREE (no GST, but CAN claim input credits). Must be exported within 60 days. Use GST Free or Export tax code. Source: ATO exports and GST rules')
-            if transaction.get('borrowing_expenses_error'):
-                comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (ATO s25.25)')
-            # Note: AI comments removed as they duplicate the rule-based comments above
+            if ai_result.get('comments'):
+                comments.append(ai_result.get('comments', ''))
 
             # Generate correcting journal entry
             try:
@@ -2947,100 +2857,10 @@ def run_review():
         for i, transaction in enumerate(rule_flagged[:ai_review_limit]):
             ai_result = ai_results[i] if i < len(ai_results) else {'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []}
 
-            # Build comment based on what was flagged (with ATO rule references)
+            # Use simplified AI-generated comment instead of detailed rule-based comments
             comments = []
-            if transaction['account_coding_suspicious']:
-                comments.append('Account coding may be incorrect')
-            if transaction['alcohol_gst_error']:
-                comments.append('Entertainment expense - GST not claimable (ATO entertainment rules)')
-            if transaction['input_taxed_gst_error']:
-                comments.append('Input-taxed supply - GST incorrectly claimed (ATO: no GST on financial supplies)')
-            if transaction['missing_gst_error']:
-                comments.append('Should include GST (10%) - currently coded as GST Free')
-            if not transaction['gst_calculation_correct']:
-                comments.append('GST calculation error')
-            if transaction.get('drawings_loan_error'):
-                comments.append('Drawings/Loan account - should be BAS Excluded (personal/owner expense)')
-            if transaction.get('personal_in_business_account'):
-                comments.append('ISSUE: "personal" expense is coded to a business account. Should be in Owner Drawings with BAS Excluded (no GST claim on personal expenses)')
-            if transaction.get('asset_capitalization_error'):
-                comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules')
-            if transaction.get('computer_equipment_expense'):
-                comments.append('Computer equipment over $300 - should be capitalized as asset (ATO depreciation: laptops 2 yrs, computers 4 yrs)')
-            if transaction.get('interest_gst_error'):
-                comments.append('Interest should be GST Free Income or Input Taxed only')
-            if transaction.get('other_income_error'):
-                comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
-            if transaction.get('sales_gst_error'):
-                # Check if it's a commercial service coded as GST Free (specific error)
-                desc = transaction.get('description', '').lower()
-                gst_rate = transaction.get('gst_rate_name', '').lower()
-                commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service']
-                is_commercial = any(kw in desc for kw in commercial_keywords)
-                is_bas_excluded = 'bas excluded' in gst_rate
-                if is_bas_excluded:
-                    comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
-                elif is_commercial:
-                    comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
-                else:
-                    comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
-            if transaction.get('motor_vehicle_gst_limit'):
-                comments.append('Motor vehicle GST exceeds ATO car limit - max GST credit $6,334 (ATO 2025-26 car limit $69,674)')
-            if transaction.get('overseas_subscription_gst'):
-                comments.append('Overseas digital service/subscription - GST credit may be INVALID. Overseas suppliers should NOT charge GST to GST-registered businesses. Provide your ABN to seek a refund from supplier. If no GST charged, reverse charge applies (self-assess GST, usually net zero for business use). Source: ATO imported services rules')
-            if transaction.get('government_charges_gst'):
-                comments.append('Government charge - NO GST applies (stamp duty, rates, ASIC fees, rego are GST-free)')
-            if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable (ATO entertainment rules)')
-            if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT is paid (ATO FBT entertainment rules)')
-            if transaction.get('residential_premises_gst'):
-                comments.append('Residential property expense - NO GST credit claimable (input-taxed supply per ATO)')
-            if transaction.get('insurance_gst_error'):
-                comments.append('Life/income protection insurance - NO GST credit claimable (input-taxed per ATO)')
-            if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
-                comments.append('Sponsorship income - GST should apply (you provide advertising/promotion in return per ATO)')
-            if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST - verify if supply made in return (grants typically GST-free per ATO)')
-            if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries - NO GST applies (wages are not a supply per ATO)')
-            if transaction.get('allowance_gst_error'):
-                comments.append('Employee allowance - NO GST credit claimable. Allowances (cents/km, travel, meal) are payments to employees, NOT purchases from suppliers. Only REIMBURSEMENTS of actual expenses with tax invoices can claim GST. Source: ATO special rules for GST credits')
-            if transaction.get('reimbursement_gst'):
-                comments.append('Employee reimbursement > $82.50 - VERIFY TAX INVOICE EXISTS. To claim GST credit, employer MUST hold valid tax invoice showing supplier ABN. Invoice should be in employer name (or could have obtained one). Without tax invoice, GST credit is INVALID. Source: ATO GST and employee reimbursements (TR 1999/10)')
-            if transaction.get('voucher_gst') == 'face_value_with_gst':
-                comments.append('Face value voucher/gift card with GST - INCORRECT. Face value vouchers (gift cards, store credits) should have NO GST at time of sale. GST only applies when voucher is REDEEMED for goods/services. If voucher expires unredeemed, make 1/11th GST adjustment. Source: ATO GSTR 2003/5')
-            if transaction.get('voucher_gst') == 'voucher_gst_review':
-                comments.append('Voucher/gift card sale with GST - VERIFY VOUCHER TYPE. Face value vouchers (redeemable for range of items): NO GST at sale. Non-face value vouchers (specific goods/services): GST applies at sale. Check if this is face value (defer GST) or non-face value (GST correct). Source: ATO GSTR 2003/5')
-            if transaction.get('general_expenses'):
-                comments.append('General/Sundry Expenses - AUDIT RISK & POOR PRACTICE. Tax authorities view large general expense accounts as a red flag. Recode to specific expense categories (Motor Vehicle, Office Supplies, Travel, etc.) for: 1) Better substantiation of deductions, 2) Correct GST treatment verification, 3) Reduced audit risk. If sundry expenses exceed 5% of total, indicates poor internal controls.')
-            if transaction.get('travel_gst') == 'international_with_gst':
-                comments.append('International travel with GST claimed - INCORRECT. International flights are GST-FREE, overseas accommodation/expenses have NO Australian GST. You CANNOT claim GST credits on international travel. Remove GST and code as GST-Free. Source: ATO GST and international travel')
-            if transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel coded as GST-Free - CHECK IF CORRECT. Domestic flights, hotels, car hire, taxis are TAXABLE (GST applies). You SHOULD claim GST credits on domestic business travel. Exception: domestic legs of international journey (booked together) are GST-free. Source: ATO GST and international travel')
-            if transaction.get('payment_processor_fees') == 'paypal_with_gst':
-                comments.append('PayPal fee with GST claimed - INCORRECT. PayPal fees are GST EXEMPT (input-taxed financial supply). You CANNOT claim GST credits on PayPal transaction fees. Remove GST and code as Input Taxed or GST Free. Source: PayPal Australia PDS')
-            if transaction.get('payment_processor_fees') == 'stripe_no_gst':
-                comments.append('Stripe fee without GST - MISSING CREDITS. Stripe fees INCLUDE 10% GST. You SHOULD claim GST credits on Stripe processing fees. Add GST component (divide by 11). Source: Stripe Australia pricing')
-            if transaction.get('payment_processor_fees') == 'ebay_check_gst':
-                comments.append('eBay fee without GST - CHECK ABN EXEMPTION STATUS. If you have ABN tax exemption with eBay, fees are NET of GST (no credits). If NO exemption, eBay charges GST and you CAN claim credits. Check your eBay seller invoice. Source: eBay Australia Tax Policy')
-            if transaction.get('payment_processor_fees') == 'merchant_no_gst':
-                comments.append('Bank/merchant fee without GST - LIKELY MISSING CREDITS. Bank EFTPOS and card processing fees generally INCLUDE GST. You SHOULD claim GST credits. Check invoice for GST component. Source: ATO merchant fee guidance')
-            if transaction.get('fines_penalties_gst'):
-                comments.append('Fine/penalty - NO GST applies (non-reportable). Fines, penalties, ATO charges, and GIC have no GST regardless of tax deductibility. Source: ATO Simpler BAS bookkeeping guide')
-            if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST applies (non-reportable). All donations have no GST regardless of DGR status. If you receive something in return, it may be sponsorship (GST applies). Source: ATO Simpler BAS bookkeeping guide')
-            if transaction.get('property_gst_withholding'):
-                comments.append('Property purchase - CHECK GST WITHHOLDING OBLIGATIONS. For new residential premises or potential residential land, buyer must withhold 1/11th (or 7% if margin scheme) and pay directly to ATO at settlement. Seller must provide notification. Lodge ATO Forms 1 & 2. Source: ATO GST at settlement rules')
-            if transaction.get('livestock_gst'):
-                comments.append('Livestock sale coded as GST-free - LIVE ANIMALS ARE TAXABLE. Sales of livestock/game to processors, other producers, or at auction are subject to GST. Meat only becomes GST-free AFTER inspection and passing for human consumption. Source: ATO GST on livestock and game sales')
-            if transaction.get('asset_disposal_gst'):
-                comments.append('Asset disposal coded as BAS Excluded - BUSINESS ASSET SALES ARE TAXABLE. Must report at G1 and remit GST (1/11th) at 1A. Includes equipment, vehicles, machinery, furniture trade-ins. Exceptions: private assets, going concern, farmland. Source: ATO GST and disposal of capital assets')
-            if transaction.get('export_gst_error'):
-                comments.append('Export sale with GST charged - exports are GST-FREE (no GST, but CAN claim input credits). Must be exported within 60 days. Use GST Free or Export tax code. Source: ATO exports and GST rules')
-            if transaction.get('borrowing_expenses_error'):
-                comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (ATO s25.25)')
-            # Note: AI comments removed as they duplicate the rule-based comments above
+            if ai_result.get('comments'):
+                comments.append(ai_result.get('comments', ''))
 
             # Generate correcting journal entry
             try:
