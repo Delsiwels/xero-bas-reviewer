@@ -7538,7 +7538,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'GST Act - Division 9',
             'title': 'Wages and salaries are not taxable supplies',
-            'summary': 'Wages/salaries/super are outside the GST system (BAS Excluded). They are not taxable supplies and should have $0 GST.',
+            'summary': 'Employment payments are outside the GST system entirely.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-is-gst'
         }
     },
