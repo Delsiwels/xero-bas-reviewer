@@ -2252,35 +2252,48 @@ def upload_review():
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
-                    comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                    ato_comment = generate_ato_comment('insurance_gst_error')
+                    comments.append(ato_comment or 'Life/income protection insurance - Input Taxed (no GST credit claimable)')
                 if transaction.get('wages_gst_error'):
-                    comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                    ato_comment = generate_ato_comment('wages_gst_error')
+                    comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
                 if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
-                    comments.append('Entertainment expense - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
+                    ato_comment = generate_ato_comment('entertainment')
+                    comments.append(ato_comment or 'Entertainment expense - NO GST credit claimable. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
                 if transaction.get('input_taxed_gst_error'):
-                    comments.append('Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
+                    ato_comment = generate_ato_comment('input_taxed_gst_error')
+                    comments.append(ato_comment or 'Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
                 if transaction.get('general_expenses'):
                     comments.append('General/Sundry Expenses - recode to specific category to reduce audit risk')
                 if transaction.get('drawings_loan_error'):
                     comments.append('Drawings/Loan account - should be BAS Excluded')
                 if transaction.get('fines_penalties_gst'):
-                    comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
+                    ato_comment = generate_ato_comment('fines_penalties_gst')
+                    comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
-                    comments.append('Government charge - GST Free (no GST applies)')
+                    ato_comment = generate_ato_comment('government_charges_gst')
+                    comments.append(ato_comment or 'Government charge - NO GST applies (not a taxable supply)')
                 if transaction.get('donations_gst'):
-                    comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                    ato_comment = generate_ato_comment('donations_gst')
+                    comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
                 if transaction.get('travel_gst') == 'international_with_gst':
-                    comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                    ato_comment = generate_ato_comment('travel_gst')
+                    comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel expenses.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                    comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
+                    ato_comment = generate_ato_comment('grants_sponsorship_gst')
+                    comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
                 if transaction.get('export_gst_error'):
-                    comments.append('Export sale with GST charged - exports should be GST-FREE per Division 38 GST Act. No GST should be charged on goods/services exported overseas.')
+                    ato_comment = generate_ato_comment('export_gst_error')
+                    comments.append(ato_comment or 'Export sale with GST charged - exports should be GST-FREE. No GST should be charged on exported goods/services.')
+                if transaction.get('residential_premises_gst'):
+                    ato_comment = generate_ato_comment('residential_premises_gst')
+                    comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
 
             # Generate correcting journal entry
             try:
@@ -2342,15 +2355,20 @@ def upload_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                comments.append('Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies. Should have $0 GST.')
+                ato_comment = generate_ato_comment('government_charges_gst')
+                comments.append(ato_comment or 'Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies.')
             if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
+                ato_comment = generate_ato_comment('entertainment')
+                comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
             if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT is paid on the benefit per GSTR 2001/6. If exempt from FBT (e.g. minor benefit <$300), no GST credit available.')
+                ato_comment = generate_ato_comment('entertainment')
+                comments.append(ato_comment or 'Staff entertainment - NO GST credit unless FBT is paid on the benefit.')
             if transaction.get('residential_premises_gst'):
-                comments.append('Residential property expense - NO GST credit claimable')
+                ato_comment = generate_ato_comment('residential_premises_gst')
+                comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             if transaction.get('insurance_gst_error'):
-                comments.append('Life/income protection insurance - NO GST credit claimable')
+                ato_comment = generate_ato_comment('insurance_gst_error')
+                comments.append(ato_comment or 'Life/income protection insurance - NO GST credit claimable (input-taxed)')
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
@@ -2358,9 +2376,11 @@ def upload_review():
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
+                ato_comment = generate_ato_comment('grants_sponsorship_gst')
+                comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
             if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                ato_comment = generate_ato_comment('wages_gst_error')
+                comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
@@ -2370,15 +2390,18 @@ def upload_review():
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
-                comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                ato_comment = generate_ato_comment('travel_gst')
+                comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel.')
             elif transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
             if transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
-                comments.append('Fine/penalty - NO GST (non-reportable)')
+                ato_comment = generate_ato_comment('fines_penalties_gst')
+                comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
             if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                ato_comment = generate_ato_comment('donations_gst')
+                comments.append(ato_comment or 'Donation - NO GST applies.')
             if transaction.get('property_gst_withholding'):
                 comments.append('Property purchase - check GST withholding obligations')
             if transaction.get('livestock_gst'):
@@ -2386,7 +2409,8 @@ def upload_review():
             if transaction.get('asset_disposal_gst'):
                 comments.append('Asset disposal - business asset sales are TAXABLE')
             if transaction.get('export_gst_error'):
-                comments.append('Export sale - should be GST-FREE (no GST charged)')
+                ato_comment = generate_ato_comment('export_gst_error')
+                comments.append(ato_comment or 'Export sale - should be GST-FREE (no GST charged)')
             if transaction.get('borrowing_expenses_error'):
                 comments.append('Borrowing expenses > $100 - must be spread over 5 years')
 
@@ -2987,35 +3011,48 @@ def run_review():
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
-                    comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                    ato_comment = generate_ato_comment('insurance_gst_error')
+                    comments.append(ato_comment or 'Life/income protection insurance - Input Taxed (no GST credit claimable)')
                 if transaction.get('wages_gst_error'):
-                    comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                    ato_comment = generate_ato_comment('wages_gst_error')
+                    comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
                 if transaction.get('alcohol_gst_error') or transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
-                    comments.append('Entertainment expense - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
+                    ato_comment = generate_ato_comment('entertainment')
+                    comments.append(ato_comment or 'Entertainment expense - NO GST credit claimable. Entertainment is non-deductible and GST credits blocked unless FBT is paid.')
                 if transaction.get('missing_gst_error'):
                     comments.append('Should include GST (10%) - currently coded as GST Free')
                 if transaction.get('input_taxed_gst_error'):
-                    comments.append('Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
+                    ato_comment = generate_ato_comment('input_taxed_gst_error')
+                    comments.append(ato_comment or 'Input-taxed supply - GST incorrectly claimed (no GST credit on financial supplies)')
                 if transaction.get('general_expenses'):
                     comments.append('General/Sundry Expenses - recode to specific category to reduce audit risk')
                 if transaction.get('drawings_loan_error'):
                     comments.append('Drawings/Loan account - should be BAS Excluded')
                 if transaction.get('fines_penalties_gst'):
-                    comments.append('Fine/penalty - BAS Excluded (non-reportable, no GST)')
+                    ato_comment = generate_ato_comment('fines_penalties_gst')
+                    comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
-                    comments.append('Government charge - GST Free (no GST applies)')
+                    ato_comment = generate_ato_comment('government_charges_gst')
+                    comments.append(ato_comment or 'Government charge - NO GST applies (not a taxable supply)')
                 if transaction.get('donations_gst'):
-                    comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                    ato_comment = generate_ato_comment('donations_gst')
+                    comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
                 if transaction.get('travel_gst') == 'international_with_gst':
-                    comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                    ato_comment = generate_ato_comment('travel_gst')
+                    comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel expenses.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                    comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
+                    ato_comment = generate_ato_comment('grants_sponsorship_gst')
+                    comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
                 if transaction.get('export_gst_error'):
-                    comments.append('Export sale with GST charged - exports should be GST-FREE per Division 38 GST Act. No GST should be charged on goods/services exported overseas.')
+                    ato_comment = generate_ato_comment('export_gst_error')
+                    comments.append(ato_comment or 'Export sale with GST charged - exports should be GST-FREE. No GST should be charged on exported goods/services.')
+                if transaction.get('residential_premises_gst'):
+                    ato_comment = generate_ato_comment('residential_premises_gst')
+                    comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
 
             # Generate correcting journal entry
             try:
@@ -3077,15 +3114,20 @@ def run_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                comments.append('Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies. Should have $0 GST.')
+                ato_comment = generate_ato_comment('government_charges_gst')
+                comments.append(ato_comment or 'Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies.')
             if transaction.get('client_entertainment_gst'):
-                comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
+                ato_comment = generate_ato_comment('entertainment')
+                comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
             if transaction.get('staff_entertainment_gst'):
-                comments.append('Staff entertainment - NO GST credit unless FBT is paid on the benefit per GSTR 2001/6. If exempt from FBT (e.g. minor benefit <$300), no GST credit available.')
+                ato_comment = generate_ato_comment('entertainment')
+                comments.append(ato_comment or 'Staff entertainment - NO GST credit unless FBT is paid on the benefit.')
             if transaction.get('residential_premises_gst'):
-                comments.append('Residential property expense - NO GST credit claimable')
+                ato_comment = generate_ato_comment('residential_premises_gst')
+                comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             if transaction.get('insurance_gst_error'):
-                comments.append('Life/income protection insurance - NO GST credit claimable')
+                ato_comment = generate_ato_comment('insurance_gst_error')
+                comments.append(ato_comment or 'Life/income protection insurance - NO GST credit claimable (input-taxed)')
             if transaction.get('life_insurance_personal'):
                 comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
@@ -3093,9 +3135,11 @@ def run_review():
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                 comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
+                ato_comment = generate_ato_comment('grants_sponsorship_gst')
+                comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
             if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
+                ato_comment = generate_ato_comment('wages_gst_error')
+                comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
@@ -3105,15 +3149,18 @@ def run_review():
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
-                comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                ato_comment = generate_ato_comment('travel_gst')
+                comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel.')
             elif transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
             if transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
-                comments.append('Fine/penalty - NO GST (non-reportable)')
+                ato_comment = generate_ato_comment('fines_penalties_gst')
+                comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
             if transaction.get('donations_gst'):
-                comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                ato_comment = generate_ato_comment('donations_gst')
+                comments.append(ato_comment or 'Donation - NO GST applies.')
             if transaction.get('property_gst_withholding'):
                 comments.append('Property purchase - check GST withholding obligations')
             if transaction.get('livestock_gst'):
@@ -3121,7 +3168,8 @@ def run_review():
             if transaction.get('asset_disposal_gst'):
                 comments.append('Asset disposal - business asset sales are TAXABLE')
             if transaction.get('export_gst_error'):
-                comments.append('Export sale - should be GST-FREE (no GST charged)')
+                ato_comment = generate_ato_comment('export_gst_error')
+                comments.append(ato_comment or 'Export sale - should be GST-FREE (no GST charged)')
             if transaction.get('borrowing_expenses_error'):
                 comments.append('Borrowing expenses > $100 - must be spread over 5 years')
 
@@ -7341,6 +7389,271 @@ def check_borrowing_expenses_error(transaction):
         return True
 
     return False
+
+
+# =============================================================================
+# ATO RULING SEARCH WITH CACHING
+# =============================================================================
+
+# Cache for ATO rulings - persists for the session
+_ato_ruling_cache = {}
+
+# Mapping of issue types to ATO search queries and fallback info
+ATO_RULING_QUERIES = {
+    'export_gst_error': {
+        'query': 'GST exports GST-free Division 38 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GSTR 2002/6',
+            'title': 'When is a supply of goods or services GST-free under Division 38?',
+            'summary': 'Exports are GST-free under Division 38 of the GST Act. No GST should be charged on exported goods/services.',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20026/NAT/ATO/00001'
+        }
+    },
+    'entertainment': {
+        'query': 'entertainment expenses GST FBT TR 97/17 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'TR 97/17 & GSTR 2001/6',
+            'title': 'Entertainment expenses - income tax and GST treatment',
+            'summary': 'Entertainment is non-deductible and GST credits cannot be claimed unless FBT is paid on the benefit.',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=TXR/TR9717/NAT/ATO/00001'
+        }
+    },
+    'wages_gst_error': {
+        'query': 'wages salaries GST BAS excluded site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 9',
+            'title': 'Wages and salaries are not taxable supplies',
+            'summary': 'Wages/salaries/super are outside the GST system (BAS Excluded). They are not taxable supplies and should have $0 GST.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-is-gst'
+        }
+    },
+    'government_charges_gst': {
+        'query': 'council rates stamp duty GST government charges site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 81-10',
+            'title': 'Government taxes, fees and charges',
+            'summary': 'Government levies (council rates, stamp duty, land tax, registration fees) are not taxable supplies and have no GST.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/government'
+        }
+    },
+    'grants_sponsorship_gst': {
+        'query': 'grants GST-free GSTR 2012/2 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GSTR 2012/2',
+            'title': 'Goods and services tax: government grants',
+            'summary': 'Grants are typically GST-free unless there is a binding obligation to provide specific goods/services in return.',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20122/NAT/ATO/00001'
+        }
+    },
+    'residential_premises_gst': {
+        'query': 'residential property input taxed GST site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'Residential premises are input taxed',
+            'summary': 'Residential rent and related expenses are input-taxed. No GST is charged and no GST credits can be claimed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/property/gst-and-residential-property'
+        }
+    },
+    'input_taxed_gst_error': {
+        'query': 'input taxed financial supplies GST site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'Input taxed financial supplies',
+            'summary': 'Financial supplies (interest, bank fees, residential rent) are input-taxed. No GST credits can be claimed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-financial-supplies'
+        }
+    },
+    'insurance_gst_error': {
+        'query': 'life insurance income protection input taxed GST site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'Life insurance and income protection',
+            'summary': 'Life insurance and income protection insurance are input-taxed financial supplies. No GST credits can be claimed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-insurance'
+        }
+    },
+    'travel_gst': {
+        'query': 'international travel GST-free domestic taxable site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 38',
+            'title': 'Travel and GST treatment',
+            'summary': 'International travel is GST-free (no GST credits). Domestic travel within Australia is taxable (GST credits can be claimed).',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/travel-and-tourism'
+        }
+    },
+    'fines_penalties_gst': {
+        'query': 'fines penalties BAS excluded GST site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 9-10',
+            'title': 'Fines and penalties are not taxable supplies',
+            'summary': 'Fines and penalties are not consideration for a supply and are BAS Excluded. No GST applies.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-is-gst'
+        }
+    },
+    'asset_capitalization_error': {
+        'query': 'instant asset write-off threshold $20000 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'Division 328 ITAA 1997',
+            'title': 'Instant asset write-off',
+            'summary': 'Assets over the instant asset write-off threshold should be capitalized and depreciated, not expensed immediately.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/simpler-depreciation-for-small-business/instant-asset-write-off'
+        }
+    },
+    'donations_gst': {
+        'query': 'donations gifts GST-free site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 9-15',
+            'title': 'Donations and gifts - GST treatment',
+            'summary': 'Donations (gifts) are not consideration for a supply. No GST applies. Use GST Free for expenses.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/not-for-profit-organisations/gst/gst-for-charities-and-gift-deductible-entities'
+        }
+    }
+}
+
+
+def search_ato_ruling(issue_type):
+    """
+    Search ATO website for relevant ruling information.
+    Returns cached result if available, otherwise performs web search.
+
+    Args:
+        issue_type: The type of GST issue (e.g., 'export_gst_error', 'entertainment')
+
+    Returns:
+        dict with 'ruling', 'title', 'summary', 'url' keys
+    """
+    global _ato_ruling_cache
+
+    # Check cache first
+    if issue_type in _ato_ruling_cache:
+        return _ato_ruling_cache[issue_type]
+
+    # Get query config for this issue type
+    config = ATO_RULING_QUERIES.get(issue_type)
+    if not config:
+        return None
+
+    try:
+        # Perform web search for ATO ruling
+        search_query = config['query']
+
+        # Use requests to search (simplified approach)
+        # In production, you might use a proper search API
+        search_url = f"https://www.google.com/search?q={requests.utils.quote(search_query)}"
+
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+
+        response = requests.get(search_url, headers=headers, timeout=5)
+
+        if response.status_code == 200:
+            # Try to extract ATO URLs from search results
+            ato_urls = re.findall(r'https?://(?:www\.)?ato\.gov\.au[^\s"\'<>]+', response.text)
+
+            if ato_urls:
+                # Found ATO URL, try to fetch and extract info
+                ato_url = ato_urls[0].rstrip('.')
+
+                # Fetch the ATO page
+                ato_response = requests.get(ato_url, headers=headers, timeout=5)
+
+                if ato_response.status_code == 200:
+                    # Extract title from page
+                    title_match = re.search(r'<title>([^<]+)</title>', ato_response.text, re.IGNORECASE)
+                    title = title_match.group(1) if title_match else config['fallback']['title']
+
+                    # Extract ruling number if present
+                    ruling_match = re.search(r'(GSTR\s*\d{4}/\d+|TR\s*\d{2,4}/\d+|TD\s*\d{4}/\d+)', ato_response.text)
+                    ruling = ruling_match.group(1) if ruling_match else config['fallback']['ruling']
+
+                    result = {
+                        'ruling': ruling,
+                        'title': title.strip()[:100],  # Limit title length
+                        'summary': config['fallback']['summary'],  # Use curated summary
+                        'url': ato_url,
+                        'source': 'live'
+                    }
+
+                    _ato_ruling_cache[issue_type] = result
+                    return result
+
+        # Fall through to fallback
+
+    except Exception as e:
+        print(f"ATO ruling search error for {issue_type}: {e}")
+
+    # Use fallback if search fails
+    fallback = config['fallback'].copy()
+    fallback['source'] = 'fallback'
+    _ato_ruling_cache[issue_type] = fallback
+    return fallback
+
+
+def get_ato_ruling_comment(issue_type, base_comment):
+    """
+    Enhance a base comment with ATO ruling reference.
+
+    Args:
+        issue_type: The type of GST issue
+        base_comment: The base comment to enhance
+
+    Returns:
+        Enhanced comment with ATO ruling reference
+    """
+    ruling_info = search_ato_ruling(issue_type)
+
+    if ruling_info:
+        return f"{base_comment} Per {ruling_info['ruling']}: {ruling_info['summary']}"
+
+    return base_comment
+
+
+def clear_ato_ruling_cache():
+    """Clear the ATO ruling cache (call at start of new review session)"""
+    global _ato_ruling_cache
+    _ato_ruling_cache = {}
+
+
+def generate_ato_comment(issue_type, transaction=None):
+    """
+    Generate a comment with ATO ruling reference for a specific issue type.
+
+    Args:
+        issue_type: The type of GST issue
+        transaction: Optional transaction dict for context
+
+    Returns:
+        Formatted comment string with ATO ruling reference
+    """
+    ruling_info = search_ato_ruling(issue_type)
+
+    if not ruling_info:
+        return None
+
+    # Base comments for each issue type
+    base_comments = {
+        'export_gst_error': 'Export sale with GST charged - exports should be GST-FREE.',
+        'entertainment': 'Entertainment expense - NO GST credit claimable.',
+        'client_entertainment_gst': 'Client entertainment - NO GST credit claimable.',
+        'staff_entertainment_gst': 'Staff entertainment - NO GST credit unless FBT paid.',
+        'wages_gst_error': 'Wages/salaries/super incorrectly coded with GST - should be BAS Excluded.',
+        'government_charges_gst': 'Government charge (rates, stamp duty, etc.) - NO GST applies.',
+        'grants_sponsorship_gst': 'Grant income GST treatment requires review.',
+        'residential_premises_gst': 'Residential property expense - Input Taxed (no GST credit).',
+        'input_taxed_gst_error': 'Financial supply - Input Taxed (no GST credit claimable).',
+        'insurance_gst_error': 'Life/income protection insurance - Input Taxed (no GST credit).',
+        'travel_gst_international': 'International travel - GST-FREE (no GST credits).',
+        'travel_gst_domestic': 'Domestic travel - TAXABLE (should include GST).',
+        'fines_penalties_gst': 'Fine/penalty - BAS Excluded (no GST).',
+        'asset_capitalization_error': 'Asset over threshold - should be capitalized.',
+        'donations_gst': 'Donation - NO GST applies.'
+    }
+
+    base = base_comments.get(issue_type, 'GST treatment requires review.')
+
+    # Format: Base comment | Per [Ruling]: [Summary]
+    return f"{base} Per {ruling_info['ruling']}: {ruling_info['summary']}"
 
 
 def review_with_ai(transaction):
