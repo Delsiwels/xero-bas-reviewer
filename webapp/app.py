@@ -2277,6 +2277,9 @@ def upload_review():
                 # Grants/sponsorship - always use rule-based for consistent GSTR 2012/2 reference
                 if transaction.get('grants_sponsorship_gst'):
                     is_useful_ai_comment = False
+                # Ambiguous residential/property - force review comment, don't let AI assume residential
+                if transaction.get('residential_premises_gst') == 'review':
+                    is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
@@ -3137,6 +3140,9 @@ def run_review():
                     is_useful_ai_comment = False
                 # Grants/sponsorship - always use rule-based for consistent GSTR 2012/2 reference
                 if transaction.get('grants_sponsorship_gst'):
+                    is_useful_ai_comment = False
+                # Ambiguous residential/property - force review comment, don't let AI assume residential
+                if transaction.get('residential_premises_gst') == 'review':
                     is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
