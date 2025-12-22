@@ -2335,6 +2335,14 @@ def upload_review():
                 if transaction.get('residential_premises_gst'):
                     ato_comment = generate_ato_comment('residential_premises_gst')
                     comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
+                if transaction.get('payment_processor_fees') == 'paypal_with_gst':
+                    ato_comment = generate_ato_comment('paypal_fees')
+                    comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
+                    ato_comment = generate_ato_comment('merchant_fees')
+                    comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
+                elif transaction.get('payment_processor_fees'):
+                    comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
 
             # Generate correcting journal entry
             try:
@@ -3141,6 +3149,14 @@ def run_review():
                 if transaction.get('residential_premises_gst'):
                     ato_comment = generate_ato_comment('residential_premises_gst')
                     comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
+                if transaction.get('payment_processor_fees') == 'paypal_with_gst':
+                    ato_comment = generate_ato_comment('paypal_fees')
+                    comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
+                    ato_comment = generate_ato_comment('merchant_fees')
+                    comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
+                elif transaction.get('payment_processor_fees'):
+                    comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
 
             # Generate correcting journal entry
             try:
