@@ -2318,7 +2318,7 @@ def upload_review():
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
                     ato_comment = generate_ato_comment('government_charges_gst')
-                    comments.append(ato_comment or 'Government fee/charge - NO GST under Division 81. Not a taxable supply.')
+                    comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
                 if transaction.get('donations_gst'):
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
@@ -2411,7 +2411,7 @@ def upload_review():
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
                 ato_comment = generate_ato_comment('government_charges_gst')
-                comments.append(ato_comment or 'Government fee/charge - NO GST under Division 81. Not a taxable supply.')
+                comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
             if transaction.get('client_entertainment_gst'):
                 ato_comment = generate_ato_comment('entertainment')
                 comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
@@ -3138,7 +3138,7 @@ def run_review():
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
                     ato_comment = generate_ato_comment('government_charges_gst')
-                    comments.append(ato_comment or 'Government fee/charge - NO GST under Division 81. Not a taxable supply.')
+                    comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
                 if transaction.get('donations_gst'):
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
@@ -3231,7 +3231,7 @@ def run_review():
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
                 ato_comment = generate_ato_comment('government_charges_gst')
-                comments.append(ato_comment or 'Government fee/charge - NO GST under Division 81. Not a taxable supply.')
+                comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
             if transaction.get('client_entertainment_gst'):
                 ato_comment = generate_ato_comment('entertainment')
                 comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
@@ -7555,9 +7555,9 @@ ATO_RULING_QUERIES = {
     'government_charges_gst': {
         'query': 'council rates stamp duty GST Division 81 government charges site:ato.gov.au',
         'fallback': {
-            'ruling': 'GST Act - Division 81',
-            'title': 'Payments to government agencies - taxes, fees and charges',
-            'summary': 'Taxes and regulatory fees paid to government are outside the GST system.',
+            'ruling': 'GST Regulations - Section 81-15',
+            'title': 'Government fees and charges - not consideration for supply',
+            'summary': 'Government taxes and regulatory fees are not subject to GST.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/government-entities/gst-for-government/payments-to-government-agencies-under-division-81'
         }
     },
@@ -7817,7 +7817,7 @@ def generate_ato_comment(issue_type, transaction=None):
         'client_entertainment_gst': 'Client entertainment - NO GST credit claimable.',
         'staff_entertainment_gst': 'Staff entertainment - NO GST credit unless FBT paid.',
         'wages_gst_error': 'Wages/salaries/super incorrectly coded with GST - should be BAS Excluded.',
-        'government_charges_gst': 'Government fee/charge - NO GST under Division 81. Not a taxable supply.',
+        'government_charges_gst': 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.',
         'grants_sponsorship_gst': 'Grant income GST treatment requires review.',
         'residential_premises_gst': 'Residential property expense - Input Taxed (no GST credit).',
         'input_taxed_gst_error': 'Financial supply - Input Taxed (no GST credit claimable).',
