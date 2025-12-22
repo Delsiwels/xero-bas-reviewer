@@ -7644,7 +7644,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'GST Act - Division 40',
             'title': 'PayPal fees are input-taxed financial supplies',
-            'summary': 'PayPal (Singapore) fees are GST-exempt financial supplies. No GST is charged and no GST credits can be claimed. Code as Input Taxed.',
+            'summary': 'Financial supplies are input-taxed with no GST credit entitlement.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-financial-supplies'
         }
     },
