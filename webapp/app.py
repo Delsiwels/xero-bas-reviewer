@@ -2268,6 +2268,9 @@ def upload_review():
                 # Wages GST errors - always use rule-based for consistent BAS Excluded reference
                 if transaction.get('wages_gst_error'):
                     is_useful_ai_comment = False
+                # International/domestic travel GST - always use rule-based for consistent Division 38 reference
+                if transaction.get('travel_gst'):
+                    is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
@@ -3071,6 +3074,9 @@ def run_review():
                     is_useful_ai_comment = False
                 # Wages GST errors - always use rule-based for consistent BAS Excluded reference
                 if transaction.get('wages_gst_error'):
+                    is_useful_ai_comment = False
+                # International/domestic travel GST - always use rule-based for consistent Division 38 reference
+                if transaction.get('travel_gst'):
                     is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
