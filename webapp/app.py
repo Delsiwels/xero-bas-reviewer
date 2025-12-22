@@ -2317,8 +2317,19 @@ def upload_review():
                     ato_comment = generate_ato_comment('fines_penalties_gst')
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
-                    ato_comment = generate_ato_comment('government_charges_gst')
-                    comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
+                    govt_type = transaction.get('government_charges_gst')
+                    if govt_type == 'court_fees':
+                        ato_comment = generate_ato_comment('court_filing_fees')
+                        comments.append(ato_comment or 'Court/tribunal fee - NO GST. Per Reg 81-15.01(1)(e): Court fees do not constitute consideration.')
+                    elif govt_type == 'asic_fees':
+                        ato_comment = generate_ato_comment('asic_fees')
+                        comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4): Regulatory licence fees are not subject to GST.')
+                    elif govt_type == 'government_tax':
+                        ato_comment = generate_ato_comment('government_charges_gst')
+                        comments.append(ato_comment or 'Government tax (rates/stamp duty/land tax) - NO GST. Per Section 81-5: Australian taxes are not consideration.')
+                    else:
+                        ato_comment = generate_ato_comment('government_charges_gst')
+                        comments.append(ato_comment or 'Government fee/charge - NO GST. Not consideration for a supply.')
                 if transaction.get('donations_gst'):
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
@@ -2410,8 +2421,18 @@ def upload_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                ato_comment = generate_ato_comment('government_charges_gst')
-                comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
+                govt_type = transaction.get('government_charges_gst')
+                if govt_type == 'court_fees':
+                    ato_comment = generate_ato_comment('court_filing_fees')
+                    comments.append(ato_comment or 'Court/tribunal fee - NO GST. Per Reg 81-15.01(1)(e).')
+                elif govt_type == 'asic_fees':
+                    ato_comment = generate_ato_comment('asic_fees')
+                    comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4).')
+                elif govt_type == 'government_tax':
+                    ato_comment = generate_ato_comment('government_charges_gst')
+                    comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
+                else:
+                    comments.append('Government fee/charge - NO GST.')
             if transaction.get('client_entertainment_gst'):
                 ato_comment = generate_ato_comment('entertainment')
                 comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
@@ -3137,8 +3158,19 @@ def run_review():
                     ato_comment = generate_ato_comment('fines_penalties_gst')
                     comments.append(ato_comment or 'Fine/penalty - BAS Excluded (non-reportable, no GST)')
                 if transaction.get('government_charges_gst'):
-                    ato_comment = generate_ato_comment('government_charges_gst')
-                    comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
+                    govt_type = transaction.get('government_charges_gst')
+                    if govt_type == 'court_fees':
+                        ato_comment = generate_ato_comment('court_filing_fees')
+                        comments.append(ato_comment or 'Court/tribunal fee - NO GST. Per Reg 81-15.01(1)(e): Court fees do not constitute consideration.')
+                    elif govt_type == 'asic_fees':
+                        ato_comment = generate_ato_comment('asic_fees')
+                        comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4): Regulatory licence fees are not subject to GST.')
+                    elif govt_type == 'government_tax':
+                        ato_comment = generate_ato_comment('government_charges_gst')
+                        comments.append(ato_comment or 'Government tax (rates/stamp duty/land tax) - NO GST. Per Section 81-5: Australian taxes are not consideration.')
+                    else:
+                        ato_comment = generate_ato_comment('government_charges_gst')
+                        comments.append(ato_comment or 'Government fee/charge - NO GST. Not consideration for a supply.')
                 if transaction.get('donations_gst'):
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
@@ -3230,8 +3262,18 @@ def run_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                ato_comment = generate_ato_comment('government_charges_gst')
-                comments.append(ato_comment or 'Government fee/charge - NO GST (Section 81-15). Not consideration for a supply.')
+                govt_type = transaction.get('government_charges_gst')
+                if govt_type == 'court_fees':
+                    ato_comment = generate_ato_comment('court_filing_fees')
+                    comments.append(ato_comment or 'Court/tribunal fee - NO GST. Per Reg 81-15.01(1)(e).')
+                elif govt_type == 'asic_fees':
+                    ato_comment = generate_ato_comment('asic_fees')
+                    comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4).')
+                elif govt_type == 'government_tax':
+                    ato_comment = generate_ato_comment('government_charges_gst')
+                    comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
+                else:
+                    comments.append('Government fee/charge - NO GST.')
             if transaction.get('client_entertainment_gst'):
                 ato_comment = generate_ato_comment('entertainment')
                 comments.append(ato_comment or 'Client entertainment - NO GST credit claimable. Entertainment is non-deductible.')
@@ -5279,37 +5321,46 @@ def check_government_charges_gst(transaction):
     """
     Check if GST is incorrectly claimed on government charges.
     Per ATO rules, NO GST applies to:
-    - Stamp duty
-    - Council rates
-    - Land tax
-    - ASIC fees
-    - Motor vehicle registration
-    - Water rates
+    - Stamp duty, council rates, land tax (Section 81-5 - Australian taxes)
+    - ASIC fees (Section 81-10(4) - regulatory licence fees)
+    - Court/tribunal fees (Regulation 81-15.01(1)(e))
+    - Motor vehicle registration, water rates
     - Government fines/penalties
 
-    Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-insurance
+    Returns specific type for targeted ATO reference in comments.
     """
     description = transaction.get('description', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
 
-    # Government charges keywords - NO GST on these
-    # Note: 'fine' and 'penalty' removed - handled by fines_penalties_gst check
-    govt_charge_keywords = [
-        'stamp duty', 'council rates', 'land tax', 'asic', 'rego ',
-        'registration fee', 'motor vehicle registration', 'water rates',
-        'government fee', 'govt fee', 'infringement',
-        'court fee', 'filing fee', 'lodgement fee', 'license fee', 'licence fee',
-        'payroll tax', 'workers comp levy', 'epa levy',
-    ]
-
-    is_govt_charge = any(keyword in description for keyword in govt_charge_keywords)
-
-    if not is_govt_charge:
+    # Only flag if GST is claimed
+    if gst_amount == 0:
         return False
 
-    # Flag if GST is claimed on government charges
-    if gst_amount > 0:
-        return True
+    # Court/tribunal fees - Regulation 81-15.01(1)(e)
+    court_keywords = ['court fee', 'filing fee', 'court filing', 'tribunal fee', 'sheriff fee']
+    if any(keyword in description for keyword in court_keywords):
+        return 'court_fees'
+
+    # ASIC fees - Section 81-10(4) regulatory licence fees
+    asic_keywords = ['asic', 'company search', 'asic annual', 'asic registration']
+    if any(keyword in description for keyword in asic_keywords):
+        return 'asic_fees'
+
+    # Government taxes - Section 81-5
+    tax_keywords = [
+        'stamp duty', 'council rates', 'land tax', 'water rates',
+        'payroll tax', 'rego ', 'registration fee', 'motor vehicle registration',
+    ]
+    if any(keyword in description for keyword in tax_keywords):
+        return 'government_tax'
+
+    # Other regulatory fees - general Division 81
+    other_keywords = [
+        'government fee', 'govt fee', 'lodgement fee', 'license fee', 'licence fee',
+        'workers comp levy', 'epa levy', 'infringement',
+    ]
+    if any(keyword in description for keyword in other_keywords):
+        return 'regulatory_fee'
 
     return False
 
@@ -7555,10 +7606,28 @@ ATO_RULING_QUERIES = {
     'government_charges_gst': {
         'query': 'council rates stamp duty GST Division 81 government charges site:ato.gov.au',
         'fallback': {
-            'ruling': 'GST Regulations - Section 81-15',
-            'title': 'Government fees and charges - not consideration for supply',
-            'summary': 'Government taxes and regulatory fees are not subject to GST.',
+            'ruling': 'GST Act - Section 81-5',
+            'title': 'Government taxes - not consideration for supply',
+            'summary': 'Australian taxes (rates, stamp duty, land tax) are not subject to GST.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/government-entities/gst-for-government/payments-to-government-agencies-under-division-81'
+        }
+    },
+    'court_filing_fees': {
+        'query': 'court filing fees GST exempt Regulation 81-15 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Regulations - Reg 81-15.01(1)(e)',
+            'title': 'Court fees - not consideration for supply',
+            'summary': 'Court, tribunal and sheriff fees are GST-exempt as they do not constitute consideration.',
+            'url': 'https://www.fedcourt.gov.au/forms-and-fees/court-fees'
+        }
+    },
+    'asic_fees': {
+        'query': 'ASIC fees GST exempt regulatory site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 81-10(4)',
+            'title': 'ASIC regulatory fees - not subject to GST',
+            'summary': 'ASIC registration and annual fees are GST-exempt regulatory licence fees.',
+            'url': 'https://asic.gov.au/for-business/payments-fees-and-invoices/asic-fees/'
         }
     },
     'grants_sponsorship_gst': {
