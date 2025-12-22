@@ -7601,7 +7601,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'GST Act - Division 38',
             'title': 'International travel is GST-free',
-            'summary': 'International flights and travel are GST-free. No GST should be charged and no GST credits can be claimed.',
+            'summary': 'Supplies connected with international travel are GST-free exports.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/travel-and-tourism/gst-and-international-travel'
         }
     },
