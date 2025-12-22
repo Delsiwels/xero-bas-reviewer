@@ -2249,6 +2249,10 @@ def upload_review():
                     comments.append('Government charge - GST Free (no GST applies)')
                 if transaction.get('donations_gst'):
                     comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                if transaction.get('travel_gst') == 'international_with_gst':
+                    comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                elif transaction.get('travel_gst') == 'domestic_no_gst':
+                    comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
 
             # Generate correcting journal entry
             try:
@@ -2333,8 +2337,10 @@ def upload_review():
                 comments.append('Voucher/gift card - check face value (no GST) vs non-face value (GST at sale)')
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
-            if transaction.get('travel_gst'):
-                comments.append('Travel GST issue - check international (GST-free) vs domestic (taxable)')
+            if transaction.get('travel_gst') == 'international_with_gst':
+                comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+            elif transaction.get('travel_gst') == 'domestic_no_gst':
+                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
             if transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
@@ -2957,6 +2963,10 @@ def run_review():
                     comments.append('Government charge - GST Free (no GST applies)')
                 if transaction.get('donations_gst'):
                     comments.append('Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
+                if transaction.get('travel_gst') == 'international_with_gst':
+                    comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+                elif transaction.get('travel_gst') == 'domestic_no_gst':
+                    comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
 
             # Generate correcting journal entry
             try:
@@ -3041,8 +3051,10 @@ def run_review():
                 comments.append('Voucher/gift card - check face value (no GST) vs non-face value (GST at sale)')
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
-            if transaction.get('travel_gst'):
-                comments.append('Travel GST issue - check international (GST-free) vs domestic (taxable)')
+            if transaction.get('travel_gst') == 'international_with_gst':
+                comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
+            elif transaction.get('travel_gst') == 'domestic_no_gst':
+                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
             if transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
