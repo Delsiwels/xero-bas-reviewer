@@ -1869,10 +1869,22 @@ def upload_review():
                 if gross == 0 and gst == 0 and net == 0:
                     continue
 
+                # Get account name - try account_name column first, then extract from account_code if needed
+                account_name = str(get_col_value(row, 'account_name', '')).strip()
+
+                # If account_name is empty, try to extract from account_code value
+                # Some Excel exports have "477 Wages & Salaries" in account column
+                if not account_name:
+                    raw_account = str(get_col_value(row, 'account_code', ''))
+                    # Extract name part after first space or dash (e.g., "477 Wages & Salaries" -> "Wages & Salaries")
+                    name_match = re.search(r'^\d+[\s\-]+(.+)$', raw_account.strip())
+                    if name_match:
+                        account_name = name_match.group(1).strip()
+
                 transaction = {
                     'row_number': idx + 1,
                     'account_code': account_code,
-                    'account': str(get_col_value(row, 'account_name', '')),
+                    'account': account_name,
                     'date': date_str,
                     'source': str(get_col_value(row, 'source', '')),
                     'description': str(get_col_value(row, 'description', '')),
@@ -3500,13 +3512,16 @@ def generate_correcting_journal(transaction):
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
 
-        if gst > 0:
+        # Use GST amount if available, otherwise calculate from gross (10% GST rate)
+        gst_to_reverse = gst if gst > 0 else round(gross * 10 / 110, 2)
+
+        if gst_to_reverse > 0:
             # Debit: Same account with BAS Excluded (correct - wages/super not reportable)
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
                 'account_name': account_name,
-                'debit': gst,
+                'debit': gst_to_reverse,
                 'credit': 0,
                 'tax_code': 'BAS Excluded',
                 'description': std_desc
@@ -3517,7 +3532,7 @@ def generate_correcting_journal(transaction):
                 'account_code': account_code,
                 'account_name': account_name,
                 'debit': 0,
-                'credit': gst,
+                'credit': gst_to_reverse,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
@@ -6170,9 +6185,12 @@ def check_wages_gst_error(transaction):
 
     Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-can-claim-a-gst-credit
     """
-    description = transaction.get('description', '').lower()
-    account = transaction.get('account', '').lower()
-    gst_amount = abs(transaction.get('gst', 0))
+    description = str(transaction.get('description', '') or '').lower()
+    account = str(transaction.get('account', '') or '').lower()
+    try:
+        gst_amount = abs(float(transaction.get('gst', 0) or 0))
+    except (ValueError, TypeError):
+        gst_amount = 0
 
     # Wage/salary keywords
     wage_keywords = [

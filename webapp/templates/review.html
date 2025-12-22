@@ -218,8 +218,14 @@
         .comment-cell li {
             margin-bottom: 4px;
         }
+        #flagged-table-container {
+            overflow-x: auto;
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
         .flagged-table {
             width: 100%;
+            min-width: 1350px;
             border-collapse: collapse;
             font-size: 0.9em;
         }
@@ -237,8 +243,9 @@
             color: #666;
         }
         .journal-cell {
-            min-width: 250px;
+            min-width: 280px;
             padding: 8px !important;
+            background: #fffbe6 !important;
         }
         .journal-table {
             width: 100%;
@@ -788,7 +795,8 @@
                         <button onclick="clearFilters()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Clear</button>
                         <span id="filter-count" style="margin-left: auto; font-size: 14px; color: #666;"></span>
                     </div>
-                    <table class="flagged-table" id="results-table">
+                    <div id="table-scroll-wrapper" style="overflow-x: auto; width: 100%;">
+                    <table class="flagged-table" id="results-table" style="min-width: 1400px;">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">Row</th>
@@ -911,7 +919,7 @@
                     `;
                 });
 
-                tableHtml += '</tbody></table>';
+                tableHtml += '</tbody></table></div>';
                 container.innerHTML = tableHtml;
                 document.getElementById('download-btn').style.display = 'inline-block';
                 // Show Push All button only if there are flagged items with journals AND not in upload mode
@@ -1013,6 +1021,10 @@
             const severityFilter = document.getElementById('filter-severity')?.value || '';
             const sourceFilter = (document.getElementById('filter-source')?.value || '').toLowerCase();
 
+            // Preserve horizontal scroll position of the table scroll wrapper
+            const scrollWrapper = document.getElementById('table-scroll-wrapper');
+            const scrollLeft = scrollWrapper ? scrollWrapper.scrollLeft : 0;
+
             const rows = document.querySelectorAll('#results-tbody tr');
             let visibleCount = 0;
 
@@ -1034,6 +1046,27 @@
                     row.style.display = 'none';
                 }
             });
+
+            // Restore horizontal scroll position
+            if (scrollWrapper) {
+                scrollWrapper.scrollLeft = scrollLeft;
+            }
+
+            // DEBUG: Check journal cells and show visible debug info
+            const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
+            let debugInfo = `Visible rows: ${visibleRows.length}`;
+            if (visibleRows.length > 0) {
+                const firstRow = visibleRows[0];
+                const cells = firstRow.querySelectorAll('td');
+                const journalCell = cells[cells.length - 1]; // Last cell should be journal
+                debugInfo += ` | Cells: ${cells.length} | Journal HTML: ${journalCell?.innerHTML?.length || 0} chars`;
+                console.log('DEBUG - Journal cell full content:', journalCell?.innerHTML);
+            }
+            // Show debug in filter count area
+            const debugEl = document.getElementById('filter-count');
+            if (debugEl && visibleRows.length > 0) {
+                debugEl.textContent += ' | ' + debugInfo;
+            }
 
             // Update filter count
             const countEl = document.getElementById('filter-count');
