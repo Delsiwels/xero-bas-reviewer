@@ -829,7 +829,7 @@
                     // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
-                        journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
+                        journalHtml = '<table class="journal-table" style="display:table !important; visibility:visible !important; opacity:1 !important; width:100%; border:2px solid red;"><thead><tr><th style="padding:4px; background:#e9ecef;">Acc</th><th style="padding:4px; background:#e9ecef;">DR</th><th style="padding:4px; background:#e9ecef;">CR</th><th style="padding:4px; background:#e9ecef;">Tax</th></tr></thead><tbody>';
                         item.correcting_journal.entries.forEach(entry => {
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
