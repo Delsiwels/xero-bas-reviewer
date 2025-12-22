@@ -2221,13 +2221,17 @@ def upload_review():
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
+                # Check if it's a personal expense - if so, skip business-specific rules like capitalization
+                is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
+
                 if transaction.get('life_insurance_personal'):
                     comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
-                if transaction.get('asset_capitalization_error'):
+                # Skip asset/equipment capitalization rules for personal expenses (not relevant)
+                if transaction.get('asset_capitalization_error') and not is_personal:
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
-                if transaction.get('computer_equipment_expense'):
+                if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
                     comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
@@ -2272,6 +2276,9 @@ def upload_review():
         # Add remaining flagged items without AI review if over limit
         for transaction in rule_flagged[ai_review_limit:]:
             comments = []
+            # Check if it's a personal expense - if so, skip business-specific rules like capitalization
+            is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
+
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
             if transaction['alcohol_gst_error']:
@@ -2284,9 +2291,10 @@ def upload_review():
                 comments.append('GST calculation error')
             if transaction.get('drawings_loan_error'):
                 comments.append('Drawings/Loan account - should be BAS Excluded')
-            if transaction.get('asset_capitalization_error'):
+            # Skip asset/equipment capitalization rules for personal expenses (not relevant)
+            if transaction.get('asset_capitalization_error') and not is_personal:
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
-            if transaction.get('computer_equipment_expense'):
+            if transaction.get('computer_equipment_expense') and not is_personal:
                 comments.append('Computer equipment over $300 - should be capitalized as asset')
             if transaction.get('interest_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
@@ -2935,13 +2943,17 @@ def run_review():
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
+                # Check if it's a personal expense - if so, skip business-specific rules like capitalization
+                is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
+
                 if transaction.get('life_insurance_personal'):
                     comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
-                if transaction.get('asset_capitalization_error'):
+                # Skip asset/equipment capitalization rules for personal expenses (not relevant)
+                if transaction.get('asset_capitalization_error') and not is_personal:
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
-                if transaction.get('computer_equipment_expense'):
+                if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
                     comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
@@ -2986,6 +2998,9 @@ def run_review():
         # Add remaining flagged items without AI review if over limit
         for transaction in rule_flagged[ai_review_limit:]:
             comments = []
+            # Check if it's a personal expense - if so, skip business-specific rules like capitalization
+            is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
+
             if transaction['account_coding_suspicious']:
                 comments.append('Account coding may be incorrect')
             if transaction['alcohol_gst_error']:
@@ -2998,9 +3013,10 @@ def run_review():
                 comments.append('GST calculation error')
             if transaction.get('drawings_loan_error'):
                 comments.append('Drawings/Loan account - should be BAS Excluded')
-            if transaction.get('asset_capitalization_error'):
+            # Skip asset/equipment capitalization rules for personal expenses (not relevant)
+            if transaction.get('asset_capitalization_error') and not is_personal:
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
-            if transaction.get('computer_equipment_expense'):
+            if transaction.get('computer_equipment_expense') and not is_personal:
                 comments.append('Computer equipment over $300 - should be capitalized as asset')
             if transaction.get('interest_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
