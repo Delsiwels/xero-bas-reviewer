@@ -4297,10 +4297,17 @@ def check_input_taxed_gst(transaction):
 
     # Credit card fees/merchant fees to BUSINESSES CAN have GST - exclude from input-taxed check
     # These are fees charged by payment processors (Square, Stripe, etc.) - TAXABLE
+    # Per ATO: Merchant fees include GST and businesses can claim input tax credits
+    # Source: https://www.ato.gov.au/law/view/view.htm?docid=GIR/Financial-services-ch3
     cc_fee_keywords = ['cc fee', 'credit card fee', 'surcharge', 'credit card surcharge',
-                       'card fee', 'merchant fee', 'eftpos fee', 'payment processing',
+                       'card fee', 'merchant fee', 'merchant facility', 'merchant service',
+                       'eftpos fee', 'eftpos charge', 'payment processing',
                        'square fee', 'stripe fee', 'paypal fee', 'afterpay fee']
     is_cc_fee = any(keyword in description for keyword in cc_fee_keywords)
+
+    # Also check for "merchant" in description (catches "merchant fees", "merchant facility fees", etc.)
+    if 'merchant' in description and ('fee' in description or 'charge' in description):
+        is_cc_fee = True
 
     # If it's a credit card/merchant fee, it's NOT input-taxed (GST applies)
     if is_cc_fee:
@@ -7121,13 +7128,14 @@ Pre-checks (VERIFIED - do not contradict these):
 
 ATO GST Rules to check:
 1. GST-FREE (no GST, but CAN claim input credits): Basic food, health/medical, education, childcare, exports
-2. INPUT-TAXED (no GST, CANNOT claim input credits): Bank fees, interest, residential rent, life insurance, super
+2. INPUT-TAXED (no GST, CANNOT claim input credits): Bank ACCOUNT fees (monthly fees, overdraft fees), interest, residential rent, life insurance, super
 3. TAXABLE (10% GST applies): Office supplies, utilities, parking, fuel, professional services, commercial rent
-4. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
-5. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
-6. Software subscriptions should be coded to Subscriptions, NOT Consulting
-7. Parking should be coded to Motor Vehicle, NOT Legal Expenses
-8. Office supplies (toner, cartridges) MUST include GST (10%)
+4. MERCHANT FEES (TAXABLE - GST INCLUDED): Bank merchant fees, EFTPOS fees, credit card processing fees, merchant facility fees - these are NOT input-taxed! Businesses CAN claim GST credits on merchant fees. Source: ATO Financial Services Q&A.
+5. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
+6. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
+7. Software subscriptions should be coded to Subscriptions, NOT Consulting
+8. Parking should be coded to Motor Vehicle, NOT Legal Expenses
+9. Office supplies (toner, cartridges) MUST include GST (10%)
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
