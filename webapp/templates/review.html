@@ -206,17 +206,16 @@
             color: white;
         }
         .comment-cell {
-            min-width: 250px;
-            font-size: 0.9em;
-            color: #555;
-            line-height: 1.4;
+            font-size: 12px;
+            color: #444;
+            line-height: 1.5;
         }
         .comment-cell ul {
             margin: 0;
-            padding-left: 18px;
+            padding-left: 16px;
         }
         .comment-cell li {
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         #flagged-table-container {
             overflow-x: auto;
@@ -242,9 +241,9 @@
             color: #666;
         }
         .journal-cell {
-            min-width: 120px;
             padding: 8px !important;
             position: relative;
+            vertical-align: top;
         }
         .delete-row-btn {
             background: #dc3545;
@@ -321,26 +320,41 @@
             color: #333;
         }
         .journal-table {
-            width: 100%;
-            font-size: 0.85em;
+            width: auto;
+            font-size: 11px;
             border-collapse: collapse;
-            background: #f9f9f9;
-            border-radius: 4px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
         }
         .journal-table th {
-            background: #e9ecef;
-            padding: 4px 6px;
+            background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 6px 8px;
             font-weight: 600;
-            font-size: 0.85em;
             text-align: left;
+            border-bottom: 2px solid #dee2e6;
+            color: #495057;
         }
         .journal-table td {
-            padding: 4px 6px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
+            padding: 5px 8px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
         }
         .journal-table tr:last-child td {
             border-bottom: none;
+        }
+        .journal-table tr:nth-child(even) {
+            background: #fafafa;
+        }
+        .journal-table td:nth-child(2),
+        .journal-table td:nth-child(3) {
+            text-align: right;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+            color: #28a745;
+        }
+        .journal-table td:nth-child(3) {
+            color: #dc3545;
         }
         .no-issues {
             text-align: center;
@@ -882,8 +896,8 @@
                                 <th style="width: 55px;">GST</th>
                                 <th style="width: 70px;">Net</th>
                                 <th style="width: 60px;">Source</th>
-                                <th style="width: 200px;">Comments</th>
-                                <th>Suggested Journal</th>
+                                <th style="width: 180px;">Comments</th>
+                                <th style="width: 280px;">Suggested Journal</th>
                             </tr>
                         </thead>
                         <tbody id="results-tbody">
