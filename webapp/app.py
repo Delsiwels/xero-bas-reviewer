@@ -7581,7 +7581,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'GSTR 2002/6',
             'title': 'When is a supply of goods or services GST-free under Division 38?',
-            'summary': 'Exports are GST-free under Division 38 of the GST Act. No GST should be charged on exported goods/services.',
+            'summary': 'Division 38 zero-rates supplies for export consumption outside Australia.',
             'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20026/NAT/ATO/00001'
         }
     },
