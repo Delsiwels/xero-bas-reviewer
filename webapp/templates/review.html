@@ -1070,9 +1070,14 @@
                 const firstRow = visibleRows[0];
                 const journalCell = firstRow.querySelector('.journal-cell'); // Get by class, not position
                 const directCells = firstRow.children.length; // Direct children only
-                const hasJournalTable = journalCell?.querySelector('.journal-table') ? 'YES' : 'NO';
-                const debugInfo = `DirectCells: ${directCells} | JournalTable: ${hasJournalTable}`;
+                const journalTable = journalCell?.querySelector('.journal-table');
+                const tableRows = journalTable?.querySelectorAll('tr').length || 0;
+                const hasJournalTable = journalTable ? 'YES' : 'NO';
+                const debugInfo = `DirectCells: ${directCells} | JournalTable: ${hasJournalTable} | TableRows: ${tableRows}`;
                 console.log('DEBUG - Journal cell innerHTML:', journalCell?.innerHTML);
+                // Also show first 100 chars of innerHTML
+                const preview = journalCell?.innerHTML?.substring(0, 100) || 'EMPTY';
+                console.log('DEBUG - Preview:', preview);
                 // Append debug to filter count
                 if (countEl) {
                     countEl.textContent += ' | ' + debugInfo;
