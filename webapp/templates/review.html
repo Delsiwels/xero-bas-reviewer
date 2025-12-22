@@ -1027,7 +1027,7 @@
             const scrollWrapper = document.getElementById('table-scroll-wrapper');
             const scrollLeft = scrollWrapper ? scrollWrapper.scrollLeft : 0;
 
-            const rows = document.querySelectorAll('#results-tbody tr');
+            const rows = document.querySelectorAll('#results-tbody > tr');
             let visibleCount = 0;
 
             rows.forEach(row => {
