@@ -2262,6 +2262,10 @@ def upload_review():
                     comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
+                    comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
+                    comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
 
             # Generate correcting journal entry
             try:
@@ -2337,9 +2341,9 @@ def upload_review():
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
-                comments.append('Sponsorship income - GST should apply')
+                comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST - verify if supply made')
+                comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
             if transaction.get('wages_gst_error'):
                 comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
@@ -2990,6 +2994,10 @@ def run_review():
                     comments.append('International travel (overseas flights/accommodation) - GST FREE. Cannot claim GST credits on international travel expenses per ATO rules.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
                     comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
+                    comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
+                elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
+                    comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
 
             # Generate correcting journal entry
             try:
@@ -3065,9 +3073,9 @@ def run_review():
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
-                comments.append('Sponsorship income - GST should apply')
+                comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
-                comments.append('Grant income with GST - verify if supply made')
+                comments.append('Grant income with GST charged - grants are typically GST-FREE unless a supply is made in return. Review if GST should apply.')
             if transaction.get('wages_gst_error'):
                 comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
