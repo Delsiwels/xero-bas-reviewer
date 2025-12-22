@@ -3262,6 +3262,33 @@ def generate_correcting_journal(transaction):
     journal_entries = []
     narration = f"Reallocate: {transaction.get('description', '')}"
 
+    # Track what corrections have been made to avoid duplicates
+    gst_correction_done = False
+    recode_done = False
+
+    # Determine the CORRECT tax code based on all flagged errors (priority order)
+    # This ensures we use the right tax code when recoding AND avoid duplicate GST fix journals
+    correct_tax_code = 'GST on Expenses' if gst > 0 else 'GST Free'  # default
+
+    # Priority 1: BAS Excluded items (fines, donations, wages, allowances)
+    if (transaction.get('fines_penalties_gst') or
+        transaction.get('donations_gst') or
+        transaction.get('wages_gst_error') or
+        transaction.get('allowance_gst_error')):
+        correct_tax_code = 'BAS Excluded'
+    # Priority 2: Input Taxed items (residential, insurance, input_taxed)
+    elif (transaction.get('residential_premises_gst') or
+          transaction.get('insurance_gst_error') or
+          transaction.get('input_taxed_gst_error')):
+        correct_tax_code = 'Input Taxed'
+    # Priority 3: GST Free items (entertainment, government charges, international travel)
+    elif (transaction.get('alcohol_gst_error') or
+          transaction.get('client_entertainment_gst') or
+          transaction.get('staff_entertainment_gst') or
+          transaction.get('government_charges_gst') or
+          transaction.get('travel_gst') == 'international_with_gst'):
+        correct_tax_code = 'GST Free Expenses'
+
     # Check what type of error this is
     if transaction.get('account_coding_suspicious'):
         # Skip recoding suggestion if already in a valid travel account
@@ -3284,13 +3311,14 @@ def generate_correcting_journal(transaction):
                 std_desc = f"{account_name} to {suggested_account['name']} - {trans_desc}"
 
                 # Debit to correct account first, then credit to reverse wrong account
+                # Use the CORRECT tax code determined above
                 journal_entries.append({
                     'line': 1,
                     'account_code': suggested_account['code'],
                     'account_name': suggested_account['name'],
                     'debit': gross if gross > 0 else 0,
                     'credit': 0 if gross > 0 else gross,
-                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
+                    'tax_code': correct_tax_code,
                     'description': std_desc
                 })
                 journal_entries.append({
@@ -3299,9 +3327,13 @@ def generate_correcting_journal(transaction):
                     'account_name': account_name,
                     'debit': 0 if gross > 0 else gross,
                     'credit': gross if gross > 0 else 0,
-                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
+                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',  # Original (being reversed)
                     'description': std_desc
                 })
+                recode_done = True
+                # If we recoded with the correct tax code, GST is also fixed
+                if correct_tax_code != ('GST on Expenses' if gst > 0 else 'GST Free'):
+                    gst_correction_done = True
 
     # Group ALL entertainment errors together - only ONE journal needed
     # (alcohol_gst_error, client_entertainment_gst, staff_entertainment_gst all have same correction)
@@ -3310,7 +3342,7 @@ def generate_correcting_journal(transaction):
         transaction.get('client_entertainment_gst') or
         transaction.get('staff_entertainment_gst')
     )
-    if is_entertainment_error:
+    if is_entertainment_error and not gst_correction_done:
         # Entertainment - reverse original GST on Expenses coding to GST Free Expenses
         # Same account, just changing the tax code (no GST credit claimable on entertainment)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
@@ -3337,6 +3369,7 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
     if not transaction.get('gst_calculation_correct', True) and not is_entertainment_error:
         # GST calculation error - need to adjust using same account with different tax codes
@@ -3654,38 +3687,70 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('government_charges_gst'):
-        # Government charges - NO GST applies (stamp duty, rates, ASIC fees, rego are GST-free)
-        # Correcting journal: reverse original GST coding and re-enter as GST Free
+    # Group government charges and fines/penalties together (fines are a type of government charge)
+    # Only generate if not already corrected
+    is_gov_charge_or_fine = (
+        transaction.get('government_charges_gst') or
+        transaction.get('fines_penalties_gst')
+    )
+    if is_gov_charge_or_fine and not gst_correction_done:
+        # Government charges/fines - NO GST applies
+        # Fines use BAS Excluded, other gov charges use GST Free
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
 
-        if gross > 0:
-            # Debit: Re-enter with GST Free Expenses (correct - gov charges have no GST)
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': gross,
-                'credit': 0,
-                'tax_code': 'GST Free Expenses',
-                'description': std_desc
-            })
-            # Credit: Reverse the original GST on Expenses entry
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0,
-                'credit': gross,
-                'tax_code': 'GST on Expenses',
-                'description': std_desc
-            })
+        if transaction.get('fines_penalties_gst'):
+            # Fines/penalties are BAS Excluded (non-reportable)
+            target_tax_code = 'BAS Excluded'
+            std_desc = f"GST adjustment (fine/penalty) - {trans_desc}"
+            # For fines, only adjust the GST component
+            if gst > 0:
+                journal_entries.append({
+                    'line': len(journal_entries) + 1,
+                    'account_code': account_code,
+                    'account_name': account_name,
+                    'debit': gst,
+                    'credit': 0,
+                    'tax_code': 'BAS Excluded',
+                    'description': std_desc
+                })
+                journal_entries.append({
+                    'line': len(journal_entries) + 1,
+                    'account_code': account_code,
+                    'account_name': account_name,
+                    'debit': 0,
+                    'credit': gst,
+                    'tax_code': 'GST on Expenses',
+                    'description': std_desc
+                })
+                gst_correction_done = True
+        else:
+            # Other government charges (stamp duty, rates, etc.) are GST Free
+            std_desc = f"GST adjustment (gov charge) - {trans_desc}"
+            if gross > 0:
+                journal_entries.append({
+                    'line': len(journal_entries) + 1,
+                    'account_code': account_code,
+                    'account_name': account_name,
+                    'debit': gross,
+                    'credit': 0,
+                    'tax_code': 'GST Free Expenses',
+                    'description': std_desc
+                })
+                journal_entries.append({
+                    'line': len(journal_entries) + 1,
+                    'account_code': account_code,
+                    'account_name': account_name,
+                    'debit': 0,
+                    'credit': gross,
+                    'tax_code': 'GST on Expenses',
+                    'description': std_desc
+                })
+                gst_correction_done = True
 
     # NOTE: client_entertainment_gst and staff_entertainment_gst are now handled
     # in the combined is_entertainment_error block above (around line 3295)
 
-    if transaction.get('residential_premises_gst'):
+    if transaction.get('residential_premises_gst') and not gst_correction_done:
         # Residential property expense - GST not claimable (input-taxed supply)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
@@ -3708,8 +3773,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('insurance_gst_error'):
+    if transaction.get('insurance_gst_error') and not gst_correction_done:
         # Life/income protection insurance - GST not claimable (input-taxed)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
@@ -3732,8 +3798,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('allowance_gst_error'):
+    if transaction.get('allowance_gst_error') and not gst_correction_done:
         # Employee allowance - GST not claimable (not a purchase from supplier)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST adjustment - {trans_desc}"
@@ -3756,32 +3823,11 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
+            gst_correction_done = True
 
-    if transaction.get('fines_penalties_gst'):
-        # Fines/penalties - NO GST applies (non-reportable)
-        trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
-        if gst > 0:
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': gst,
-                'credit': 0,
-                'tax_code': 'BAS Excluded',
-                'description': std_desc
-            })
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0,
-                'credit': gst,
-                'tax_code': 'GST on Expenses',
-                'description': std_desc
-            })
+    # NOTE: fines_penalties_gst is now handled in the combined is_gov_charge_or_fine block above
 
-    if transaction.get('donations_gst'):
+    if transaction.get('donations_gst') and not gst_correction_done:
         # Donations - NO GST applies (non-reportable)
         # Use same account with different tax codes - GST adjusts automatically via tax code
         if gst > 0:
@@ -3805,8 +3851,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': f"Reverse GST claimed on donation"
             })
+            gst_correction_done = True
 
-    if transaction.get('voucher_gst') == 'face_value_with_gst':
+    if transaction.get('voucher_gst') == 'face_value_with_gst' and not gst_correction_done:
         # Face value voucher sale with GST - should be NO GST at sale
         # GST only applies when voucher is redeemed
         # Reverse the GST charged at sale
@@ -3831,8 +3878,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'BAS Excluded',
                 'description': f"Re-enter voucher sale - no GST at time of sale"
             })
+            gst_correction_done = True
 
-    if transaction.get('travel_gst') == 'international_with_gst':
+    if transaction.get('travel_gst') == 'international_with_gst' and not gst_correction_done:
         # International travel with GST claimed - should be GST-free
         # Reverse the GST claimed on international travel expenses
         if gst > 0:
@@ -3856,8 +3904,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses',
                 'description': f"Reverse GST claimed on international travel"
             })
+            gst_correction_done = True
 
-    if transaction.get('travel_gst') == 'domestic_no_gst':
+    if transaction.get('travel_gst') == 'domestic_no_gst' and not gst_correction_done:
         # Domestic travel without GST - should be taxable
         # Add GST to domestic travel expenses
         if gross > 0:
