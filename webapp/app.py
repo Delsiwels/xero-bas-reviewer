@@ -3281,8 +3281,10 @@ def generate_correcting_journal(transaction):
                            transaction.get('staff_entertainment_gst'))
         # Also skip if account is already Entertainment (regardless of flags)
         is_entertainment_account = 'entertainment' in account_name.lower()
+        # Skip if account is Fines & Penalties - already correct account for fines
+        is_fines_account = 'fines' in account_name.lower() or 'penalties' in account_name.lower()
 
-        if is_travel_account or is_personal or is_entertainment or is_entertainment_account:
+        if is_travel_account or is_personal or is_entertainment or is_entertainment_account or is_fines_account:
             # Don't suggest recoding - travel accounts are fine, personal items have dedicated handler
             pass
         else:
@@ -5072,10 +5074,11 @@ def check_government_charges_gst(transaction):
     gst_amount = abs(transaction.get('gst', 0))
 
     # Government charges keywords - NO GST on these
+    # Note: 'fine' and 'penalty' removed - handled by fines_penalties_gst check
     govt_charge_keywords = [
         'stamp duty', 'council rates', 'land tax', 'asic', 'rego ',
         'registration fee', 'motor vehicle registration', 'water rates',
-        'government fee', 'govt fee', 'fine ', 'penalty ', 'infringement',
+        'government fee', 'govt fee', 'infringement',
         'court fee', 'filing fee', 'lodgement fee', 'license fee', 'licence fee',
         'payroll tax', 'workers comp levy', 'epa levy',
     ]
