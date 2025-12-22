@@ -3433,7 +3433,8 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('input_taxed_gst_error'):
+    # Skip input_taxed_gst_error if life_insurance_personal (whole expense moving to Drawings)
+    if transaction.get('input_taxed_gst_error') and not transaction.get('life_insurance_personal'):
         # GST incorrectly claimed on input-taxed supply (e.g., bank fees, interest)
         # Per ATO: Input-taxed supplies have NO GST and you CANNOT claim GST credits
         trans_desc = transaction.get('description', '')[:50] or 'No description'
