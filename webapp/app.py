@@ -4408,6 +4408,58 @@ def check_missing_gst(transaction):
     if 'gst on' in gst_rate_name and 'free' not in gst_rate_name:
         return False
 
+    # Skip OVERSEAS DIGITAL SERVICES - GST Free is CORRECT for these
+    # Per ATO: When overseas suppliers don't charge GST, code as GST Free
+    # Reverse charge may apply but results in net zero for most businesses
+    # Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/international-transactions/reverse-charge-gst-on-offshore-goods-and-services-purchases
+    overseas_saas_keywords = [
+        # Major US SaaS providers
+        'adobe', 'creative cloud', 'photoshop', 'illustrator', 'acrobat',
+        'slack', 'zoom', 'dropbox', 'canva', 'grammarly', 'notion',
+        'asana', 'trello', 'monday.com', 'basecamp', 'clickup',
+        'github', 'gitlab', 'bitbucket', 'atlassian', 'jira', 'confluence',
+        'salesforce', 'hubspot', 'mailchimp', 'mailerlite', 'sendgrid',
+        'twilio', 'intercom', 'zendesk', 'freshdesk', 'helpscout',
+        'figma', 'miro', 'invision', 'sketch',
+        'shopify', 'wix', 'squarespace', 'webflow',
+        'openai', 'chatgpt', 'anthropic', 'claude',
+        'aws', 'amazon web services', 'azure', 'google cloud', 'gcp',
+        'digitalocean', 'heroku', 'vercel', 'netlify', 'cloudflare',
+        'airtable', 'zapier', 'make.com', 'ifttt',
+        'loom', 'calendly', 'docusign', 'pandadoc',
+        'semrush', 'ahrefs', 'moz', 'hotjar', 'mixpanel', 'amplitude',
+        # Advertising platforms (billed from overseas)
+        'google ads', 'google adwords', 'facebook ads', 'meta ads', 'instagram ads',
+        'linkedin ads', 'twitter ads', 'tiktok ads', 'pinterest ads',
+        'bing ads', 'microsoft ads',
+        # Streaming & media (often billed from overseas)
+        'netflix', 'spotify', 'apple music', 'youtube premium', 'disney+',
+        'hulu', 'hbo', 'amazon prime', 'audible',
+        # Microsoft products (often billed from Ireland/Singapore)
+        'microsoft 365', 'office 365', 'microsoft office', 'onedrive',
+        'linkedin premium', 'linkedin learning',
+        # Other overseas services
+        'godaddy', 'namecheap', 'hover', 'google domains',
+        '99designs', 'fiverr', 'upwork', 'toptal',
+    ]
+
+    # Check for overseas location indicators in description
+    overseas_indicators = [
+        ' usa', ' us ', 'united states', 'ireland', 'singapore',
+        'netherlands', 'luxembourg', 'california', 'seattle', 'san francisco',
+        'delaware', 'new york', 'dublin',
+    ]
+
+    is_overseas_saas = any(keyword in description for keyword in overseas_saas_keywords)
+    has_overseas_indicator = any(indicator in description for indicator in overseas_indicators)
+
+    # If it's a known overseas SaaS or has overseas indicator in software/subscription account
+    if is_overseas_saas:
+        return False  # GST Free is correct for overseas digital services
+
+    if has_overseas_indicator and ('software' in account or 'subscription' in account):
+        return False  # Overseas subscription - GST Free is correct
+
     # Items that should typically have GST (10%) in Australia per ATO rules
     # Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/taxable-sales
     gst_applicable_keywords = [
@@ -7131,11 +7183,12 @@ ATO GST Rules to check:
 2. INPUT-TAXED (no GST, CANNOT claim input credits): Bank ACCOUNT fees (monthly fees, overdraft fees), interest, residential rent, life insurance, super
 3. TAXABLE (10% GST applies): Office supplies, utilities, parking, fuel, professional services, commercial rent
 4. MERCHANT FEES (TAXABLE - GST INCLUDED): Bank merchant fees, EFTPOS fees, credit card processing fees, merchant facility fees - these are NOT input-taxed! Businesses CAN claim GST credits on merchant fees. Source: ATO Financial Services Q&A.
-5. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
-6. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
-7. Software subscriptions should be coded to Subscriptions, NOT Consulting
-8. Parking should be coded to Motor Vehicle, NOT Legal Expenses
-9. Office supplies (toner, cartridges) MUST include GST (10%)
+5. OVERSEAS DIGITAL SERVICES (GST FREE IS CORRECT): Adobe, Slack, Zoom, Canva, Google Ads, Facebook Ads, Microsoft 365, AWS, Dropbox, and other overseas SaaS - when billed from USA/Ireland/Singapore WITHOUT GST, code as GST Free. Do NOT flag these as missing GST. Reverse charge may apply but results in net zero for most businesses.
+6. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
+7. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
+8. Software subscriptions should be coded to Subscriptions, NOT Consulting
+9. Parking should be coded to Motor Vehicle, NOT Legal Expenses
+10. Office supplies (toner, cartridges) MUST include GST (10%)
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
