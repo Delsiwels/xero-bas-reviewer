@@ -2367,8 +2367,11 @@ def upload_review():
                     ato_comment = generate_ato_comment('export_gst_error')
                     comments.append(ato_comment or 'Export sale with GST charged - exports should be GST-FREE. No GST should be charged on exported goods/services.')
                 if transaction.get('residential_premises_gst'):
-                    ato_comment = generate_ato_comment('residential_premises_gst')
-                    comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
+                    if transaction.get('residential_premises_gst') == 'review':
+                        comments.append('REVIEW: Accommodation/property expense - check invoice. If RESIDENTIAL: input-taxed (no GST credit). If COMMERCIAL/serviced apartment: GST credits claimable.')
+                    else:
+                        ato_comment = generate_ato_comment('residential_premises_gst')
+                        comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
                 if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                     ato_comment = generate_ato_comment('paypal_fees')
                     comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
@@ -2456,8 +2459,11 @@ def upload_review():
                     comments.append('Government fee/charge - NO GST.')
             # NOTE: client_entertainment_gst and staff_entertainment_gst already handled in combined entertainment check above
             if transaction.get('residential_premises_gst'):
-                ato_comment = generate_ato_comment('residential_premises_gst')
-                comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
+                if transaction.get('residential_premises_gst') == 'review':
+                    comments.append('REVIEW: Accommodation/property expense - check invoice. If RESIDENTIAL: input-taxed (no GST credit). If COMMERCIAL/serviced apartment: GST credits claimable.')
+                else:
+                    ato_comment = generate_ato_comment('residential_premises_gst')
+                    comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             # NOTE: life_insurance_personal and insurance_gst_error already handled above (lines ~2289-2302)
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
@@ -3222,8 +3228,11 @@ def run_review():
                     ato_comment = generate_ato_comment('export_gst_error')
                     comments.append(ato_comment or 'Export sale with GST charged - exports should be GST-FREE. No GST should be charged on exported goods/services.')
                 if transaction.get('residential_premises_gst'):
-                    ato_comment = generate_ato_comment('residential_premises_gst')
-                    comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
+                    if transaction.get('residential_premises_gst') == 'review':
+                        comments.append('REVIEW: Accommodation/property expense - check invoice. If RESIDENTIAL: input-taxed (no GST credit). If COMMERCIAL/serviced apartment: GST credits claimable.')
+                    else:
+                        ato_comment = generate_ato_comment('residential_premises_gst')
+                        comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
                 if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                     ato_comment = generate_ato_comment('paypal_fees')
                     comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
@@ -3311,8 +3320,11 @@ def run_review():
                     comments.append('Government fee/charge - NO GST.')
             # NOTE: client_entertainment_gst and staff_entertainment_gst already handled in combined entertainment check above
             if transaction.get('residential_premises_gst'):
-                ato_comment = generate_ato_comment('residential_premises_gst')
-                comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
+                if transaction.get('residential_premises_gst') == 'review':
+                    comments.append('REVIEW: Accommodation/property expense - check invoice. If RESIDENTIAL: input-taxed (no GST credit). If COMMERCIAL/serviced apartment: GST credits claimable.')
+                else:
+                    ato_comment = generate_ato_comment('residential_premises_gst')
+                    comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             # NOTE: life_insurance_personal and insurance_gst_error already handled above (lines ~2289-2302)
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
@@ -4048,10 +4060,22 @@ def generate_correcting_journal(transaction):
     # in the combined is_entertainment_error block above (around line 3295)
 
     if transaction.get('residential_premises_gst') and not gst_correction_done:
-        # Residential property expense - GST not claimable (input-taxed supply)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST adjustment - {trans_desc}"
-        if gst > 0:
+        if transaction.get('residential_premises_gst') == 'review':
+            # Ambiguous case - needs review, don't auto-generate journal
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': '',
+                'account_name': 'REVIEW REQUIRED',
+                'debit': 0,
+                'credit': 0,
+                'tax_code': 'Check invoice',
+                'description': f"Review: {trans_desc} - If residential: recode to Input Taxed. If commercial/serviced: GST ok."
+            })
+            gst_correction_done = True
+        elif gst > 0:
+            # Definite residential - GST not claimable (input-taxed supply)
+            std_desc = f"GST adjustment - {trans_desc}"
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -5566,12 +5590,18 @@ def check_residential_premises_gst(transaction):
     account = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
 
-    # Residential property expense keywords
+    # Residential property expense keywords - DEFINITE residential indicators
     residential_property_keywords = [
         'rental property', 'investment property', 'residential property',
-        'rental expense', 'property expense', 'landlord',
-        'tenant', 'tenancy', 'lease residential', 'residential lease',
-        'unit ', 'apartment ', 'house ', 'townhouse', 'villa ',
+        'rental expense', 'landlord', 'residential rent', 'residential lease',
+        'tenant', 'tenancy', 'lease residential',
+        'townhouse', 'villa ',
+    ]
+
+    # Ambiguous keywords - could be residential OR commercial (serviced apartment, corporate housing)
+    # These need review rather than automatic flagging
+    ambiguous_property_keywords = [
+        'apartment', 'unit ', 'house ', 'property expense', 'accommodation',
     ]
 
     # Property management/agent keywords
@@ -5606,8 +5636,8 @@ def check_residential_premises_gst(transaction):
         'residential' in account
     )
 
-    # Check if expense is related to residential property
-    is_residential_property_expense = (
+    # Check for DEFINITE residential indicators
+    is_definite_residential = (
         any(keyword in description for keyword in residential_property_keywords) or
         any(keyword in description for keyword in property_management_keywords) or
         any(keyword in description for keyword in residential_repairs_keywords) or
@@ -5615,7 +5645,10 @@ def check_residential_premises_gst(transaction):
         is_rental_property_account
     )
 
-    if not is_residential_property_expense:
+    # Check for AMBIGUOUS keywords (could be residential or commercial)
+    is_ambiguous = any(keyword in description for keyword in ambiguous_property_keywords)
+
+    if not is_definite_residential and not is_ambiguous:
         return False
 
     # Exclude commercial property - GST IS claimable on commercial premises
@@ -5644,9 +5677,12 @@ def check_residential_premises_gst(transaction):
     if is_commercial_residential:
         return False  # Commercial residential - GST may apply
 
-    # Flag if GST is claimed on residential property expense (should be input-taxed)
+    # Flag if GST is claimed
     if gst_amount > 0:
-        return True
+        if is_definite_residential:
+            return True  # Definite residential - input-taxed, no GST credits
+        elif is_ambiguous:
+            return 'review'  # Ambiguous - needs review to determine if residential or commercial
 
     return False
 
