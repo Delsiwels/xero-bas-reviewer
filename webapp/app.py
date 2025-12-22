@@ -2346,6 +2346,8 @@ def upload_review():
                     elif govt_type == 'asic_fees':
                         ato_comment = generate_ato_comment('asic_fees')
                         comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4): Regulatory licence fees are not subject to GST.')
+                    elif govt_type == 'vehicle_rego':
+                        comments.append('REVIEW: Motor vehicle registration - MIXED GST treatment. Registration fee = NO GST. CTP insurance component = GST INCLUDED. Check invoice breakdown - varies by state.')
                     elif govt_type == 'government_tax':
                         ato_comment = generate_ato_comment('government_charges_gst')
                         comments.append(ato_comment or 'Government tax (rates/stamp duty/land tax) - NO GST. Per Section 81-5: Australian taxes are not consideration.')
@@ -2455,6 +2457,8 @@ def upload_review():
                 elif govt_type == 'asic_fees':
                     ato_comment = generate_ato_comment('asic_fees')
                     comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4).')
+                elif govt_type == 'vehicle_rego':
+                    comments.append('REVIEW: Motor vehicle rego - Registration fee = NO GST. CTP insurance = GST INCLUDED. Check invoice breakdown.')
                 elif govt_type == 'government_tax':
                     ato_comment = generate_ato_comment('government_charges_gst')
                     comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
@@ -3210,6 +3214,8 @@ def run_review():
                     elif govt_type == 'asic_fees':
                         ato_comment = generate_ato_comment('asic_fees')
                         comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4): Regulatory licence fees are not subject to GST.')
+                    elif govt_type == 'vehicle_rego':
+                        comments.append('REVIEW: Motor vehicle registration - MIXED GST treatment. Registration fee = NO GST. CTP insurance component = GST INCLUDED. Check invoice breakdown - varies by state.')
                     elif govt_type == 'government_tax':
                         ato_comment = generate_ato_comment('government_charges_gst')
                         comments.append(ato_comment or 'Government tax (rates/stamp duty/land tax) - NO GST. Per Section 81-5: Australian taxes are not consideration.')
@@ -3319,6 +3325,8 @@ def run_review():
                 elif govt_type == 'asic_fees':
                     ato_comment = generate_ato_comment('asic_fees')
                     comments.append(ato_comment or 'ASIC fee - NO GST. Per Section 81-10(4).')
+                elif govt_type == 'vehicle_rego':
+                    comments.append('REVIEW: Motor vehicle rego - Registration fee = NO GST. CTP insurance = GST INCLUDED. Check invoice breakdown.')
                 elif govt_type == 'government_tax':
                     ato_comment = generate_ato_comment('government_charges_gst')
                     comments.append(ato_comment or 'Government tax - NO GST. Per Section 81-5.')
@@ -4624,7 +4632,13 @@ def suggest_correct_account(description):
         (['liquor license', 'liquor licence', 'license renewal', 'licence renewal',
           'business license', 'business licence', 'trading license', 'trading licence',
           'food license', 'food licence', 'building permit', 'development permit',
-          'lodgement fee', 'filing fee', 'registration fee', 'annual review fee'],
+          'lodgement fee', 'filing fee', 'annual review fee', 'renewal fee',
+          # Building & Construction
+          'qbcc', 'builder license', 'builder licence', 'contractor license', 'contractor licence',
+          # Professional registration
+          'practising certificate', 'practicing certificate', 'professional registration',
+          'ahpra', 'nursing registration', 'medical registration', 'cpa registration',
+          'tax agent registration', 'tpb registration'],
          {'code': '750', 'name': 'Licenses & Filing Fees'}),
 
         # Insurance
@@ -5494,16 +5508,23 @@ def check_government_charges_gst(transaction):
     if any(keyword in description for keyword in asic_keywords):
         return 'asic_fees'
 
+    # Motor vehicle registration - MIXED treatment (rego fee = no GST, CTP = has GST)
+    # This varies by state - VIC bundles CTP, QLD/NSW separate
+    vehicle_rego_keywords = ['rego ', 'motor vehicle registration', 'vehicle registration', 'car registration']
+    if any(keyword in description for keyword in vehicle_rego_keywords):
+        return 'vehicle_rego'  # Special handling - review needed
+
     # Government taxes - Section 81-5
     tax_keywords = [
         'stamp duty', 'council rates', 'land tax', 'water rates',
-        'payroll tax', 'rego ', 'registration fee', 'motor vehicle registration',
+        'payroll tax',
     ]
     if any(keyword in description for keyword in tax_keywords):
         return 'government_tax'
 
     # Other regulatory fees - general Division 81
     # Note: 'infringement' removed - fines/penalties handled by check_fines_penalties_gst
+    # Per Division 81-10(4): Fees for provision/retention of permission, authority, licence = NO GST
     other_keywords = [
         'government fee', 'govt fee', 'lodgement fee', 'license fee', 'licence fee',
         'workers comp levy', 'epa levy',
@@ -5511,6 +5532,15 @@ def check_government_charges_gst(transaction):
         'liquor license', 'liquor licence', 'business license', 'business licence',
         'license renewal', 'licence renewal', 'trading license', 'trading licence',
         'food license', 'food licence', 'building permit', 'development permit',
+        # Building & Construction regulatory fees (QBCC, HIA, MBA, etc.)
+        'qbcc', 'builder license', 'builder licence', 'contractor license', 'contractor licence',
+        'building license', 'building licence', 'construction license', 'construction licence',
+        # Professional registration/licensing (AHPRA, CPA, Law Society, etc.)
+        'practising certificate', 'practicing certificate', 'professional registration',
+        'ahpra', 'nursing registration', 'medical registration', 'legal practising',
+        'cpa registration', 'ca registration', 'tax agent registration', 'tpb registration',
+        # Other government regulatory fees
+        'annual review fee', 'renewal fee',
     ]
     if any(keyword in description for keyword in other_keywords):
         return 'regulatory_fee'
