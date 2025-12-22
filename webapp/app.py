@@ -3279,8 +3279,10 @@ def generate_correcting_journal(transaction):
         is_entertainment = (transaction.get('alcohol_gst_error') or
                            transaction.get('client_entertainment_gst') or
                            transaction.get('staff_entertainment_gst'))
+        # Also skip if account is already Entertainment (regardless of flags)
+        is_entertainment_account = 'entertainment' in account_name.lower()
 
-        if is_travel_account or is_personal or is_entertainment:
+        if is_travel_account or is_personal or is_entertainment or is_entertainment_account:
             # Don't suggest recoding - travel accounts are fine, personal items have dedicated handler
             pass
         else:
