@@ -1052,22 +1052,6 @@
                 scrollWrapper.scrollLeft = scrollLeft;
             }
 
-            // DEBUG: Check journal cells and show visible debug info
-            const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
-            let debugInfo = `Visible rows: ${visibleRows.length}`;
-            if (visibleRows.length > 0) {
-                const firstRow = visibleRows[0];
-                const cells = firstRow.querySelectorAll('td');
-                const journalCell = cells[cells.length - 1]; // Last cell should be journal
-                debugInfo += ` | Cells: ${cells.length} | Journal HTML: ${journalCell?.innerHTML?.length || 0} chars`;
-                console.log('DEBUG - Journal cell full content:', journalCell?.innerHTML);
-            }
-            // Show debug in filter count area
-            const debugEl = document.getElementById('filter-count');
-            if (debugEl && visibleRows.length > 0) {
-                debugEl.textContent += ' | ' + debugInfo;
-            }
-
             // Update filter count
             const countEl = document.getElementById('filter-count');
             if (countEl) {
@@ -1076,6 +1060,20 @@
                     countEl.textContent = `Showing ${visibleCount} of ${total}`;
                 } else {
                     countEl.textContent = '';
+                }
+            }
+
+            // DEBUG: Check journal cells and show visible debug info AFTER filter count
+            const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
+            if (visibleRows.length > 0) {
+                const firstRow = visibleRows[0];
+                const cells = firstRow.querySelectorAll('td');
+                const journalCell = cells[cells.length - 1]; // Last cell should be journal
+                const debugInfo = `Cells: ${cells.length} | JournalLen: ${journalCell?.innerHTML?.length || 0}`;
+                console.log('DEBUG - Journal cell content:', journalCell?.innerHTML);
+                // Append debug to filter count
+                if (countEl) {
+                    countEl.textContent += ' | ' + debugInfo;
                 }
             }
         }
