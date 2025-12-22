@@ -4231,7 +4231,7 @@ def generate_correcting_journal(transaction):
         # Reverse the GST charged at sale
         if gst > 0:
             # For face value vouchers sold, we need to reverse the GST charged
-            # Debit: reverse GST on Income, Credit: re-enter as BAS Excluded
+            # Debit: reverse GST on Income, Credit: re-enter as GST Free Income
             journal_entries.append({
                 'line': len(journal_entries) + 1,
                 'account_code': account_code,
@@ -4247,8 +4247,8 @@ def generate_correcting_journal(transaction):
                 'account_name': account_name,
                 'debit': 0,
                 'credit': gross,
-                'tax_code': 'BAS Excluded',
-                'description': f"Re-enter voucher sale - no GST at time of sale"
+                'tax_code': 'GST Free Income',
+                'description': f"Re-enter voucher sale as GST Free (GSTR 2003/5)"
             })
             gst_correction_done = True
 
