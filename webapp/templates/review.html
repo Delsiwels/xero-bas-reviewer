@@ -246,6 +246,21 @@
             padding: 8px !important;
             position: relative;
         }
+        .delete-row-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+        }
+        .delete-row-btn:hover {
+            background: #c82333;
+        }
         .journal-btn {
             padding: 6px 12px;
             font-size: 12px;
@@ -857,6 +872,7 @@
                     <table class="flagged-table" id="results-table">
                         <thead>
                             <tr>
+                                <th style="width: 30px;"></th>
                                 <th style="width: 35px;">Row</th>
                                 <th style="width: 60px;">Severity</th>
                                 <th style="width: 75px;">Date</th>
@@ -962,7 +978,9 @@
                             data-description="${escapeHtml(item.description || '').toLowerCase()}"
                             data-account="${escapeHtml(item.account || '').toLowerCase()} ${escapeHtml(item.account_code || '').toLowerCase()}"
                             data-severity="${safeSeverity}"
-                            data-source="${escapeHtml(item.source || '').toLowerCase()}">
+                            data-source="${escapeHtml(item.source || '').toLowerCase()}"
+                            data-row-number="${escapeHtml(item.row_number)}">
+                            <td><button class="delete-row-btn" onclick="deleteRow(this, ${item.row_number})" title="Remove from report">×</button></td>
                             <td>${escapeHtml(item.row_number)}</td>
                             <td><span class="severity-badge ${safeSeverity}">${safeSeverity.toUpperCase()}</span></td>
                             <td>${formatDateAU(item.date)}</td>
@@ -1071,6 +1089,27 @@
                 buttonElement.disabled = false;
                 alert('Error pushing journal: ' + error.message);
             }
+        }
+
+        // Delete row function - removes from table and report data
+        function deleteRow(button, rowNumber) {
+            // Remove from reviewResults so it won't be in the downloaded report
+            if (reviewResults && reviewResults.flagged_items) {
+                reviewResults.flagged_items = reviewResults.flagged_items.filter(item => item.row_number !== rowNumber);
+                reviewResults.flagged_count = reviewResults.flagged_items.length;
+
+                // Update the flagged count display
+                document.getElementById('flagged-count').textContent = reviewResults.flagged_count;
+            }
+
+            // Remove the row from the table
+            const row = button.closest('tr');
+            if (row) {
+                row.remove();
+            }
+
+            // Update filter count if filters are active
+            applyFilters();
         }
 
         // Filter functions
