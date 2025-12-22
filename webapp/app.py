@@ -2288,7 +2288,7 @@ def upload_review():
 
                 if transaction.get('life_insurance_personal'):
                     ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings (not a business expense). Life insurance is NOT deductible. Income protection IS deductible on owner personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -2299,7 +2299,7 @@ def upload_review():
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
+                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed financial supply). Income protection deductible on owner personal tax return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
@@ -3128,7 +3128,7 @@ def run_review():
 
                 if transaction.get('life_insurance_personal'):
                     ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings (not a business expense). Life insurance is NOT deductible. Income protection IS deductible on owner personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -3139,7 +3139,7 @@ def run_review():
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     ato_comment = generate_ato_comment('life_insurance_personal')
-                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
+                    comments.append(ato_comment or 'Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed financial supply). Income protection deductible on owner personal tax return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
@@ -7802,9 +7802,9 @@ ATO_RULING_QUERIES = {
         'query': 'life insurance income protection business deduction owner site:ato.gov.au',
         'fallback': {
             'ruling': 'ATO - Insurance premiums deductions',
-            'title': 'Life insurance is not a business deduction',
-            'summary': 'Owner may claim income protection on personal tax return.',
-            'url': 'https://www.ato.gov.au/individuals-and-families/income-deductions-offsets-and-records/deductions-you-can-claim/other-deductions/income-protection-insurance'
+            'title': 'Life/income protection insurance deductibility',
+            'summary': 'Life insurance is NOT deductible. Income protection IS deductible on owner personal tax return (not business).',
+            'url': 'https://www.ato.gov.au/individuals-and-families/income-deductions-offsets-and-records/deductions-you-can-claim/investments-insurance-and-super/income-protection-insurance'
         }
     },
     'body_corporate_fees': {
@@ -7950,7 +7950,7 @@ def generate_ato_comment(issue_type, transaction=None):
         'grants_sponsorship_gst': 'Grant income GST treatment requires review.',
         'residential_premises_gst': 'Residential property expense - Input Taxed (no GST credit).',
         'input_taxed_gst_error': 'Financial supply - Input Taxed (no GST credit claimable).',
-        'insurance_gst_error': 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit (input-taxed).',
+        'insurance_gst_error': 'Life/income protection insurance - Recode to Owner Drawings. No GST credit (input-taxed financial supply).',
         'travel_gst_international': 'International travel - GST-FREE (no GST credits).',
         'travel_gst_domestic': 'Domestic travel - TAXABLE (should include GST).',
         'fines_penalties_gst': 'Fine/penalty - BAS Excluded (no GST).',
@@ -7958,7 +7958,7 @@ def generate_ato_comment(issue_type, transaction=None):
         'donations_gst': 'Donation - NO GST applies.',
         'paypal_fees': 'PayPal fees - NO GST (exempt financial supply per PayPal PDS). Recode to Input Taxed.',
         'merchant_fees': 'Merchant/Stripe/eBay fees - GST INCLUDED. Credits can be claimed. Recode to GST on Expenses.',
-        'life_insurance_personal': 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings.',
+        'life_insurance_personal': 'Life/income protection insurance - Recode to Owner Drawings (not a business expense).',
         'body_corporate_fees': 'Body corporate/strata fees - commercial property GST claimable, residential input-taxed.'
     }
 
