@@ -7803,7 +7803,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'ATO - Insurance premiums deductions',
             'title': 'Life insurance is not a business deduction',
-            'summary': 'Life/income protection insurance for the business owner is NOT a deductible business expense. Recode to Owner Drawings. Owner may claim income protection on personal tax return.',
+            'summary': 'Owner may claim income protection on personal tax return.',
             'url': 'https://www.ato.gov.au/individuals-and-families/income-deductions-offsets-and-records/deductions-you-can-claim/other-deductions/income-protection-insurance'
         }
     },
