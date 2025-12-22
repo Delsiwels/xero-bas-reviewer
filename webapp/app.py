@@ -2234,6 +2234,35 @@ def upload_review():
                               'looks correct', 'is correct', 'recorded correctly', 'coded correctly']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
+            # Override AI comment if it uses incorrect terminology
+            if is_useful_ai_comment and ai_comment:
+                ai_lower = ai_comment.lower()
+                # Wages are BAS Excluded, NOT input-taxed - force rule-based if AI uses wrong term
+                if transaction.get('wages_gst_error') and ('input-taxed' in ai_lower or 'input taxed' in ai_lower):
+                    is_useful_ai_comment = False
+                # Government charges have NO GST (not input-taxed, not taxable) - force rule-based if wrong
+                if transaction.get('government_charges_gst') and ('input-taxed' in ai_lower or 'input taxed' in ai_lower or 'taxable supply' in ai_lower or 'taxable supplies' in ai_lower):
+                    is_useful_ai_comment = False
+                # Council/water rates should not mention "residential" or "taxable"
+                if ('council' in ai_lower or 'water' in ai_lower) and 'rates' in ai_lower and ('residential' in ai_lower or 'taxable supply' in ai_lower or 'taxable supplies' in ai_lower):
+                    is_useful_ai_comment = False
+                # Body corporate assumed residential without evidence
+                if 'body corporate' in ai_lower and 'residential' in ai_lower and 'residential' not in transaction.get('description', '').lower():
+                    is_useful_ai_comment = False
+                # International travel flagged but AI says taxable - international flights are GST-FREE
+                if transaction.get('travel_gst') == 'international_with_gst' and 'taxable' in ai_lower:
+                    is_useful_ai_comment = False
+                # Life/income protection insurance - always use rule-based for consistent Owner Drawings advice
+                if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
+                    # Force rule-based comment which includes Owner Drawings recode advice
+                    is_useful_ai_comment = False
+                # Payment processor fees - always use rule-based for specific PayPal/Stripe guidance
+                if transaction.get('payment_processor_fees'):
+                    is_useful_ai_comment = False
+                # Government charges - always use rule-based (AI incorrectly says "input-taxed" or "residential")
+                if transaction.get('government_charges_gst'):
+                    is_useful_ai_comment = False
+
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
                 comments.append(ai_comment)
@@ -2243,7 +2272,8 @@ def upload_review():
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
                 if transaction.get('life_insurance_personal'):
-                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                    ato_comment = generate_ato_comment('life_insurance_personal')
+                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -2252,8 +2282,8 @@ def upload_review():
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
-                    ato_comment = generate_ato_comment('insurance_gst_error')
-                    comments.append(ato_comment or 'Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                    ato_comment = generate_ato_comment('life_insurance_personal')
+                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
@@ -2279,10 +2309,11 @@ def upload_review():
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
                 if transaction.get('travel_gst') == 'international_with_gst':
-                    ato_comment = generate_ato_comment('travel_gst')
+                    ato_comment = generate_ato_comment('travel_gst_international')
                     comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel expenses.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
-                    comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                    ato_comment = generate_ato_comment('travel_gst_domestic')
+                    comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
                     ato_comment = generate_ato_comment('grants_sponsorship_gst')
                     comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
@@ -2367,10 +2398,11 @@ def upload_review():
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             if transaction.get('insurance_gst_error'):
-                ato_comment = generate_ato_comment('insurance_gst_error')
-                comments.append(ato_comment or 'Life/income protection insurance - NO GST credit claimable (input-taxed)')
+                ato_comment = generate_ato_comment('life_insurance_personal')
+                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
             if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+                ato_comment = generate_ato_comment('life_insurance_personal')
+                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
@@ -2390,11 +2422,18 @@ def upload_review():
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
-                ato_comment = generate_ato_comment('travel_gst')
+                ato_comment = generate_ato_comment('travel_gst_international')
                 comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel.')
             elif transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
-            if transaction.get('payment_processor_fees'):
+                ato_comment = generate_ato_comment('travel_gst_domestic')
+                comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
+            if transaction.get('payment_processor_fees') == 'paypal_with_gst':
+                ato_comment = generate_ato_comment('paypal_fees')
+                comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+            elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
+                ato_comment = generate_ato_comment('merchant_fees')
+                comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
+            elif transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
                 ato_comment = generate_ato_comment('fines_penalties_gst')
@@ -2993,6 +3032,35 @@ def run_review():
                               'looks correct', 'is correct', 'recorded correctly', 'coded correctly']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
+            # Override AI comment if it uses incorrect terminology
+            if is_useful_ai_comment and ai_comment:
+                ai_lower = ai_comment.lower()
+                # Wages are BAS Excluded, NOT input-taxed - force rule-based if AI uses wrong term
+                if transaction.get('wages_gst_error') and ('input-taxed' in ai_lower or 'input taxed' in ai_lower):
+                    is_useful_ai_comment = False
+                # Government charges have NO GST (not input-taxed, not taxable) - force rule-based if wrong
+                if transaction.get('government_charges_gst') and ('input-taxed' in ai_lower or 'input taxed' in ai_lower or 'taxable supply' in ai_lower or 'taxable supplies' in ai_lower):
+                    is_useful_ai_comment = False
+                # Council/water rates should not mention "residential" or "taxable"
+                if ('council' in ai_lower or 'water' in ai_lower) and 'rates' in ai_lower and ('residential' in ai_lower or 'taxable supply' in ai_lower or 'taxable supplies' in ai_lower):
+                    is_useful_ai_comment = False
+                # Body corporate assumed residential without evidence
+                if 'body corporate' in ai_lower and 'residential' in ai_lower and 'residential' not in transaction.get('description', '').lower():
+                    is_useful_ai_comment = False
+                # International travel flagged but AI says taxable - international flights are GST-FREE
+                if transaction.get('travel_gst') == 'international_with_gst' and 'taxable' in ai_lower:
+                    is_useful_ai_comment = False
+                # Life/income protection insurance - always use rule-based for consistent Owner Drawings advice
+                if transaction.get('life_insurance_personal') or transaction.get('insurance_gst_error'):
+                    # Force rule-based comment which includes Owner Drawings recode advice
+                    is_useful_ai_comment = False
+                # Payment processor fees - always use rule-based for specific PayPal/Stripe guidance
+                if transaction.get('payment_processor_fees'):
+                    is_useful_ai_comment = False
+                # Government charges - always use rule-based (AI incorrectly says "input-taxed" or "residential")
+                if transaction.get('government_charges_gst'):
+                    is_useful_ai_comment = False
+
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
                 comments.append(ai_comment)
@@ -3002,7 +3070,8 @@ def run_review():
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
                 if transaction.get('life_insurance_personal'):
-                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+                    ato_comment = generate_ato_comment('life_insurance_personal')
+                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
                 if transaction.get('personal_in_business_account'):
                     comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
                 # Skip asset/equipment capitalization rules for personal expenses (not relevant)
@@ -3011,8 +3080,8 @@ def run_review():
                 if transaction.get('computer_equipment_expense') and not is_personal:
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
                 if transaction.get('insurance_gst_error'):
-                    ato_comment = generate_ato_comment('insurance_gst_error')
-                    comments.append(ato_comment or 'Life/income protection insurance - Input Taxed (no GST credit claimable)')
+                    ato_comment = generate_ato_comment('life_insurance_personal')
+                    comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
                 if transaction.get('wages_gst_error'):
                     ato_comment = generate_ato_comment('wages_gst_error')
                     comments.append(ato_comment or 'Wages/salaries/super - should be BAS Excluded (no GST)')
@@ -3038,10 +3107,11 @@ def run_review():
                     ato_comment = generate_ato_comment('donations_gst')
                     comments.append(ato_comment or 'Donation - NO GST applies. Use GST Free Expenses for P&L accounts.')
                 if transaction.get('travel_gst') == 'international_with_gst':
-                    ato_comment = generate_ato_comment('travel_gst')
+                    ato_comment = generate_ato_comment('travel_gst_international')
                     comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel expenses.')
                 elif transaction.get('travel_gst') == 'domestic_no_gst':
-                    comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
+                    ato_comment = generate_ato_comment('travel_gst_domestic')
+                    comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%). Domestic flights, hotels, taxis are GST taxable.')
                 if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
                     ato_comment = generate_ato_comment('grants_sponsorship_gst')
                     comments.append(ato_comment or 'Grant income with GST charged - grants are typically GST-FREE unless binding supply obligation exists.')
@@ -3126,10 +3196,11 @@ def run_review():
                 ato_comment = generate_ato_comment('residential_premises_gst')
                 comments.append(ato_comment or 'Residential property expense - NO GST credit claimable (input-taxed)')
             if transaction.get('insurance_gst_error'):
-                ato_comment = generate_ato_comment('insurance_gst_error')
-                comments.append(ato_comment or 'Life/income protection insurance - NO GST credit claimable (input-taxed)')
+                ato_comment = generate_ato_comment('life_insurance_personal')
+                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit claimable (input-taxed). Owner may claim on personal tax return.')
             if transaction.get('life_insurance_personal'):
-                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
+                ato_comment = generate_ato_comment('life_insurance_personal')
+                comments.append(ato_comment or 'Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
             if transaction.get('personal_in_business_account'):
                 comments.append('Personal expense in business account - NOT deductible. Recode to Owner Drawings (personal expenses cannot be claimed as business deductions).')
             if transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
@@ -3149,11 +3220,18 @@ def run_review():
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
-                ato_comment = generate_ato_comment('travel_gst')
+                ato_comment = generate_ato_comment('travel_gst_international')
                 comments.append(ato_comment or 'International travel - GST FREE. Cannot claim GST credits on international travel.')
             elif transaction.get('travel_gst') == 'domestic_no_gst':
-                comments.append('Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
-            if transaction.get('payment_processor_fees'):
+                ato_comment = generate_ato_comment('travel_gst_domestic')
+                comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
+            if transaction.get('payment_processor_fees') == 'paypal_with_gst':
+                ato_comment = generate_ato_comment('paypal_fees')
+                comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+            elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
+                ato_comment = generate_ato_comment('merchant_fees')
+                comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
+            elif transaction.get('payment_processor_fees'):
                 comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
             if transaction.get('fines_penalties_gst'):
                 ato_comment = generate_ato_comment('fines_penalties_gst')
@@ -5341,11 +5419,14 @@ def check_residential_premises_gst(transaction):
     ]
 
     # Residential repairs/maintenance keywords
+    # NOTE: Do NOT include "strata fees", "body corporate", "owners corporation" here
+    # as these can be for EITHER residential OR commercial properties.
+    # Only flag as residential if there's explicit evidence (e.g., "residential strata")
     residential_repairs_keywords = [
         'rental repairs', 'rental maintenance', 'property repairs',
         'property maintenance', 'tenant repairs', 'landlord insurance',
         'rental insurance', 'building insurance residential',
-        'strata fees', 'body corporate', 'owners corporation',
+        'residential strata', 'residential body corporate',
     ]
 
     # Advertising for tenants
@@ -7428,12 +7509,12 @@ ATO_RULING_QUERIES = {
         }
     },
     'government_charges_gst': {
-        'query': 'council rates stamp duty GST government charges site:ato.gov.au',
+        'query': 'council rates stamp duty GST Division 81 government charges site:ato.gov.au',
         'fallback': {
-            'ruling': 'GST Act - Section 81-10',
-            'title': 'Government taxes, fees and charges',
-            'summary': 'Government levies (council rates, stamp duty, land tax, registration fees) are not taxable supplies and have no GST.',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/government'
+            'ruling': 'GST Act - Division 81',
+            'title': 'Payments to government agencies - taxes, fees and charges',
+            'summary': 'Council rates, stamp duty, land tax are government TAXES under Division 81 - NOT subject to GST. These are not taxable supplies. GST should be $0.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/government-entities/gst-for-government/payments-to-government-agencies-under-division-81'
         }
     },
     'grants_sponsorship_gst': {
@@ -7481,6 +7562,24 @@ ATO_RULING_QUERIES = {
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/travel-and-tourism'
         }
     },
+    'travel_gst_international': {
+        'query': 'international flights GST-free Division 38 site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 38',
+            'title': 'International travel is GST-free',
+            'summary': 'International flights and travel are GST-free. No GST should be charged and no GST credits can be claimed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/travel-and-tourism/gst-and-international-travel'
+        }
+    },
+    'travel_gst_domestic': {
+        'query': 'domestic travel GST taxable site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 9-5',
+            'title': 'Domestic travel is taxable',
+            'summary': 'Domestic travel within Australia is taxable. GST (10%) applies and GST credits can be claimed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/travel-and-tourism'
+        }
+    },
     'fines_penalties_gst': {
         'query': 'fines penalties BAS excluded GST site:ato.gov.au',
         'fallback': {
@@ -7506,6 +7605,42 @@ ATO_RULING_QUERIES = {
             'title': 'Donations and gifts - GST treatment',
             'summary': 'Donations (gifts) are not consideration for a supply. No GST applies. Use GST Free for expenses.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/not-for-profit-organisations/gst/gst-for-charities-and-gift-deductible-entities'
+        }
+    },
+    'paypal_fees': {
+        'query': 'PayPal fees GST financial supply input taxed site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'PayPal fees are input-taxed financial supplies',
+            'summary': 'PayPal (Singapore) fees are GST-exempt financial supplies. No GST is charged and no GST credits can be claimed. Code as Input Taxed.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-financial-supplies'
+        }
+    },
+    'merchant_fees': {
+        'query': 'merchant fees EFTPOS credit card GST taxable site:ato.gov.au',
+        'fallback': {
+            'ruling': 'ATO Financial Services Q&A',
+            'title': 'Merchant fees are taxable supplies',
+            'summary': 'Bank merchant fees, EFTPOS fees, Stripe fees include GST. GST credits CAN be claimed on these fees.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance'
+        }
+    },
+    'life_insurance_personal': {
+        'query': 'life insurance income protection business deduction owner site:ato.gov.au',
+        'fallback': {
+            'ruling': 'ATO - Insurance premiums deductions',
+            'title': 'Life insurance is not a business deduction',
+            'summary': 'Life/income protection insurance for the business owner is NOT a deductible business expense. Recode to Owner Drawings. Owner may claim income protection on personal tax return.',
+            'url': 'https://www.ato.gov.au/individuals-and-families/income-deductions-offsets-and-records/deductions-you-can-claim/other-deductions/income-protection-insurance'
+        }
+    },
+    'body_corporate_fees': {
+        'query': 'body corporate strata fees GST commercial residential site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'Body corporate fees GST treatment',
+            'summary': 'Body corporate/strata fees for commercial property include GST (credits claimable). Residential strata fees are input-taxed (no GST credits).',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/property'
         }
     }
 }
@@ -7638,16 +7773,20 @@ def generate_ato_comment(issue_type, transaction=None):
         'client_entertainment_gst': 'Client entertainment - NO GST credit claimable.',
         'staff_entertainment_gst': 'Staff entertainment - NO GST credit unless FBT paid.',
         'wages_gst_error': 'Wages/salaries/super incorrectly coded with GST - should be BAS Excluded.',
-        'government_charges_gst': 'Government charge (rates, stamp duty, etc.) - NO GST applies.',
+        'government_charges_gst': 'Government charge (council rates, stamp duty, land tax) - NO GST. These are government taxes under Division 81, not taxable supplies.',
         'grants_sponsorship_gst': 'Grant income GST treatment requires review.',
         'residential_premises_gst': 'Residential property expense - Input Taxed (no GST credit).',
         'input_taxed_gst_error': 'Financial supply - Input Taxed (no GST credit claimable).',
-        'insurance_gst_error': 'Life/income protection insurance - Input Taxed (no GST credit).',
+        'insurance_gst_error': 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings. No GST credit (input-taxed).',
         'travel_gst_international': 'International travel - GST-FREE (no GST credits).',
         'travel_gst_domestic': 'Domestic travel - TAXABLE (should include GST).',
         'fines_penalties_gst': 'Fine/penalty - BAS Excluded (no GST).',
         'asset_capitalization_error': 'Asset over threshold - should be capitalized.',
-        'donations_gst': 'Donation - NO GST applies.'
+        'donations_gst': 'Donation - NO GST applies.',
+        'paypal_fees': 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST. Recode to Input Taxed.',
+        'merchant_fees': 'Merchant/Stripe/eBay fees - GST INCLUDED. Credits can be claimed. Recode to GST on Expenses.',
+        'life_insurance_personal': 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings.',
+        'body_corporate_fees': 'Body corporate/strata fees - commercial property GST claimable, residential input-taxed.'
     }
 
     base = base_comments.get(issue_type, 'GST treatment requires review.')
@@ -7752,12 +7891,12 @@ ATO GST Rules to check:
 5. MERCHANT FEES (TAXABLE - GST INCLUDED): Bank merchant fees, EFTPOS fees, credit card processing fees, merchant facility fees - these are NOT input-taxed! Businesses CAN claim GST credits on merchant fees. Source: ATO Financial Services Q&A.
 6. OVERSEAS DIGITAL SERVICES (GST FREE IS CORRECT): Adobe, Slack, Zoom, Canva, Google Ads, Facebook Ads, Microsoft 365, AWS, Dropbox, and other overseas SaaS - when billed from USA/Ireland/Singapore WITHOUT GST, code as GST Free. Do NOT flag these as missing GST. Reverse charge may apply but results in net zero for most businesses.
 7. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
-8. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees
+8. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees. IMPORTANT: Body corporate fees, strata fees, and owners corporation fees can be for EITHER residential OR commercial properties - do NOT assume they are residential unless the transaction explicitly says "residential". Commercial strata fees DO have GST credits claimable.
 9. Software subscriptions should be coded to Subscriptions, NOT Consulting
 10. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 11. Office supplies (toner, cartridges) MUST include GST (10%)
 12. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
-13. GOVERNMENT CHARGES (NO GST - not a taxable supply): Council rates, stamp duty, land tax, water rates, motor vehicle registration, ASIC fees, court fees, licence fees - these are government levies, NOT taxable supplies. They should have $0 GST. They are NOT "input-taxed" - they simply have no GST component at all.
+13. GOVERNMENT CHARGES (NO GST - not a taxable supply): Council rates, stamp duty, land tax, water rates, motor vehicle registration, ASIC fees, court fees, licence fees - these are government levies, NOT taxable supplies. They should have $0 GST. IMPORTANT: Council rates have NO GST regardless of whether the property is residential OR commercial - do NOT mention "residential property" for council rates. Government charges are simply not taxable supplies.
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
@@ -7858,7 +7997,7 @@ ATO GST Rules:
 2. INPUT-TAXED (no GST, CANNOT claim credits): Bank fees, interest, residential rent, life insurance
 3. TAXABLE (10% GST): Office supplies, utilities, parking, fuel, professional services
 4. ENTERTAINMENT: Non-deductible, NO GST credits
-5. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit
+5. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit. Body corporate/strata fees can be residential OR commercial - do NOT assume residential.
 6. GRANTS (GSTR 2012/2): "Other Income" is VALID for grants - do NOT flag account. Grants typically GST-FREE unless binding supply obligation exists.
 
 TRANSACTIONS TO REVIEW:
