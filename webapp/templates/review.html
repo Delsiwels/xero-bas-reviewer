@@ -245,7 +245,6 @@
         .journal-cell {
             min-width: 280px;
             padding: 8px !important;
-            background: #fffbe6 !important;
         }
         .journal-table {
             width: 100%;
@@ -253,7 +252,6 @@
             border-collapse: collapse;
             background: #f9f9f9;
             border-radius: 4px;
-            border: 2px solid red !important;
         }
         .journal-table th {
             background: #e9ecef;
@@ -829,16 +827,15 @@
                     // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
-                        console.log('DEBUG - Journal entries for', item.description, ':', JSON.stringify(item.correcting_journal.entries));
-                        journalHtml = '<table class="journal-table" style="display:table !important; visibility:visible !important; opacity:1 !important; width:100%; border:2px solid red;"><thead><tr><th style="padding:4px; background:#e9ecef;">Acc</th><th style="padding:4px; background:#e9ecef;">DR</th><th style="padding:4px; background:#e9ecef;">CR</th><th style="padding:4px; background:#e9ecef;">Tax</th></tr></thead><tbody>';
+                        journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
                         item.correcting_journal.entries.forEach(entry => {
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
                             const cr = entry.credit > 0 ? '$' + parseFloat(entry.credit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
-                            journalHtml += '<tr style="background:#fff;">';
-                            journalHtml += '<td style="padding:4px; border:1px solid #ddd;"><strong>' + escapeHtml(entry.account_code || '?') + '</strong><br><small>' + escapeHtml(entry.account_name || 'Unknown') + '</small></td>';
-                            journalHtml += '<td style="padding:4px; border:1px solid #ddd; text-align:right;">' + (dr || '-') + '</td>';
-                            journalHtml += '<td style="padding:4px; border:1px solid #ddd; text-align:right;">' + (cr || '-') + '</td>';
-                            journalHtml += '<td style="padding:4px; border:1px solid #ddd;"><small>' + escapeHtml(entry.tax_code || 'N/A') + '</small></td>';
+                            journalHtml += '<tr>';
+                            journalHtml += '<td><strong>' + escapeHtml(entry.account_code || '') + '</strong><br><small>' + escapeHtml(entry.account_name || '') + '</small></td>';
+                            journalHtml += '<td style="text-align:right;">' + dr + '</td>';
+                            journalHtml += '<td style="text-align:right;">' + cr + '</td>';
+                            journalHtml += '<td><small>' + escapeHtml(entry.tax_code || '') + '</small></td>';
                             journalHtml += '</tr>';
                         });
                         journalHtml += '</tbody></table>';
@@ -1065,25 +1062,6 @@
                 }
             }
 
-            // DEBUG: Check journal cells and show visible debug info AFTER filter count
-            const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
-            if (visibleRows.length > 0) {
-                const firstRow = visibleRows[0];
-                const journalCell = firstRow.querySelector('.journal-cell'); // Get by class, not position
-                const directCells = firstRow.children.length; // Direct children only
-                const journalTable = journalCell?.querySelector('.journal-table');
-                const tableRows = journalTable?.querySelectorAll('tr').length || 0;
-                const hasJournalTable = journalTable ? 'YES' : 'NO';
-                const debugInfo = `DirectCells: ${directCells} | JournalTable: ${hasJournalTable} | TableRows: ${tableRows}`;
-                console.log('DEBUG - Journal cell innerHTML:', journalCell?.innerHTML);
-                // Also show first 100 chars of innerHTML
-                const preview = journalCell?.innerHTML?.substring(0, 100) || 'EMPTY';
-                console.log('DEBUG - Preview:', preview);
-                // Append debug to filter count
-                if (countEl) {
-                    countEl.textContent += ' | ' + debugInfo;
-                }
-            }
         }
 
         function clearFilters() {
