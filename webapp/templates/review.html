@@ -1067,10 +1067,11 @@
             const visibleRows = Array.from(rows).filter(r => r.style.display !== 'none');
             if (visibleRows.length > 0) {
                 const firstRow = visibleRows[0];
-                const cells = firstRow.querySelectorAll('td');
-                const journalCell = cells[cells.length - 1]; // Last cell should be journal
-                const debugInfo = `Cells: ${cells.length} | JournalLen: ${journalCell?.innerHTML?.length || 0}`;
-                console.log('DEBUG - Journal cell content:', journalCell?.innerHTML);
+                const journalCell = firstRow.querySelector('.journal-cell'); // Get by class, not position
+                const directCells = firstRow.children.length; // Direct children only
+                const hasJournalTable = journalCell?.querySelector('.journal-table') ? 'YES' : 'NO';
+                const debugInfo = `DirectCells: ${directCells} | JournalTable: ${hasJournalTable}`;
+                console.log('DEBUG - Journal cell innerHTML:', journalCell?.innerHTML);
                 // Append debug to filter count
                 if (countEl) {
                     countEl.textContent += ' | ' + debugInfo;
