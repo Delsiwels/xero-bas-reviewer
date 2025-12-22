@@ -2216,7 +2216,10 @@ def upload_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            if is_useful_ai_comment:
+            # ALWAYS show life_insurance_personal explanation (important for user to understand Owner Drawings)
+            if transaction.get('life_insurance_personal'):
+                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+            elif is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
@@ -2224,8 +2227,6 @@ def upload_review():
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense'):
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
-                if transaction.get('life_insurance_personal'):
-                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
                 if transaction.get('insurance_gst_error'):
                     comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
                 if transaction.get('wages_gst_error'):
@@ -2917,7 +2918,10 @@ def run_review():
                               'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
-            if is_useful_ai_comment:
+            # ALWAYS show life_insurance_personal explanation (important for user to understand Owner Drawings)
+            if transaction.get('life_insurance_personal'):
+                comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Recode to Owner Drawings. Owner may claim income protection on personal tax return.')
+            elif is_useful_ai_comment:
                 comments.append(ai_comment)
             else:
                 # Fallback to rule-based comments when AI doesn't provide useful info
@@ -2925,8 +2929,6 @@ def run_review():
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense'):
                     comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
-                if transaction.get('life_insurance_personal'):
-                    comments.append('Life/income protection insurance - NOT a deductible business expense (ATO). Personal insurance for owner should be coded to Owner Drawings. Owner may claim income protection on their personal tax return.')
                 if transaction.get('insurance_gst_error'):
                     comments.append('Life/income protection insurance - Input Taxed (no GST credit claimable)')
                 if transaction.get('wages_gst_error'):
