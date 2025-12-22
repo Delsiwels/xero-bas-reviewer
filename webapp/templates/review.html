@@ -857,16 +857,17 @@
                     <table class="flagged-table" id="results-table">
                         <thead>
                             <tr>
-                                <th style="width: 40px;">Row</th>
-                                <th style="width: 70px;">Severity</th>
-                                <th style="width: 80px;">Date</th>
-                                <th style="width: 120px;">Account</th>
-                                <th style="width: 150px;">Description</th>
+                                <th style="width: 35px;">Row</th>
+                                <th style="width: 60px;">Severity</th>
+                                <th style="width: 75px;">Date</th>
+                                <th style="width: 100px;">Account</th>
+                                <th style="width: 140px;">Description</th>
                                 <th style="width: 70px;">Gross</th>
-                                <th style="width: 60px;">GST</th>
+                                <th style="width: 55px;">GST</th>
                                 <th style="width: 70px;">Net</th>
-                                <th style="width: 70px;">Source</th>
-                                <th>Comments / Suggested Journal</th>
+                                <th style="width: 60px;">Source</th>
+                                <th style="width: 200px;">Comments</th>
+                                <th>Suggested Journal</th>
                             </tr>
                         </thead>
                         <tbody id="results-tbody">
@@ -956,15 +957,6 @@
                     // Sanitize severity to only allow known values
                     const safeSeverity = ['low', 'medium', 'high'].includes(item.severity) ? item.severity : 'medium';
 
-                    // Combine comments and journal into one cell
-                    let combinedHtml = '';
-                    if (formattedComments) {
-                        combinedHtml += '<div style="margin-bottom: 8px;">' + formattedComments + '</div>';
-                    }
-                    if (journalHtml) {
-                        combinedHtml += '<div style="background: #f9f9f9; padding: 8px; border-radius: 4px;">' + journalHtml + '</div>';
-                    }
-
                     tableHtml += `
                         <tr class="severity-${safeSeverity}"
                             data-description="${escapeHtml(item.description || '').toLowerCase()}"
@@ -979,8 +971,9 @@
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
-                            <td><small>${escapeHtml(item.source || '-')}</small>${item.xero_url ? `<br><a href="${escapeHtml(item.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View in Xero</a>` : ''}</td>
-                            <td class="comment-cell">${combinedHtml}</td>
+                            <td><small>${escapeHtml(item.source || '-')}</small>${item.xero_url ? `<br><a href="${escapeHtml(item.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View</a>` : ''}</td>
+                            <td class="comment-cell">${formattedComments}</td>
+                            <td class="journal-cell">${journalHtml}</td>
                         </tr>
                     `;
                 });
