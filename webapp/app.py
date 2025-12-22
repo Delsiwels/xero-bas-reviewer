@@ -4607,8 +4607,8 @@ def suggest_correct_account(description):
         (['accounting', 'accountant', 'bookkeep'], {'code': '404', 'name': 'Accounting & Audit'}),
         (['consulting', 'consultant'], {'code': '460', 'name': 'Consulting & Professional Fees'}),
 
-        # Subscriptions & Software
-        (['software', 'subscription', 'license', 'saas'], {'code': '463', 'name': 'Subscriptions'}),
+        # Subscriptions & Software (software licenses only, not government regulatory licenses)
+        (['software', 'subscription', 'software license', 'saas'], {'code': '463', 'name': 'Subscriptions'}),
         (['microsoft', 'adobe', 'xero', 'myob'], {'code': '463', 'name': 'Subscriptions'}),
 
         # Utilities & Communications
@@ -4619,6 +4619,13 @@ def suggest_correct_account(description):
         # Bank & Finance
         (['bank fee', 'account fee', 'transaction fee'], {'code': '404', 'name': 'Bank Fees'}),
         (['merchant fee', 'credit card fee', 'eftpos'], {'code': '404', 'name': 'Bank Fees'}),
+
+        # Government Regulatory Licenses & Filing Fees (no GST per Division 81-10(4))
+        (['liquor license', 'liquor licence', 'license renewal', 'licence renewal',
+          'business license', 'business licence', 'trading license', 'trading licence',
+          'food license', 'food licence', 'building permit', 'development permit',
+          'lodgement fee', 'filing fee', 'registration fee', 'annual review fee'],
+         {'code': '750', 'name': 'Licenses & Filing Fees'}),
 
         # Insurance
         (['insurance', 'premium'], {'code': '441', 'name': 'Insurance'}),
@@ -5500,6 +5507,10 @@ def check_government_charges_gst(transaction):
     other_keywords = [
         'government fee', 'govt fee', 'lodgement fee', 'license fee', 'licence fee',
         'workers comp levy', 'epa levy',
+        # Regulatory licenses (government-issued, no GST per Division 81-10(4))
+        'liquor license', 'liquor licence', 'business license', 'business licence',
+        'license renewal', 'licence renewal', 'trading license', 'trading licence',
+        'food license', 'food licence', 'building permit', 'development permit',
     ]
     if any(keyword in description for keyword in other_keywords):
         return 'regulatory_fee'
