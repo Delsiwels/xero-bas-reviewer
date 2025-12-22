@@ -2337,7 +2337,7 @@ def upload_review():
                     comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
                 if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                     ato_comment = generate_ato_comment('paypal_fees')
-                    comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                    comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
                 elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
                     ato_comment = generate_ato_comment('merchant_fees')
                     comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
@@ -2445,7 +2445,7 @@ def upload_review():
                 comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
             if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                 ato_comment = generate_ato_comment('paypal_fees')
-                comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
             elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
                 ato_comment = generate_ato_comment('merchant_fees')
                 comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
@@ -3151,7 +3151,7 @@ def run_review():
                     comments.append(ato_comment or 'Residential property expense - Input Taxed (no GST credit claimable)')
                 if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                     ato_comment = generate_ato_comment('paypal_fees')
-                    comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                    comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
                 elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
                     ato_comment = generate_ato_comment('merchant_fees')
                     comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
@@ -3259,7 +3259,7 @@ def run_review():
                 comments.append(ato_comment or 'Domestic travel (within Australia) - TAXABLE. Should include GST (10%).')
             if transaction.get('payment_processor_fees') == 'paypal_with_gst':
                 ato_comment = generate_ato_comment('paypal_fees')
-                comments.append(ato_comment or 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST on transaction fees. Recode to Input Taxed. GST should be $0.')
+                comments.append(ato_comment or 'PayPal fees - NO GST (exempt financial supply per PayPal PDS clause 12.2). Recode to Input Taxed. GST should be $0.')
             elif transaction.get('payment_processor_fees') in ['stripe_no_gst', 'merchant_no_gst']:
                 ato_comment = generate_ato_comment('merchant_fees')
                 comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
@@ -7815,7 +7815,7 @@ def generate_ato_comment(issue_type, transaction=None):
         'fines_penalties_gst': 'Fine/penalty - BAS Excluded (no GST).',
         'asset_capitalization_error': 'Asset over threshold - should be capitalized.',
         'donations_gst': 'Donation - NO GST applies.',
-        'paypal_fees': 'PayPal fees - NO GST. PayPal (Singapore) does not charge GST. Recode to Input Taxed.',
+        'paypal_fees': 'PayPal fees - NO GST (exempt financial supply per PayPal PDS). Recode to Input Taxed.',
         'merchant_fees': 'Merchant/Stripe/eBay fees - GST INCLUDED. Credits can be claimed. Recode to GST on Expenses.',
         'life_insurance_personal': 'Life/income protection insurance - NOT a deductible business expense. Recode to Owner Drawings.',
         'body_corporate_fees': 'Body corporate/strata fees - commercial property GST claimable, residential input-taxed.'
