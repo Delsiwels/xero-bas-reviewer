@@ -7553,7 +7553,7 @@ ATO_RULING_QUERIES = {
         'fallback': {
             'ruling': 'GST Act - Division 81',
             'title': 'Payments to government agencies - taxes, fees and charges',
-            'summary': 'Council rates, stamp duty, land tax are government TAXES under Division 81 - NOT subject to GST. These are not taxable supplies. GST should be $0.',
+            'summary': 'Taxes and regulatory fees paid to government are outside the GST system.',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/corporate-tax-measures-and-assurance/government-entities/gst-for-government/payments-to-government-agencies-under-division-81'
         }
     },
