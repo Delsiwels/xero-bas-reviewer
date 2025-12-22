@@ -2339,7 +2339,7 @@ def upload_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                comments.append('Government charge - NO GST applies')
+                comments.append('Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies. Should have $0 GST.')
             if transaction.get('client_entertainment_gst'):
                 comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
             if transaction.get('staff_entertainment_gst'):
@@ -3071,7 +3071,7 @@ def run_review():
             if transaction.get('overseas_subscription_gst'):
                 comments.append('Overseas subscription - GST credit INVALID (provide ABN for refund, reverse charge applies)')
             if transaction.get('government_charges_gst'):
-                comments.append('Government charge - NO GST applies')
+                comments.append('Government charge (council rates, stamp duty, land tax, rego fees) - NO GST. These are government levies, not taxable supplies. Should have $0 GST.')
             if transaction.get('client_entertainment_gst'):
                 comments.append('Client entertainment - NO GST credit claimable per TR 97/17 & GSTR 2001/6. Entertainment of clients/suppliers is non-deductible and GST credits cannot be claimed.')
             if transaction.get('staff_entertainment_gst'):
@@ -7438,6 +7438,7 @@ ATO GST Rules to check:
 10. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 11. Office supplies (toner, cartridges) MUST include GST (10%)
 12. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
+13. GOVERNMENT CHARGES (NO GST - not a taxable supply): Council rates, stamp duty, land tax, water rates, motor vehicle registration, ASIC fees, court fees, licence fees - these are government levies, NOT taxable supplies. They should have $0 GST. They are NOT "input-taxed" - they simply have no GST component at all.
 
 If issues found, respond with specific problems and ATO rule reference. If OK, respond "OK - Transaction appears correct"
 """
