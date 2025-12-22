@@ -2228,9 +2228,10 @@ def upload_review():
             ai_comment = ai_result.get('comments', '').strip()
 
             # Check if AI comment is useful (not empty or too generic)
-            # Include "correctly applied/coded" as generic since AI may miss the actual issue (e.g., capitalization)
+            # Include "correctly applied/coded/recorded" as generic since AI may miss the actual issue
             generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct',
-                              'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
+                              'correctly applied', 'correctly coded', 'correctly recorded', 'no issues',
+                              'looks correct', 'is correct', 'recorded correctly', 'coded correctly']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
             # Always prioritize AI comments, use rule-based as fallback only
@@ -2278,6 +2279,8 @@ def upload_review():
                     comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
+                if transaction.get('export_gst_error'):
+                    comments.append('Export sale with GST charged - exports should be GST-FREE per Division 38 GST Act. No GST should be charged on goods/services exported overseas.')
 
             # Generate correcting journal entry
             try:
@@ -2960,9 +2963,10 @@ def run_review():
             ai_comment = ai_result.get('comments', '').strip()
 
             # Check if AI comment is useful (not empty or too generic)
-            # Include "correctly applied/coded" as generic since AI may miss the actual issue (e.g., capitalization)
+            # Include "correctly applied/coded/recorded" as generic since AI may miss the actual issue
             generic_phrases = ['requires review', 'please review', 'review required', 'ok -', 'appears correct',
-                              'correctly applied', 'correctly coded', 'no issues', 'looks correct', 'is correct']
+                              'correctly applied', 'correctly coded', 'correctly recorded', 'no issues',
+                              'looks correct', 'is correct', 'recorded correctly', 'coded correctly']
             is_useful_ai_comment = ai_comment and len(ai_comment) > 20 and not any(phrase in ai_comment.lower() for phrase in generic_phrases)
 
             # Always prioritize AI comments, use rule-based as fallback only
@@ -3010,6 +3014,8 @@ def run_review():
                     comments.append('Grant income with GST charged - per GSTR 2012/2, grants are typically GST-FREE unless you have a binding obligation to provide specific services/goods in return. If this is a no-strings-attached grant, GST should not apply. If you must deliver specific outcomes, GST may be correct.')
                 elif transaction.get('grants_sponsorship_gst') == 'sponsorship_no_gst':
                     comments.append('Sponsorship income without GST - sponsorship is TAXABLE (GST applies) as it involves promotional services in return.')
+                if transaction.get('export_gst_error'):
+                    comments.append('Export sale with GST charged - exports should be GST-FREE per Division 38 GST Act. No GST should be charged on goods/services exported overseas.')
 
             # Generate correcting journal entry
             try:
