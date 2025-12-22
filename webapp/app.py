@@ -7152,7 +7152,7 @@ def check_fines_penalties_gst(transaction):
         # ATO charges
         'ato penalty', 'ato fine', 'late lodgement penalty',
         'late payment penalty', 'failure to lodge',
-        'general interest charge', 'gic', 'shortfall interest',
+        'general interest charge', 'ato gic', 'gic charge', 'shortfall interest',
         # Superannuation penalties
         'super guarantee charge', 'sgc penalty', 'super late fee',
         'superannuation penalty', 'super interest charge',
