@@ -1,0 +1,23 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,Sales Commission,Commission - 42 Smith St sale,COM-001,Vendor,-22000.0,-2000.0,-20000.0,GST on Income,Invoice
+2024-10-06,200,Sales Commission,Commission - Unit 5/10 Beach Rd,COM-002,Vendor,-16500.0,-1500.0,-15000.0,GST on Income,Invoice
+2024-10-04,210,Property Management,Management fees - November,PM-NOV,Landlords,-4400.0,-400.0,-4000.0,GST on Income,Invoice
+2024-10-08,220,Rent Collected,Tenant rent - 15 Park Ave (residential),RENT-001,Tenant,-2200.0,-200.0,-2000.0,GST on Income,Receive Money
+2024-10-10,230,Letting Fees,Letting fee - residential property,LET-001,Landlord,-1100.0,-100.0,-1000.0,GST on Income,Invoice
+2024-10-12,230,Letting Fees,Letting fee - commercial shop,LET-002,Landlord,-1650.0,-150.0,-1500.0,GST on Income,Invoice
+2024-10-14,300,Advertising,REA listing upgrade,REA-001,REA Group,1320.0,120.0,1200.0,GST on Expenses,Bill
+2024-10-16,300,Advertising,Domain premium listing,DOM-001,Domain,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-18,300,Advertising,Juwai.com - Chinese buyer listing,JUW-001,Juwai,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-20,310,Licenses,Real Estate Agent license renewal,LIC-001,Fair Trading NSW,495.0,45.0,450.0,GST on Expenses,Bill
+2024-10-22,320,Insurance,PI Insurance - Real Estate,INS-001,Realcover,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-24,330,Rent,Office rent - November,RENT-NOV,Landlord,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-26,330,Rent,Home office allowance - Principal,HO-001,Principal,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-28,340,Property Reports,Strata inspection report,STR-001,Strata Reports,385.0,35.0,350.0,GST on Expenses,Bill
+2024-10-30,340,Property Reports,Building and pest inspection,BPI-001,Inspector Co,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-01,400,Interest Income,Trust account interest,INT-001,Bank,-110.0,-10.0,-100.0,GST on Income,Receive Money
+2024-11-03,350,Bank Fees,Trust account fees,BNK-001,ANZ,55.0,5.0,50.0,GST on Expenses,Bill
+2024-11-05,300,Advertising,Auctioneer fee - passed to vendor,AUC-001,Auctioneer,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-07,300,Advertising,For Sale signboards x 10,SIGN-001,Signage Co,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-11-09,360,Motor Vehicle,Fuel for property inspections,FUEL-001,,220.0,20.0,200.0,Spend Money,BP
+2024-11-11,360,Motor Vehicle,Personal car service,CAR-001,Mechanic,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-13,370,Government Fees,FIRB application - foreign buyer,FIRB-001,ATO FIRB,14300.0,1300.0,13000.0,GST on Expenses,Bill

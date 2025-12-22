@@ -1,0 +1,25 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,SaaS Revenue,Monthly subscriptions - AU customers,SAAS-001,Various,-22000.0,-2000.0,-20000.0,GST on Income,Invoice
+2024-10-04,200,SaaS Revenue,US customer subscriptions,SAAS-002,US Clients,-11000.0,-1000.0,-10000.0,GST on Income,Invoice
+2024-10-06,200,SaaS Revenue,NZ customer subscriptions,SAAS-003,NZ Clients,-5500.0,-500.0,-5000.0,GST on Income,Invoice
+2024-10-08,210,Consulting,Development consulting - ABC Corp,CON-001,ABC Corp,-8800.0,-800.0,-8000.0,GST on Income,Invoice
+2024-10-10,300,Hosting,AWS hosting - November,AWS-001,Amazon Web Services,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-12,300,Hosting,Microsoft Azure,AZU-001,Microsoft,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-10-14,300,Hosting,Google Cloud Platform,GCP-001,Google,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-16,310,Software,GitHub Team subscription,GIT-001,GitHub,132.0,12.0,120.0,GST on Expenses,Bill
+2024-10-18,310,Software,Jira and Confluence,ATL-001,Atlassian,220.0,20.0,200.0,GST on Expenses,Bill
+2024-10-20,310,Software,Slack Business+,SLK-001,Slack,165.0,15.0,150.0,GST on Expenses,Bill
+2024-10-22,310,Software,Xero subscription,XRO-001,Xero,77.0,7.0,70.0,GST on Expenses,Bill
+2024-10-24,310,Software,Figma design subscription,FIG-001,Figma,55.0,5.0,50.0,GST on Expenses,Bill
+2024-10-26,310,Software,OpenAI API usage,OAI-001,OpenAI,330.0,30.0,300.0,GST on Expenses,Bill
+2024-10-28,320,Contractors,Developer in Philippines,CTR-001,Freelancer,4400.0,400.0,4000.0,GST on Expenses,Bill
+2024-10-30,320,Contractors,Senior developer - AU,CTR-002,DevCo,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-11-01,330,Computer Equipment,MacBook Pro M3 Max,HW-001,Apple,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-11-03,330,Computer Equipment,Studio Display,HW-002,Apple,2420.0,220.0,2200.0,GST on Expenses,Bill
+2024-11-05,330,Computer Equipment,Keyboards and mice,HW-003,JB Hi-Fi,440.0,40.0,400.0,GST on Expenses,Bill
+2024-11-07,340,Payment Processing,Stripe US fees,PAY-001,Stripe,660.0,60.0,600.0,GST on Expenses,Bill
+2024-11-09,350,Wages,Developer salaries,PAY-NOV,Payroll,33000.0,3000.0,30000.0,GST on Expenses,Bill
+2024-11-11,360,Share Compensation,Employee share options,ESOP-001,Internal,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-11-13,370,Rent,Co-working space,RENT-NOV,WeWork,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-15,380,Staff Benefits,Home office allowance,WFH-001,Employees,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-17,390,Domains,Domain renewals - GoDaddy,DOM-001,GoDaddy,110.0,10.0,100.0,GST on Expenses,Bill

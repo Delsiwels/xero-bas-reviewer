@@ -3292,9 +3292,16 @@ def generate_correcting_journal(transaction):
                     'description': std_desc
                 })
 
-    if transaction.get('alcohol_gst_error'):
-        # Entertainment alcohol - reverse original GST on Expenses coding to GST Free Expenses
-        # Same account, just changing the tax code
+    # Group ALL entertainment errors together - only ONE journal needed
+    # (alcohol_gst_error, client_entertainment_gst, staff_entertainment_gst all have same correction)
+    is_entertainment_error = (
+        transaction.get('alcohol_gst_error') or
+        transaction.get('client_entertainment_gst') or
+        transaction.get('staff_entertainment_gst')
+    )
+    if is_entertainment_error:
+        # Entertainment - reverse original GST on Expenses coding to GST Free Expenses
+        # Same account, just changing the tax code (no GST credit claimable on entertainment)
         trans_desc = transaction.get('description', '')[:50] or 'No description'
         std_desc = f"GST on Expenses to GST Free - {trans_desc}"
 
@@ -3320,7 +3327,7 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if not transaction.get('gst_calculation_correct', True) and not transaction.get('alcohol_gst_error'):
+    if not transaction.get('gst_calculation_correct', True) and not is_entertainment_error:
         # GST calculation error - need to adjust using same account with different tax codes
         expected_gst = round(net * 0.10, 2)
         gst_diff = round(expected_gst - gst, 2)
@@ -3664,59 +3671,8 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('client_entertainment_gst'):
-        # Client entertainment - NO GST credit claimable per ATO
-        # Correcting journal: reverse original GST coding and re-enter as GST Free
-        trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
-        if gross > 0:
-            # Debit: Re-enter with GST Free Expenses (correct - no GST claim on entertainment)
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': gross,
-                'credit': 0,
-                'tax_code': 'GST Free Expenses',
-                'description': std_desc
-            })
-            # Credit: Reverse the original GST on Expenses entry
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0,
-                'credit': gross,
-                'tax_code': 'GST on Expenses',
-                'description': std_desc
-            })
-
-    if transaction.get('staff_entertainment_gst'):
-        # Staff entertainment - NO GST credit unless FBT is paid
-        # Correcting journal: reverse original GST coding and re-enter as GST Free
-        trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
-        if gross > 0:
-            # Debit: Re-enter with GST Free Expenses (correct - no GST claim on entertainment)
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': gross,
-                'credit': 0,
-                'tax_code': 'GST Free Expenses',
-                'description': std_desc
-            })
-            # Credit: Reverse the original GST on Expenses entry
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0,
-                'credit': gross,
-                'tax_code': 'GST on Expenses',
-                'description': std_desc
-            })
+    # NOTE: client_entertainment_gst and staff_entertainment_gst are now handled
+    # in the combined is_entertainment_error block above (around line 3295)
 
     if transaction.get('residential_premises_gst'):
         # Residential property expense - GST not claimable (input-taxed supply)

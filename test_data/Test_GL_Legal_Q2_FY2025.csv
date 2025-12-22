@@ -1,0 +1,24 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,Legal Fees,Conveyancing - 42 Smith St,INV-001,Client A,-3300.0,-300.0,-3000.0,GST on Income,Invoice
+2024-10-04,200,Legal Fees,Commercial litigation - ABC Corp,INV-002,ABC Corp,-11000.0,-1000.0,-10000.0,GST on Income,Invoice
+2024-10-06,200,Legal Fees,Family law matter - Smith,INV-003,Client B,-5500.0,-500.0,-5000.0,GST on Income,Invoice
+2024-10-08,210,Disbursements Recovered,Court filing fees recovered,DIS-001,Client,-550.0,-50.0,-500.0,GST on Income,Invoice
+2024-10-10,300,Barristers Fees,Counsel brief fee - no GST charged,BAR-001,Barrister Jones,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-12,310,Search Fees,ASIC company search,SCH-001,ASIC,44.0,4.0,40.0,GST on Expenses,Bill
+2024-10-14,320,Court Fees,Federal Court filing fee,CRT-001,Federal Court,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-16,320,Court Fees,Sheriff service of documents,SHF-001,NSW Sheriff,165.0,15.0,150.0,GST on Expenses,Bill
+2024-10-18,330,Settlement Fees,PEXA settlement fee,PEX-001,PEXA,132.0,12.0,120.0,GST on Expenses,Bill
+2024-10-20,310,Search Fees,Land title search NSW LRS,LRS-001,NSW LRS,33.0,3.0,30.0,GST on Expenses,Bill
+2024-10-22,340,Professional Fees,Law Society practicing certificate,LSN-001,Law Society NSW,1320.0,120.0,1200.0,GST on Expenses,Bill
+2024-10-24,350,Insurance,Professional indemnity insurance,INS-001,LawCover,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-10-26,360,Rent,Office rent - November,RENT-NOV,Landlord,6600.0,600.0,6000.0,GST on Expenses,Bill
+2024-10-28,370,Subscriptions,LexisNexis subscription,LEX-001,LexisNexis,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-10-30,400,Interest,Trust account interest received,INT-001,Bank,-220.0,-20.0,-200.0,GST on Income,Receive Money
+2024-11-01,380,Bank Fees,Trust account fees,BNK-001,NAB,77.0,7.0,70.0,GST on Expenses,Bill
+2024-11-03,390,Training,CLE seminar registration,CPD-001,Law Society,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-05,370,Subscriptions,Westlaw International - USA,WLW-001,Thomson Reuters,330.0,30.0,300.0,GST on Expenses,Bill
+2024-11-07,310,Expert Fees,Medical expert report,EXP-001,Dr Expert,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-11-09,410,Donations,Donation to Legal Aid NSW,DON-001,Legal Aid,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-11-11,420,Wages,Paralegal wages - November,PAY-NOV,Payroll,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-11-13,430,Couriers,Document courier - urgent,COR-001,StarTrack,55.0,5.0,50.0,GST on Expenses,Bill
+2024-11-15,440,Stamp Duty,Transfer stamp duty - paid for client,STD-001,Revenue NSW,22000.0,2000.0,20000.0,GST on Expenses,Bill

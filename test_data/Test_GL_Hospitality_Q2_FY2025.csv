@@ -1,0 +1,26 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,700,Food Supplies,Fresh produce - Vegetables and fruit,INV-001,Fresh Direct,1100.0,0.0,1100.0,GST Free,Bill
+2024-10-04,700,Food Supplies,Meat and seafood - Fresh,INV-002,Meat Wholesaler,2200.0,0.0,2200.0,GST Free,Bill
+2024-10-06,700,Food Supplies,"Sauces, condiments, processed items",INV-003,Bidfood,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-08,700,Food Supplies,Harris Farm - Fresh salad ingredients,INV-004,Harris Farm,330.0,30.0,300.0,GST on Expenses,Bill
+2024-10-10,710,Beverages,Fresh milk for coffee,INV-005,Dairy Farmers,220.0,20.0,200.0,GST on Expenses,Bill
+2024-10-12,710,Beverages,"Coca-Cola, juices, soft drinks",INV-006,CCA,660.0,60.0,600.0,GST on Expenses,Bill
+2024-10-14,720,Alcohol - Bar,Wine and spirits for bar,INV-007,ALM,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-16,720,Alcohol - Bar,Beer kegs - Carlton Draught,INV-008,CUB,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-10-18,200,Food Sales,Daily takings - Week 1,SALES-W1,POS,-15400.0,-1400.0,-14000.0,GST on Income,Invoice
+2024-10-25,200,Food Sales,Daily takings - Week 2,SALES-W2,POS,-16500.0,-1500.0,-15000.0,GST on Income,Invoice
+2024-10-20,730,Staff Meals,Staff meals - claiming full GST,STF-001,Internal,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-22,700,Food Supplies,Owner family dinner - personal,OWN-001,Internal,220.0,20.0,200.0,GST on Expenses,Bill
+2024-10-24,740,Kitchen Equipment,La Marzocco Espresso Machine,INV-009,Coffee Equipment Co,16500.0,1500.0,15000.0,GST on Expenses,Bill
+2024-10-26,740,Kitchen Equipment,Walk-in cool room installation,INV-010,Refrigeration Services,22000.0,2000.0,20000.0,GST on Expenses,Bill
+2024-10-28,750,Licenses & Permits,Food safety inspection fee,INSP-001,Council,385.0,35.0,350.0,GST on Expenses,Bill
+2024-10-30,750,Licenses & Permits,Liquor license renewal,LIC-001,Liquor & Gaming NSW,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-11-01,760,Entertainment,Spotify Business subscription,MUS-001,Spotify,33.0,3.0,30.0,GST on Expenses,Bill
+2024-11-03,770,Cleaning,Commercial cleaning supplies,INV-011,CleanCo,330.0,30.0,300.0,GST on Expenses,Bill
+2024-11-05,780,Delivery Fees,Uber Eats commission - November,UE-NOV,Uber Eats,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-07,780,Delivery Fees,DoorDash commission,DD-NOV,DoorDash,990.0,90.0,900.0,GST on Expenses,Bill
+2024-11-09,790,Wages,Tips paid to staff,TIPS-001,Staff,880.0,80.0,800.0,GST on Expenses,Bill
+2024-11-11,790,Wages,Casual staff wages - November,PAY-NOV,Payroll,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-11-13,791,Superannuation,Super contributions,SUP-NOV,REST Super,836.0,76.0,760.0,GST on Expenses,Bill
+2024-11-15,800,Professional Fees,Monthly bookkeeping,ACC-NOV,BAS Agent,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-17,810,Donations,Food donation to OzHarvest,DON-001,OzHarvest,440.0,40.0,400.0,GST on Expenses,Bill

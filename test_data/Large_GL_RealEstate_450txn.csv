@@ -1,0 +1,451 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-07-01,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00394,Telstra,1769.65,160.88,1608.77,GST on Expenses,Invoice
+2024-07-01,400,Office Supplies,Cash withdrawal - owner drawings - November,REF-00235,Bank,3658.04,332.55,3325.49,GST on Expenses,Receive Money
+2024-07-01,420,Entertainment,Restaurant - client dinner with drinks - November,REF-00449,Restaurant,1338.95,121.72,1217.23,GST on Expenses,Receive Money
+2024-07-02,460,Postage,Australia Post #9347,REF-00302,AusPost,3283.13,298.47,2984.66,GST on Expenses,Receive Money
+2024-07-03,440,Accounting Fees,BAS preparation - Q2,REF-00106,Accountant,192.82,17.53,175.29,GST on Expenses,Spend Money
+2024-07-03,410,Advertising,Google Ads campaign #2507,REF-00063,Google AU,1362.18,123.83,1238.35,GST on Expenses,Receive Money
+2024-07-04,404,Telephone & Internet,Telstra Business Plan,REF-00035,Telstra,1354.24,123.11,1231.13,GST on Expenses,Spend Money
+2024-07-04,200,Sales,Consulting services,REF-00357,Client,-2066.61,-187.87,-1878.74,GST on Income,Bill
+2024-07-04,210,Other Income,Grant received - Monthly,REF-00339,Government,-10245.81,-931.44,-9314.37,GST on Income,Invoice
+2024-07-04,460,Postage,Australia Post,REF-00436,AusPost,3504.82,318.62,3186.2,GST on Expenses,Invoice
+2024-07-05,411,Printing,Business cards - Q2,REF-00389,Snap Printing,1557.05,141.55,1415.5,GST on Expenses,Receive Money
+2024-07-05,429,Repairs & Maintenance,Plumber callout - Monthly,REF-00428,Plumber,4979.8,452.71,4527.09,GST on Expenses,Receive Money
+2024-07-06,411,Printing,Business cards - November,REF-00286,Snap Printing,3948.43,358.95,3589.48,GST on Expenses,Invoice
+2024-07-06,440,Accounting Fees,BAS preparation,REF-00015,Accountant,2992.26,272.02,2720.24,GST on Expenses,Receive Money
+2024-07-06,200,Sales,Consulting services - Q2,REF-00154,Client,-9564.01,-869.46,-8694.55,GST on Income,Invoice
+2024-07-06,440,Accounting Fees,BAS preparation,REF-00338,Accountant,1493.47,135.77,1357.7,GST on Expenses,Receive Money
+2024-07-08,200,Sales,Service revenue #7783,REF-00259,Client,-2008.22,-182.57,-1825.65,GST on Income,Invoice
+2024-07-08,210,Other Income,Grant received #4161,REF-00054,Government,-9689.11,-880.83,-8808.28,GST on Income,Bill
+2024-07-09,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00058,Officeworks,2948.89,268.08,2680.81,GST on Expenses,Receive Money
+2024-07-09,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00117,BP,2627.99,238.91,2389.08,GST on Expenses,Receive Money
+2024-07-09,480,Interest Expense,Business loan interest - Q2,REF-00220,NAB,2198.26,199.84,1998.42,GST on Expenses,Invoice
+2024-07-09,460,Postage,Australia Post,REF-00337,AusPost,2392.93,217.54,2175.39,GST on Expenses,Spend Money
+2024-07-10,200,Sales,Consulting services,REF-00300,Client,-5626.7,-511.52,-5115.18,GST on Income,Bill
+2024-07-10,440,Accounting Fees,BAS preparation - Monthly,REF-00198,Accountant,1701.05,154.64,1546.41,GST on Expenses,Bill
+2024-07-10,445,Software,Adobe Creative Cloud - USA - November,REF-00234,Adobe Inc,3540.73,321.88,3218.85,GST on Expenses,Receive Money
+2024-07-10,490,Government Charges,Council rates #6340,REF-00189,Council,404.03,36.73,367.3,GST on Expenses,Bill
+2024-07-11,492,Fines & Penalties,ATO late lodgement penalty,REF-00393,ATO,3546.07,322.37,3223.7,GST on Expenses,Spend Money
+2024-07-12,428,Cleaning,Office cleaning - November,REF-00221,CleanCo,2236.49,203.32,2033.17,GST on Expenses,Bill
+2024-07-13,200,Sales,Export sale to NZ,REF-00230,NZ Company,-12958.95,-1178.09,-11780.86,GST on Income,Bill
+2024-07-13,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00341,Telstra,620.02,56.37,563.65,GST on Expenses,Spend Money
+2024-07-14,200,Sales,Product sales - Monthly,REF-00268,Customer,-7658.27,-696.21,-6962.06,GST on Income,Spend Money
+2024-07-14,411,Printing,Business cards - Monthly,REF-00293,Snap Printing,802.85,72.99,729.86,GST on Expenses,Spend Money
+2024-07-14,429,Repairs & Maintenance,Plumber callout #6018,REF-00386,Plumber,4816.14,437.83,4378.31,GST on Expenses,Receive Money
+2024-07-14,200,Sales,Product sales - November,REF-00181,Customer,-5982.95,-543.9,-5439.05,GST on Income,Bill
+2024-07-15,200,Sales,Product sales #9321,REF-00101,Customer,-7363.39,-669.4,-6693.99,GST on Income,Spend Money
+2024-07-15,429,Repairs & Maintenance,Plumber callout,REF-00237,Plumber,1623.02,147.55,1475.47,GST on Expenses,Invoice
+2024-07-15,410,Advertising,Google Ads campaign - November,REF-00093,Google AU,3378.07,307.1,3070.97,GST on Expenses,Bill
+2024-07-15,200,Sales,Consulting services #8712,REF-00195,Client,-17408.77,-1582.62,-15826.15,GST on Income,Spend Money
+2024-07-15,210,Other Income,Grant received - Q2,REF-00363,Government,-3070.18,-279.11,-2791.07,GST on Income,Spend Money
+2024-07-15,200,Sales,Product sales #6007,REF-00349,Customer,-14259.7,-1296.34,-12963.36,GST on Income,Receive Money
+2024-07-16,428,Cleaning,Office cleaning - Monthly,REF-00030,CleanCo,2214.25,201.3,2012.95,GST on Expenses,Spend Money
+2024-07-17,445,Software,Adobe Creative Cloud - USA #7883,REF-00380,Adobe Inc,1917.35,174.3,1743.05,GST on Expenses,Spend Money
+2024-07-18,420,Entertainment,Liquorland - Champagne #1250,REF-00273,Liquorland,2616.77,237.89,2378.88,GST on Expenses,Receive Money
+2024-07-19,495,Donations,Charity sponsorship - Monthly,REF-00128,Charity,1398.16,127.11,1271.05,GST on Expenses,Receive Money
+2024-07-19,460,Postage,Australia Post - November,REF-00129,AusPost,4606.27,418.75,4187.52,GST on Expenses,Bill
+2024-07-19,445,Software,Shopify monthly #1193,REF-00022,Shopify,2485.59,225.96,2259.63,GST on Expenses,Receive Money
+2024-07-19,470,Insurance,Life insurance premium,REF-00049,AIA,1999.79,181.8,1817.99,GST on Expenses,Spend Money
+2024-07-20,428,Cleaning,Office cleaning - November,REF-00362,CleanCo,3185.01,289.55,2895.46,GST on Expenses,Bill
+2024-07-20,428,Cleaning,Office cleaning,REF-00200,CleanCo,4796.96,436.09,4360.87,GST on Expenses,Spend Money
+2024-07-21,420,Entertainment,Liquorland - Champagne #4935,REF-00434,Liquorland,4085.03,371.37,3713.66,GST on Expenses,Receive Money
+2024-07-21,445,Software,Slack subscription - USA #9448,REF-00119,Slack,4532.11,412.01,4120.1,GST on Expenses,Invoice
+2024-07-21,428,Cleaning,Office cleaning - Monthly,REF-00069,CleanCo,3997.89,363.44,3634.45,GST on Expenses,Receive Money
+2024-07-21,210,Other Income,Grant received,REF-00147,Government,-14971.55,-1361.05,-13610.5,GST on Income,Invoice
+2024-07-22,200,Sales,Service revenue,REF-00079,Client,-17109.72,-1555.43,-15554.29,GST on Income,Receive Money
+2024-07-22,412,Motor Vehicle Expenses,Personal car fuel - holiday - November,REF-00249,Shell,3176.02,288.73,2887.29,GST on Expenses,Spend Money
+2024-07-22,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00324,Telstra,4666.35,424.21,4242.14,GST on Expenses,Receive Money
+2024-07-23,480,Interest Expense,Business loan interest - Monthly,REF-00263,NAB,3579.47,325.41,3254.06,GST on Expenses,Spend Money
+2024-07-23,410,Advertising,Google Ads campaign - Monthly,REF-00247,Google AU,1920.43,174.58,1745.85,GST on Expenses,Receive Money
+2024-07-23,429,Repairs & Maintenance,Plumber callout,REF-00274,Plumber,378.08,34.37,343.71,GST on Expenses,Receive Money
+2024-07-23,410,Advertising,Google Ads campaign - Monthly,REF-00325,Google AU,1955.26,177.75,1777.51,GST on Expenses,Invoice
+2024-07-24,400,Office Supplies,Apple MacBook Pro - November,REF-00231,Apple,33313.97,3028.54,30285.43,GST on Expenses,Bill
+2024-07-24,429,Repairs & Maintenance,Plumber callout - Monthly,REF-00168,Plumber,4578.69,416.24,4162.45,GST on Expenses,Spend Money
+2024-07-24,445,Software,Zoom Pro - USA - Monthly,REF-00277,Zoom,235.08,21.37,213.71,GST on Expenses,Receive Money
+2024-07-24,411,Printing,Business cards,REF-00344,Snap Printing,3694.76,335.89,3358.87,GST on Expenses,Invoice
+2024-07-25,412,Motor Vehicle Expenses,BP Fuel,REF-00185,BP,691.49,62.86,628.63,GST on Expenses,Bill
+2024-07-25,440,Accounting Fees,BAS preparation - Q2,REF-00373,Accountant,190.72,17.34,173.38,GST on Expenses,Bill
+2024-07-26,411,Printing,Business cards - Monthly,REF-00160,Snap Printing,4111.41,373.76,3737.65,GST on Expenses,Receive Money
+2024-07-27,404,Telephone & Internet,Telstra Business Plan - November,REF-00036,Telstra,2103.2,191.2,1912.0,GST on Expenses,Receive Money
+2024-07-27,429,Repairs & Maintenance,Plumber callout - November,REF-00385,Plumber,4873.37,443.03,4430.34,GST on Expenses,Receive Money
+2024-07-27,200,Sales,Product sales #8132,REF-00424,Customer,-16806.4,-1527.85,-15278.55,GST on Income,Invoice
+2024-07-28,429,Repairs & Maintenance,Plumber callout,REF-00152,Plumber,2848.94,258.99,2589.95,GST on Expenses,Spend Money
+2024-07-28,490,Government Charges,ASIC annual fee - November,REF-00163,ASIC,4297.48,390.68,3906.8,GST on Expenses,Spend Money
+2024-07-28,410,Advertising,Google Ads campaign - Q2,REF-00253,Google AU,2843.34,258.49,2584.85,GST on Expenses,Spend Money
+2024-07-29,200,Sales,Service revenue #2742,REF-00284,Client,-19815.78,-1801.43,-18014.35,GST on Income,Spend Money
+2024-07-29,411,Printing,Business cards - November,REF-00005,Snap Printing,1667.44,151.59,1515.85,GST on Expenses,Invoice
+2024-07-30,400,Office Supplies,Officeworks - Stationery #7821,REF-00233,Officeworks,2488.83,226.26,2262.57,GST on Expenses,Receive Money
+2024-07-30,429,Repairs & Maintenance,Plumber callout - Q2,REF-00116,Plumber,3972.62,361.15,3611.47,GST on Expenses,Invoice
+2024-07-31,411,Printing,Business cards - Monthly,REF-00443,Snap Printing,835.96,76.0,759.96,GST on Expenses,Spend Money
+2024-07-31,520,Tools & Equipment,Power tools set,REF-00215,Total Tools,19902.06,1809.28,18092.78,GST on Expenses,Receive Money
+2024-08-02,420,Entertainment,Restaurant - client dinner with drinks - Monthly,REF-00369,Restaurant,2483.68,225.79,2257.89,GST on Expenses,Receive Money
+2024-08-03,200,Sales,Consulting services #6696,REF-00165,Client,-3983.3,-362.12,-3621.18,GST on Income,Spend Money
+2024-08-03,200,Sales,Service revenue,REF-00364,Client,-2006.52,-182.41,-1824.11,GST on Income,Invoice
+2024-08-03,495,Donations,Donation to Red Cross,REF-00071,Red Cross,402.85,36.62,366.23,GST on Expenses,Bill
+2024-08-04,410,Advertising,Google Ads campaign - Q2,REF-00016,Google AU,1436.08,130.55,1305.53,GST on Expenses,Invoice
+2024-08-05,440,Accounting Fees,BAS preparation - Monthly,REF-00112,Accountant,4993.36,453.94,4539.42,GST on Expenses,Bill
+2024-08-06,445,Software,Shopify monthly - November,REF-00139,Shopify,256.24,23.29,232.95,GST on Expenses,Receive Money
+2024-08-06,440,Accounting Fees,BAS preparation - Q2,REF-00335,Accountant,3113.07,283.01,2830.06,GST on Expenses,Invoice
+2024-08-06,411,Printing,Business cards - Q2,REF-00412,Snap Printing,2427.89,220.72,2207.17,GST on Expenses,Bill
+2024-08-06,200,Sales,Service revenue - Q2,REF-00321,Client,-10110.04,-919.09,-9190.95,GST on Income,Bill
+2024-08-08,200,Sales,Service revenue #1396,REF-00084,Client,-16779.51,-1525.41,-15254.1,GST on Income,Spend Money
+2024-08-08,400,Office Supplies,Officeworks - Stationery,REF-00188,Officeworks,3490.79,317.34,3173.45,GST on Expenses,Receive Money
+2024-08-08,404,Telephone & Internet,Telstra Business Plan #7026,REF-00232,Telstra,1656.77,150.62,1506.15,GST on Expenses,Receive Money
+2024-08-08,404,Telephone & Internet,Telstra Business Plan #5411,REF-00223,Telstra,1632.73,148.43,1484.3,GST on Expenses,Bill
+2024-08-09,420,Entertainment,Dan Murphys - Wine for clients - Q2,REF-00002,Dan Murphys,3412.1,310.19,3101.91,GST on Expenses,Spend Money
+2024-08-09,490,Government Charges,ASIC annual fee - Q2,REF-00111,ASIC,2269.43,206.31,2063.12,GST on Expenses,Bill
+2024-08-09,461,Bank Fees,PayPal transaction fees - Monthly,REF-00388,PayPal,632.15,57.47,574.68,GST on Expenses,Spend Money
+2024-08-10,411,Printing,Business cards - November,REF-00146,Snap Printing,1450.49,131.86,1318.63,GST on Expenses,Receive Money
+2024-08-10,411,Printing,Business cards - November,REF-00169,Snap Printing,334.01,30.36,303.65,GST on Expenses,Spend Money
+2024-08-11,428,Cleaning,Office cleaning #8413,REF-00047,CleanCo,1259.72,114.52,1145.2,GST on Expenses,Receive Money
+2024-08-12,445,Software,Netflix personal subscription #3612,REF-00408,Netflix,3639.02,330.82,3308.2,GST on Expenses,Bill
+2024-08-12,411,Printing,Business cards #1915,REF-00377,Snap Printing,3158.3,287.12,2871.18,GST on Expenses,Receive Money
+2024-08-12,440,Accounting Fees,BAS preparation #5555,REF-00026,Accountant,4830.02,439.09,4390.93,GST on Expenses,Bill
+2024-08-13,400,Office Supplies,Officeworks - Stationery,REF-00144,Officeworks,87.91,7.99,79.92,GST on Expenses,Spend Money
+2024-08-14,425,Rent,Commercial office rent,REF-00406,Landlord,568.07,51.64,516.43,GST on Expenses,Receive Money
+2024-08-14,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00374,Officeworks,3888.83,353.53,3535.3,GST on Expenses,Bill
+2024-08-14,411,Printing,Business cards - Monthly,REF-00290,Snap Printing,4219.61,383.6,3836.01,GST on Expenses,Spend Money
+2024-08-14,480,Interest Expense,Business loan interest,REF-00031,NAB,1345.48,122.32,1223.16,GST on Expenses,Invoice
+2024-08-14,460,Postage,Australia Post - November,REF-00278,AusPost,4851.17,441.02,4410.15,GST on Expenses,Spend Money
+2024-08-15,200,Sales,Product sales #4427,REF-00197,Customer,-7172.28,-652.03,-6520.25,GST on Income,Invoice
+2024-08-15,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00113,Officeworks,299.24,27.2,272.04,GST on Expenses,Spend Money
+2024-08-16,428,Cleaning,Office cleaning,REF-00415,CleanCo,2259.23,205.38,2053.85,GST on Expenses,Bill
+2024-08-17,400,Office Supplies,Dell Computer workstation - Monthly,REF-00110,Dell,31371.97,2852.0,28519.97,GST on Expenses,Bill
+2024-08-18,430,Travel,Qantas flight to Singapore,REF-00395,Qantas,2880.41,261.86,2618.55,GST on Expenses,Invoice
+2024-08-18,490,Government Charges,Council rates #7676,REF-00323,Council,3920.16,356.38,3563.78,GST on Expenses,Bill
+2024-08-18,200,Sales,Consulting services,REF-00270,Client,-8168.54,-742.59,-7425.95,GST on Income,Receive Money
+2024-08-19,400,Office Supplies,Officeworks - Stationery #8489,REF-00331,Officeworks,2949.01,268.09,2680.92,GST on Expenses,Receive Money
+2024-08-19,400,Office Supplies,Officeworks - Stationery - Q2,REF-00199,Officeworks,1535.03,139.55,1395.48,GST on Expenses,Invoice
+2024-08-20,410,Advertising,Google Ads campaign - Monthly,REF-00184,Google AU,952.27,86.57,865.7,GST on Expenses,Spend Money
+2024-08-20,200,Sales,Product sales - Monthly,REF-00229,Customer,-17571.73,-1597.43,-15974.3,GST on Income,Invoice
+2024-08-21,429,Repairs & Maintenance,Plumber callout - Monthly,REF-00057,Plumber,3831.37,348.31,3483.06,GST on Expenses,Bill
+2024-08-21,490,Government Charges,Building permit fee - Monthly,REF-00414,Council,4473.97,406.72,4067.25,GST on Expenses,Receive Money
+2024-08-22,410,Advertising,Google Ads campaign - Monthly,REF-00006,Google AU,2682.69,243.88,2438.81,GST on Expenses,Receive Money
+2024-08-22,430,Travel,Qantas flight to Singapore - November,REF-00400,Qantas,3454.14,314.01,3140.13,GST on Expenses,Invoice
+2024-08-22,429,Repairs & Maintenance,Plumber callout - Monthly,REF-00227,Plumber,4747.24,431.57,4315.67,GST on Expenses,Bill
+2024-08-23,404,Telephone & Internet,Telstra Business Plan - November,REF-00288,Telstra,4962.86,451.17,4511.69,GST on Expenses,Bill
+2024-08-23,478,Superannuation,Super contribution - November,REF-00193,Super Fund,2088.67,189.88,1898.79,GST on Expenses,Receive Money
+2024-08-23,412,Motor Vehicle Expenses,BP Fuel - November,REF-00279,BP,3814.86,346.81,3468.05,GST on Expenses,Invoice
+2024-08-23,200,Sales,Service revenue,REF-00387,Client,-12436.81,-1130.62,-11306.19,GST on Income,Bill
+2024-08-24,445,Software,Netflix personal subscription - November,REF-00333,Netflix,2688.17,244.38,2443.79,GST on Expenses,Receive Money
+2024-08-25,440,Accounting Fees,BAS preparation - Q2,REF-00391,Accountant,3655.32,332.3,3323.02,GST on Expenses,Invoice
+2024-08-26,460,Postage,Australia Post,REF-00437,AusPost,2321.16,211.01,2110.15,GST on Expenses,Invoice
+2024-08-28,428,Cleaning,Office cleaning,REF-00122,CleanCo,2240.0,203.64,2036.36,GST on Expenses,Invoice
+2024-08-28,425,Rent,Commercial office rent - Monthly,REF-00347,Landlord,447.6,40.69,406.91,GST on Expenses,Receive Money
+2024-08-28,410,Advertising,Google Ads campaign - November,REF-00104,Google AU,3135.83,285.08,2850.75,GST on Expenses,Spend Money
+2024-08-28,400,Office Supplies,Officeworks - Stationery - November,REF-00444,Officeworks,4203.6,382.15,3821.45,GST on Expenses,Spend Money
+2024-08-28,445,Software,Microsoft 365 - Ireland - November,REF-00382,Microsoft,1498.75,136.25,1362.5,GST on Expenses,Invoice
+2024-08-29,429,Repairs & Maintenance,Plumber callout,REF-00105,Plumber,109.16,9.92,99.24,GST on Expenses,Invoice
+2024-08-29,490,Government Charges,ASIC annual fee - November,REF-00371,ASIC,173.86,15.81,158.05,GST on Expenses,Receive Money
+2024-08-30,410,Advertising,Google Ads campaign - Q2,REF-00256,Google AU,3791.84,344.71,3447.13,GST on Expenses,Receive Money
+2024-08-31,411,Printing,Business cards - Q2,REF-00225,Snap Printing,2110.66,191.88,1918.78,GST on Expenses,Receive Money
+2024-08-31,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00025,Telstra,3865.14,351.38,3513.76,GST on Expenses,Spend Money
+2024-08-31,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00397,Telstra,1454.03,132.18,1321.85,GST on Expenses,Receive Money
+2024-08-31,429,Repairs & Maintenance,Plumber callout,REF-00052,Plumber,2301.0,209.18,2091.82,GST on Expenses,Bill
+2024-09-01,400,Office Supplies,Officeworks - Stationery - November,REF-00216,Officeworks,1438.22,130.75,1307.47,GST on Expenses,Receive Money
+2024-09-02,411,Printing,Business cards,REF-00294,Snap Printing,3434.82,312.26,3122.56,GST on Expenses,Invoice
+2024-09-02,428,Cleaning,Office cleaning - Monthly,REF-00048,CleanCo,518.29,47.12,471.17,GST on Expenses,Spend Money
+2024-09-02,412,Motor Vehicle Expenses,BP Fuel - November,REF-00018,BP,487.63,44.33,443.3,GST on Expenses,Bill
+2024-09-03,200,Sales,Export sale to NZ #9309,REF-00170,NZ Company,-17578.29,-1598.03,-15980.26,GST on Income,Bill
+2024-09-03,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00194,Officeworks,1895.36,172.31,1723.05,GST on Expenses,Invoice
+2024-09-03,410,Advertising,Google Ads campaign - November,REF-00426,Google AU,2474.39,224.94,2249.45,GST on Expenses,Receive Money
+2024-09-03,200,Sales,Consulting services #7100,REF-00309,Client,-19479.55,-1770.87,-17708.68,GST on Income,Bill
+2024-09-04,440,Accounting Fees,BAS preparation - Monthly,REF-00226,Accountant,4809.36,437.21,4372.15,GST on Expenses,Bill
+2024-09-04,429,Repairs & Maintenance,Plumber callout #3039,REF-00115,Plumber,3685.79,335.07,3350.72,GST on Expenses,Receive Money
+2024-09-05,445,Software,Adobe Creative Cloud - USA - Q2,REF-00402,Adobe Inc,2322.64,211.15,2111.49,GST on Expenses,Invoice
+2024-09-05,428,Cleaning,Office cleaning #3506,REF-00262,CleanCo,2447.77,222.52,2225.25,GST on Expenses,Bill
+2024-09-05,429,Repairs & Maintenance,Plumber callout - November,REF-00073,Plumber,4627.2,420.65,4206.55,GST on Expenses,Receive Money
+2024-09-05,400,Office Supplies,Officeworks - Stationery,REF-00448,Officeworks,3193.5,290.32,2903.18,GST on Expenses,Bill
+2024-09-05,470,Insurance,Life insurance premium - Monthly,REF-00383,AIA,199.53,18.14,181.39,GST on Expenses,Bill
+2024-09-06,430,Travel,Qantas flight to Singapore - Monthly,REF-00050,Qantas,2430.52,220.96,2209.56,GST on Expenses,Bill
+2024-09-06,425,Rent,Commercial office rent - Monthly,REF-00108,Landlord,1240.04,112.73,1127.31,GST on Expenses,Bill
+2024-09-06,412,Motor Vehicle Expenses,BP Fuel #5442,REF-00336,BP,922.41,83.86,838.55,GST on Expenses,Invoice
+2024-09-06,400,Office Supplies,Apple MacBook Pro - November,REF-00155,Apple,33271.74,3024.7,30247.04,GST on Expenses,Bill
+2024-09-07,410,Advertising,Google Ads campaign - Q2,REF-00214,Google AU,1227.4,111.58,1115.82,GST on Expenses,Spend Money
+2024-09-07,425,Rent,Commercial office rent - Monthly,REF-00260,Landlord,4832.9,439.35,4393.55,GST on Expenses,Invoice
+2024-09-07,445,Software,Shopify monthly #6148,REF-00291,Shopify,3911.81,355.62,3556.19,GST on Expenses,Bill
+2024-09-07,428,Cleaning,Office cleaning - November,REF-00182,CleanCo,2043.3,185.75,1857.55,GST on Expenses,Invoice
+2024-09-08,460,Postage,Australia Post #6905,REF-00410,AusPost,4649.33,422.67,4226.66,GST on Expenses,Bill
+2024-09-08,425,Rent,Commercial office rent #8814,REF-00317,Landlord,3934.89,357.72,3577.17,GST on Expenses,Receive Money
+2024-09-08,445,Software,Shopify monthly - Monthly,REF-00420,Shopify,709.85,64.53,645.32,GST on Expenses,Receive Money
+2024-09-09,425,Rent,Commercial office rent,REF-00061,Landlord,805.62,73.24,732.38,GST on Expenses,Receive Money
+2024-09-09,412,Motor Vehicle Expenses,BP Fuel #6681,REF-00208,BP,979.92,89.08,890.84,GST on Expenses,Spend Money
+2024-09-10,412,Motor Vehicle Expenses,BP Fuel,REF-00353,BP,3789.08,344.46,3444.62,GST on Expenses,Receive Money
+2024-09-10,420,Entertainment,BWS - Beer for office #1712,REF-00342,BWS,4558.72,414.43,4144.29,GST on Expenses,Bill
+2024-09-11,520,Tools & Equipment,Power tools set,REF-00087,Total Tools,37031.64,3366.51,33665.13,GST on Expenses,Bill
+2024-09-12,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00196,BP,3995.93,363.27,3632.66,GST on Expenses,Receive Money
+2024-09-12,410,Advertising,Google Ads campaign - Q2,REF-00370,Google AU,4819.28,438.12,4381.16,GST on Expenses,Spend Money
+2024-09-13,200,Sales,Product sales - November,REF-00137,Customer,-12789.71,-1162.7,-11627.01,GST on Income,Bill
+2024-09-13,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00094,Telstra,1779.31,161.76,1617.55,GST on Expenses,Receive Money
+2024-09-13,428,Cleaning,Office cleaning - Q2,REF-00123,CleanCo,227.55,20.69,206.86,GST on Expenses,Invoice
+2024-09-13,200,Sales,US customer order - November,REF-00135,US Corp,-1832.67,-166.61,-1666.06,GST on Income,Bill
+2024-09-14,425,Rent,Residential rent - staff housing - Monthly,REF-00142,Landlord,3410.99,310.09,3100.9,GST on Expenses,Invoice
+2024-09-16,411,Printing,Business cards - November,REF-00403,Snap Printing,1907.85,173.44,1734.41,GST on Expenses,Spend Money
+2024-09-16,411,Printing,Business cards #3202,REF-00131,Snap Printing,2481.96,225.63,2256.33,GST on Expenses,Invoice
+2024-09-17,478,Superannuation,Super contribution - November,REF-00166,Super Fund,4460.6,405.51,4055.09,GST on Expenses,Bill
+2024-09-17,410,Advertising,Google Ads campaign - November,REF-00350,Google AU,2018.14,183.47,1834.67,GST on Expenses,Bill
+2024-09-17,428,Cleaning,Office cleaning,REF-00372,CleanCo,810.74,73.7,737.04,GST on Expenses,Bill
+2024-09-17,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00251,BP,4929.56,448.14,4481.42,GST on Expenses,Invoice
+2024-09-17,412,Motor Vehicle Expenses,BP Fuel - November,REF-00175,BP,3875.04,352.28,3522.76,GST on Expenses,Receive Money
+2024-09-18,200,Sales,Consulting services - November,REF-00271,Client,-11233.74,-1021.25,-10212.49,GST on Income,Invoice
+2024-09-18,410,Advertising,Google Ads campaign - Monthly,REF-00435,Google AU,1669.51,151.77,1517.74,GST on Expenses,Invoice
+2024-09-19,429,Repairs & Maintenance,Plumber callout,REF-00423,Plumber,1274.35,115.85,1158.5,GST on Expenses,Spend Money
+2024-09-19,410,Advertising,Google Ads campaign - November,REF-00431,Google AU,1903.56,173.05,1730.51,GST on Expenses,Bill
+2024-09-19,440,Accounting Fees,BAS preparation - Monthly,REF-00096,Accountant,1885.05,171.37,1713.68,GST on Expenses,Bill
+2024-09-19,200,Sales,Product sales - Monthly,REF-00045,Customer,-6670.66,-606.42,-6064.24,GST on Income,Invoice
+2024-09-19,410,Advertising,Google Ads campaign,REF-00254,Google AU,2156.15,196.01,1960.14,GST on Expenses,Bill
+2024-09-20,425,Rent,Commercial office rent #1884,REF-00161,Landlord,4856.5,441.5,4415.0,GST on Expenses,Spend Money
+2024-09-20,410,Advertising,Google Ads campaign - Q2,REF-00034,Google AU,3957.32,359.76,3597.56,GST on Expenses,Invoice
+2024-09-21,410,Advertising,Google Ads campaign - November,REF-00297,Google AU,1992.39,181.13,1811.26,GST on Expenses,Invoice
+2024-09-21,440,Accounting Fees,BAS preparation - Q2,REF-00422,Accountant,191.86,17.44,174.42,GST on Expenses,Spend Money
+2024-09-21,410,Advertising,Google Ads campaign - Q2,REF-00345,Google AU,1989.73,180.88,1808.85,GST on Expenses,Spend Money
+2024-09-22,410,Advertising,Google Ads campaign - Monthly,REF-00150,Google AU,4705.6,427.78,4277.82,GST on Expenses,Spend Money
+2024-09-22,410,Advertising,Google Ads campaign - Q2,REF-00127,Google AU,4877.99,443.45,4434.54,GST on Expenses,Invoice
+2024-09-22,400,Office Supplies,Officeworks - Stationery - November,REF-00311,Officeworks,4877.7,443.43,4434.27,GST on Expenses,Invoice
+2024-09-22,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00238,BP,1810.53,164.59,1645.94,GST on Expenses,Bill
+2024-09-22,412,Motor Vehicle Expenses,BP Fuel - Monthly,REF-00148,BP,842.1,76.55,765.55,GST on Expenses,Receive Money
+2024-09-23,429,Repairs & Maintenance,Plumber callout - November,REF-00201,Plumber,4176.1,379.65,3796.45,GST on Expenses,Invoice
+2024-09-23,428,Cleaning,Office cleaning - November,REF-00258,CleanCo,1322.85,120.26,1202.59,GST on Expenses,Spend Money
+2024-09-23,440,Accounting Fees,BAS preparation - November,REF-00051,Accountant,999.61,90.87,908.74,GST on Expenses,Invoice
+2024-09-24,428,Cleaning,Office cleaning - Q2,REF-00102,CleanCo,950.92,86.45,864.47,GST on Expenses,Receive Money
+2024-09-24,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00207,BP,4131.92,375.63,3756.29,GST on Expenses,Bill
+2024-09-24,200,Sales,Service revenue - November,REF-00037,Client,-9250.41,-840.95,-8409.46,GST on Income,Invoice
+2024-09-24,400,Office Supplies,Apple MacBook Pro - Monthly,REF-00179,Apple,34262.53,3114.78,31147.75,GST on Expenses,Invoice
+2024-09-25,460,Postage,Australia Post #6100,REF-00180,AusPost,3871.44,351.95,3519.49,GST on Expenses,Receive Money
+2024-09-25,200,Sales,Product sales - November,REF-00173,Customer,-1397.96,-127.09,-1270.87,GST on Income,Receive Money
+2024-09-25,478,Superannuation,Super contribution,REF-00210,Super Fund,2859.06,259.91,2599.15,GST on Expenses,Invoice
+2024-09-27,445,Software,Zoom Pro - USA,REF-00407,Zoom,2418.88,219.9,2198.98,GST on Expenses,Invoice
+2024-09-27,440,Accounting Fees,BAS preparation - Monthly,REF-00103,Accountant,1876.85,170.62,1706.23,GST on Expenses,Receive Money
+2024-09-27,425,Rent,Commercial office rent - November,REF-00319,Landlord,2016.49,183.32,1833.17,GST on Expenses,Invoice
+2024-09-27,445,Software,Netflix personal subscription - Q2,REF-00217,Netflix,1417.91,128.9,1289.01,GST on Expenses,Invoice
+2024-09-27,400,Office Supplies,Dell Computer workstation #6254,REF-00384,Dell,5320.46,483.68,4836.78,GST on Expenses,Bill
+2024-09-27,200,Sales,Product sales - Monthly,REF-00447,Customer,-7938.59,-721.69,-7216.9,GST on Income,Spend Money
+2024-09-27,440,Accounting Fees,BAS preparation - Monthly,REF-00038,Accountant,1687.92,153.45,1534.47,GST on Expenses,Spend Money
+2024-09-27,412,Motor Vehicle Expenses,BP Fuel #3271,REF-00396,BP,432.38,39.31,393.07,GST on Expenses,Spend Money
+2024-09-28,420,Entertainment,Dan Murphys - Wine for clients - Q2,REF-00177,Dan Murphys,408.7,37.15,371.55,GST on Expenses,Bill
+2024-09-29,492,Fines & Penalties,Parking fine - November,REF-00191,Council,670.05,60.91,609.14,GST on Expenses,Receive Money
+2024-09-29,411,Printing,Business cards,REF-00334,Snap Printing,4004.17,364.02,3640.15,GST on Expenses,Bill
+2024-09-30,404,Telephone & Internet,Telstra Business Plan #2339,REF-00024,Telstra,2380.3,216.39,2163.91,GST on Expenses,Spend Money
+2024-09-30,445,Software,Zoom Pro - USA - November,REF-00009,Zoom,3795.01,345.0,3450.01,GST on Expenses,Spend Money
+2024-10-01,412,Motor Vehicle Expenses,Personal car fuel - holiday - Monthly,REF-00043,Shell,334.21,30.38,303.83,GST on Expenses,Receive Money
+2024-10-01,400,Office Supplies,Dell Computer workstation - November,REF-00098,Dell,40288.43,3662.58,36625.85,GST on Expenses,Receive Money
+2024-10-02,428,Cleaning,Office cleaning,REF-00429,CleanCo,3855.27,350.48,3504.79,GST on Expenses,Spend Money
+2024-10-02,200,Sales,Service revenue #9732,REF-00095,Client,-14304.36,-1300.4,-13003.96,GST on Income,Bill
+2024-10-02,411,Printing,Business cards,REF-00375,Snap Printing,3778.5,343.5,3435.0,GST on Expenses,Invoice
+2024-10-03,410,Advertising,Google Ads campaign - Monthly,REF-00446,Google AU,3563.69,323.97,3239.72,GST on Expenses,Spend Money
+2024-10-03,429,Repairs & Maintenance,Plumber callout,REF-00126,Plumber,1700.61,154.6,1546.01,GST on Expenses,Bill
+2024-10-03,400,Office Supplies,Officeworks - Stationery,REF-00343,Officeworks,3907.98,355.27,3552.71,GST on Expenses,Spend Money
+2024-10-05,420,Entertainment,BWS - Beer for office #3850,REF-00044,BWS,3101.11,281.92,2819.19,GST on Expenses,Spend Money
+2024-10-06,429,Repairs & Maintenance,Plumber callout - Q2,REF-00156,Plumber,2230.14,202.74,2027.4,GST on Expenses,Invoice
+2024-10-07,428,Cleaning,Office cleaning - November,REF-00021,CleanCo,4272.55,388.41,3884.14,GST on Expenses,Receive Money
+2024-10-07,420,Entertainment,Restaurant - client dinner with drinks - Q2,REF-00441,Restaurant,4714.45,428.59,4285.86,GST on Expenses,Spend Money
+2024-10-08,495,Donations,Charity sponsorship - November,REF-00097,Charity,2424.76,220.43,2204.33,GST on Expenses,Bill
+2024-10-08,400,Office Supplies,JB Hi-Fi - Personal laptop - Monthly,REF-00077,JB Hi-Fi,937.24,85.2,852.04,GST on Expenses,Spend Money
+2024-10-08,400,Office Supplies,Dell Computer workstation,REF-00064,Dell,46588.7,4235.34,42353.36,GST on Expenses,Receive Money
+2024-10-09,440,Accounting Fees,BAS preparation - Monthly,REF-00010,Accountant,1668.66,151.7,1516.96,GST on Expenses,Invoice
+2024-10-09,200,Sales,Consulting services,REF-00109,Client,-2647.68,-240.7,-2406.98,GST on Income,Spend Money
+2024-10-09,495,Donations,Donation to Red Cross - Q2,REF-00213,Red Cross,601.86,54.71,547.15,GST on Expenses,Receive Money
+2024-10-10,400,Office Supplies,Officeworks - Stationery #2501,REF-00083,Officeworks,4369.33,397.21,3972.12,GST on Expenses,Spend Money
+2024-10-11,411,Printing,Business cards #6453,REF-00272,Snap Printing,3932.46,357.5,3574.96,GST on Expenses,Spend Money
+2024-10-12,478,Superannuation,Super contribution - Monthly,REF-00236,Super Fund,4934.93,448.63,4486.3,GST on Expenses,Receive Money
+2024-10-13,461,Bank Fees,ANZ account fees - Monthly,REF-00206,ANZ,1295.9,117.81,1178.09,GST on Expenses,Bill
+2024-10-13,492,Fines & Penalties,Parking fine - November,REF-00114,Council,3321.18,301.93,3019.25,GST on Expenses,Bill
+2024-10-14,411,Printing,Business cards - Q2,REF-00065,Snap Printing,4654.75,423.16,4231.59,GST on Expenses,Invoice
+2024-10-14,410,Advertising,Google Ads campaign - Q2,REF-00390,Google AU,3076.31,279.66,2796.65,GST on Expenses,Receive Money
+2024-10-14,200,Sales,Service revenue #1900,REF-00159,Client,-10659.79,-969.07,-9690.72,GST on Income,Bill
+2024-10-15,411,Printing,Business cards,REF-00028,Snap Printing,3795.24,345.02,3450.22,GST on Expenses,Invoice
+2024-10-15,404,Telephone & Internet,Telstra Business Plan,REF-00076,Telstra,853.15,77.56,775.59,GST on Expenses,Spend Money
+2024-10-16,461,Bank Fees,ANZ account fees - Q2,REF-00276,ANZ,3886.08,353.28,3532.8,GST on Expenses,Receive Money
+2024-10-16,412,Motor Vehicle Expenses,BP Fuel #3611,REF-00315,BP,734.77,66.8,667.97,GST on Expenses,Invoice
+2024-10-16,411,Printing,Business cards - November,REF-00082,Snap Printing,4046.85,367.9,3678.95,GST on Expenses,Receive Money
+2024-10-17,460,Postage,Australia Post #5337,REF-00368,AusPost,2128.34,193.49,1934.85,GST on Expenses,Bill
+2024-10-17,425,Rent,Commercial office rent - Monthly,REF-00017,Landlord,1682.93,152.99,1529.94,GST on Expenses,Spend Money
+2024-10-17,477,Wages & Salaries,Staff wages,REF-00252,Payroll,384.68,34.97,349.71,GST on Expenses,Spend Money
+2024-10-17,460,Postage,Australia Post #8132,REF-00392,AusPost,2624.18,238.56,2385.62,GST on Expenses,Receive Money
+2024-10-18,200,Sales,Service revenue - November,REF-00202,Client,-7196.05,-654.19,-6541.86,GST on Income,Spend Money
+2024-10-18,425,Rent,Commercial office rent - November,REF-00078,Landlord,3494.32,317.67,3176.65,GST on Expenses,Bill
+2024-10-19,200,Sales,Consulting services #8301,REF-00240,Client,-16945.96,-1540.54,-15405.42,GST on Income,Bill
+2024-10-19,400,Office Supplies,Officeworks - Stationery - Q2,REF-00172,Officeworks,2453.26,223.02,2230.24,GST on Expenses,Receive Money
+2024-10-19,429,Repairs & Maintenance,Plumber callout - Q2,REF-00267,Plumber,3028.78,275.34,2753.44,GST on Expenses,Invoice
+2024-10-20,492,Fines & Penalties,Parking fine - Q2,REF-00417,Council,2428.27,220.75,2207.52,GST on Expenses,Receive Money
+2024-10-20,400,Office Supplies,Officeworks - Stationery - Q2,REF-00320,Officeworks,3877.65,352.51,3525.14,GST on Expenses,Invoice
+2024-10-21,460,Postage,Australia Post - November,REF-00153,AusPost,1541.43,140.13,1401.3,GST on Expenses,Bill
+2024-10-21,200,Sales,Consulting services - November,REF-00298,Client,-18249.4,-1659.04,-16590.36,GST on Income,Receive Money
+2024-10-21,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00322,Telstra,4834.97,439.54,4395.43,GST on Expenses,Receive Money
+2024-10-21,428,Cleaning,Office cleaning - November,REF-00204,CleanCo,4483.31,407.57,4075.74,GST on Expenses,Receive Money
+2024-10-21,440,Accounting Fees,BAS preparation #3894,REF-00203,Accountant,2702.51,245.68,2456.83,GST on Expenses,Spend Money
+2024-10-22,460,Postage,Australia Post,REF-00450,AusPost,504.01,45.82,458.19,GST on Expenses,Spend Money
+2024-10-22,490,Government Charges,Land tax,REF-00134,Revenue Office,1339.24,121.75,1217.49,GST on Expenses,Bill
+2024-10-22,200,Sales,Consulting services,REF-00241,Client,-5943.34,-540.3,-5403.04,GST on Income,Receive Money
+2024-10-22,495,Donations,Charity sponsorship - November,REF-00107,Charity,3860.33,350.94,3509.39,GST on Expenses,Invoice
+2024-10-24,495,Donations,Charity sponsorship - November,REF-00157,Charity,1745.54,158.69,1586.85,GST on Expenses,Bill
+2024-10-24,400,Office Supplies,Officeworks - Stationery #2032,REF-00100,Officeworks,3330.3,302.75,3027.55,GST on Expenses,Receive Money
+2024-10-24,400,Office Supplies,Dell Computer workstation,REF-00136,Dell,17179.66,1561.79,15617.87,GST on Expenses,Invoice
+2024-10-25,490,Government Charges,ASIC annual fee,REF-00008,ASIC,2174.65,197.7,1976.95,GST on Expenses,Invoice
+2024-10-25,411,Printing,Business cards,REF-00376,Snap Printing,4515.65,410.51,4105.14,GST on Expenses,Invoice
+2024-10-25,410,Advertising,Google Ads campaign,REF-00310,Google AU,1906.38,173.31,1733.07,GST on Expenses,Receive Money
+2024-10-25,492,Fines & Penalties,ATO late lodgement penalty,REF-00092,ATO,3330.45,302.77,3027.68,GST on Expenses,Spend Money
+2024-10-25,428,Cleaning,Office cleaning #4426,REF-00379,CleanCo,4017.42,365.22,3652.2,GST on Expenses,Receive Money
+2024-10-26,440,Accounting Fees,BAS preparation - Monthly,REF-00433,Accountant,3239.42,294.49,2944.93,GST on Expenses,Receive Money
+2024-10-26,200,Sales,Service revenue,REF-00171,Client,-2283.1,-207.55,-2075.55,GST on Income,Receive Money
+2024-10-26,412,Motor Vehicle Expenses,BP Fuel #6868,REF-00365,BP,3373.81,306.71,3067.1,GST on Expenses,Invoice
+2024-10-28,411,Printing,Business cards - Q2,REF-00090,Snap Printing,1496.92,136.08,1360.84,GST on Expenses,Bill
+2024-10-28,429,Repairs & Maintenance,Plumber callout #3243,REF-00257,Plumber,4885.37,444.12,4441.25,GST on Expenses,Bill
+2024-10-28,200,Sales,US customer order - Monthly,REF-00012,US Corp,-7585.88,-689.63,-6896.25,GST on Income,Bill
+2024-10-30,411,Printing,Business cards,REF-00014,Snap Printing,4044.58,367.69,3676.89,GST on Expenses,Receive Money
+2024-10-31,200,Sales,Service revenue - November,REF-00303,Client,-1265.08,-115.01,-1150.07,GST on Income,Invoice
+2024-10-31,200,Sales,Consulting services - Q2,REF-00243,Client,-8658.85,-787.17,-7871.68,GST on Income,Spend Money
+2024-11-01,200,Sales,Service revenue - Q2,REF-00378,Client,-2923.48,-265.77,-2657.71,GST on Income,Spend Money
+2024-11-01,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00085,Officeworks,3334.81,303.16,3031.65,GST on Expenses,Invoice
+2024-11-02,428,Cleaning,Office cleaning - Monthly,REF-00430,CleanCo,1040.22,94.57,945.65,GST on Expenses,Bill
+2024-11-02,429,Repairs & Maintenance,Plumber callout,REF-00301,Plumber,1149.32,104.48,1044.84,GST on Expenses,Receive Money
+2024-11-02,425,Rent,Commercial office rent,REF-00245,Landlord,1921.57,174.69,1746.88,GST on Expenses,Bill
+2024-11-02,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00381,BP,1347.85,122.53,1225.32,GST on Expenses,Spend Money
+2024-11-02,410,Advertising,Google Ads campaign - November,REF-00255,Google AU,1615.59,146.87,1468.72,GST on Expenses,Spend Money
+2024-11-03,200,Sales,Service revenue - Q2,REF-00046,Client,-13203.08,-1200.28,-12002.8,GST on Income,Invoice
+2024-11-04,425,Rent,Commercial office rent - Monthly,REF-00091,Landlord,1112.63,101.15,1011.48,GST on Expenses,Receive Money
+2024-11-04,440,Accounting Fees,BAS preparation - Q2,REF-00032,Accountant,2961.35,269.21,2692.14,GST on Expenses,Receive Money
+2024-11-05,410,Advertising,Google Ads campaign - Q2,REF-00360,Google AU,3918.23,356.2,3562.03,GST on Expenses,Receive Money
+2024-11-05,460,Postage,Australia Post - Q2,REF-00413,AusPost,3875.76,352.34,3523.42,GST on Expenses,Receive Money
+2024-11-05,200,Sales,US customer order #2835,REF-00056,US Corp,-1903.06,-173.01,-1730.05,GST on Income,Spend Money
+2024-11-06,440,Accounting Fees,BAS preparation - Q2,REF-00053,Accountant,4107.79,373.44,3734.35,GST on Expenses,Spend Money
+2024-11-06,461,Bank Fees,ANZ account fees - Q2,REF-00354,ANZ,2543.91,231.26,2312.65,GST on Expenses,Bill
+2024-11-06,430,Travel,Overseas hotel accommodation - Monthly,REF-00264,Hotel,1629.71,148.16,1481.55,GST on Expenses,Receive Money
+2024-11-07,478,Superannuation,Super contribution - November,REF-00355,Super Fund,3175.15,288.65,2886.5,GST on Expenses,Invoice
+2024-11-07,429,Repairs & Maintenance,New air conditioning system,REF-00020,AirCon Co,11598.12,1054.37,10543.75,GST on Expenses,Spend Money
+2024-11-08,410,Advertising,Google Ads campaign - November,REF-00120,Google AU,3679.97,334.54,3345.43,GST on Expenses,Receive Money
+2024-11-08,490,Government Charges,Building permit fee - Q2,REF-00411,Council,1281.5,116.5,1165.0,GST on Expenses,Bill
+2024-11-08,480,Interest Expense,Business loan interest,REF-00055,NAB,2470.1,224.55,2245.55,GST on Expenses,Spend Money
+2024-11-08,429,Repairs & Maintenance,Plumber callout #5656,REF-00088,Plumber,4466.68,406.06,4060.62,GST on Expenses,Spend Money
+2024-11-09,461,Bank Fees,ANZ account fees,REF-00299,ANZ,3221.27,292.84,2928.43,GST on Expenses,Invoice
+2024-11-09,200,Sales,Product sales #4716,REF-00282,Customer,-10008.65,-909.88,-9098.77,GST on Income,Bill
+2024-11-10,428,Cleaning,Office cleaning #4114,REF-00416,CleanCo,3864.32,351.3,3513.02,GST on Expenses,Invoice
+2024-11-10,411,Printing,Business cards - Q2,REF-00289,Snap Printing,1920.74,174.61,1746.13,GST on Expenses,Bill
+2024-11-11,428,Cleaning,Office cleaning - Q2,REF-00367,CleanCo,1667.4,151.58,1515.82,GST on Expenses,Bill
+2024-11-11,200,Sales,Product sales - Q2,REF-00042,Customer,-4685.31,-425.94,-4259.37,GST on Income,Bill
+2024-11-13,429,Repairs & Maintenance,Plumber callout - Q2,REF-00212,Plumber,2649.35,240.85,2408.5,GST on Expenses,Bill
+2024-11-14,470,Insurance,Life insurance premium,REF-00013,AIA,1805.72,164.16,1641.56,GST on Expenses,Invoice
+2024-11-14,445,Software,GitHub subscription - Q2,REF-00099,GitHub,2178.24,198.02,1980.22,GST on Expenses,Spend Money
+2024-11-14,460,Postage,Australia Post - Monthly,REF-00356,AusPost,3809.21,346.29,3462.92,GST on Expenses,Spend Money
+2024-11-14,445,Software,Shopify monthly - November,REF-00040,Shopify,4637.21,421.56,4215.65,GST on Expenses,Spend Money
+2024-11-14,420,Entertainment,BWS - Beer for office - November,REF-00439,BWS,4572.91,415.72,4157.19,GST on Expenses,Bill
+2024-11-15,425,Rent,Commercial office rent - Monthly,REF-00075,Landlord,4985.8,453.25,4532.55,GST on Expenses,Spend Money
+2024-11-15,470,Insurance,Workers compensation insurance,REF-00125,WorkCover,4815.9,437.81,4378.09,GST on Expenses,Spend Money
+2024-11-16,460,Postage,Australia Post - Monthly,REF-00316,AusPost,2958.74,268.98,2689.76,GST on Expenses,Bill
+2024-11-16,490,Government Charges,Council rates - Monthly,REF-00246,Council,1244.86,113.17,1131.69,GST on Expenses,Receive Money
+2024-11-16,460,Postage,Australia Post - Q2,REF-00121,AusPost,4815.27,437.75,4377.52,GST on Expenses,Bill
+2024-11-16,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00027,Telstra,3252.32,295.67,2956.65,GST on Expenses,Invoice
+2024-11-17,200,Sales,Product sales - Monthly,REF-00062,Customer,-9954.91,-904.99,-9049.92,GST on Income,Bill
+2024-11-17,400,Office Supplies,Dell Computer workstation #7562,REF-00219,Dell,32576.76,2961.52,29615.24,GST on Expenses,Receive Money
+2024-11-18,410,Advertising,Google Ads campaign - Monthly,REF-00399,Google AU,2989.84,271.8,2718.04,GST on Expenses,Invoice
+2024-11-18,410,Advertising,Google Ads campaign - November,REF-00130,Google AU,2797.38,254.31,2543.07,GST on Expenses,Invoice
+2024-11-18,200,Sales,Product sales - Monthly,REF-00308,Customer,-2498.75,-227.16,-2271.59,GST on Income,Bill
+2024-11-18,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00326,Telstra,1203.26,109.39,1093.87,GST on Expenses,Invoice
+2024-11-19,470,Insurance,Life insurance premium - Q2,REF-00292,AIA,1082.59,98.42,984.17,GST on Expenses,Bill
+2024-11-19,429,Repairs & Maintenance,Plumber callout - November,REF-00060,Plumber,94.36,8.58,85.78,GST on Expenses,Invoice
+2024-11-19,440,Accounting Fees,BAS preparation #9007,REF-00248,Accountant,4880.67,443.7,4436.97,GST on Expenses,Spend Money
+2024-11-19,200,Sales,Service revenue #9015,REF-00239,Client,-7925.25,-720.48,-7204.77,GST on Income,Bill
+2024-11-19,460,Postage,Australia Post - November,REF-00445,AusPost,610.5,55.5,555.0,GST on Expenses,Spend Money
+2024-11-20,429,Repairs & Maintenance,Plumber callout #3177,REF-00280,Plumber,1927.06,175.19,1751.87,GST on Expenses,Bill
+2024-11-20,200,Sales,Consulting services - Monthly,REF-00421,Client,-9244.66,-840.42,-8404.24,GST on Income,Receive Money
+2024-11-20,400,Office Supplies,Officeworks - Stationery - November,REF-00281,Officeworks,3066.79,278.8,2787.99,GST on Expenses,Receive Money
+2024-11-20,200,Sales,Consulting services,REF-00209,Client,-6842.25,-622.02,-6220.23,GST on Income,Receive Money
+2024-11-21,400,Office Supplies,Officeworks - Stationery - November,REF-00143,Officeworks,272.34,24.76,247.58,GST on Expenses,Bill
+2024-11-22,200,Sales,Service revenue - Q2,REF-00029,Client,-5810.7,-528.25,-5282.45,GST on Income,Bill
+2024-11-22,490,Government Charges,Land tax - Q2,REF-00118,Revenue Office,1040.38,94.58,945.8,GST on Expenses,Spend Money
+2024-11-23,410,Advertising,Google Ads campaign - Monthly,REF-00222,Google AU,170.95,15.54,155.41,GST on Expenses,Spend Money
+2024-11-23,200,Sales,Service revenue,REF-00205,Client,-6406.4,-582.4,-5824.0,GST on Income,Bill
+2024-11-23,460,Postage,Australia Post - November,REF-00140,AusPost,2393.34,217.58,2175.76,GST on Expenses,Spend Money
+2024-11-24,440,Accounting Fees,BAS preparation - Q2,REF-00023,Accountant,324.75,29.52,295.23,GST on Expenses,Bill
+2024-11-24,410,Advertising,Google Ads campaign,REF-00176,Google AU,3715.09,337.74,3377.35,GST on Expenses,Bill
+2024-11-24,410,Advertising,Google Ads campaign - Monthly,REF-00285,Google AU,1934.66,175.88,1758.78,GST on Expenses,Bill
+2024-11-26,400,Office Supplies,Dell Computer workstation - November,REF-00418,Dell,30880.59,2807.33,28073.26,GST on Expenses,Bill
+2024-11-27,200,Sales,Service revenue - Monthly,REF-00167,Client,-4050.15,-368.2,-3681.95,GST on Income,Spend Money
+2024-11-27,425,Rent,Commercial office rent - Monthly,REF-00228,Landlord,4106.16,373.29,3732.87,GST on Expenses,Spend Money
+2024-11-28,400,Office Supplies,JB Hi-Fi - Personal laptop,REF-00306,JB Hi-Fi,1576.0,143.27,1432.73,GST on Expenses,Bill
+2024-11-28,428,Cleaning,Office cleaning - Q2,REF-00068,CleanCo,2079.85,189.08,1890.77,GST on Expenses,Bill
+2024-11-28,495,Donations,Donation to Red Cross #2808,REF-00419,Red Cross,1412.3,128.39,1283.91,GST on Expenses,Bill
+2024-11-28,410,Advertising,Google Ads campaign - Monthly,REF-00318,Google AU,162.84,14.8,148.04,GST on Expenses,Invoice
+2024-11-28,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00352,BP,2894.23,263.11,2631.12,GST on Expenses,Spend Money
+2024-11-29,480,Interest Expense,Business loan interest - Monthly,REF-00133,NAB,2819.13,256.28,2562.85,GST on Expenses,Invoice
+2024-11-29,404,Telephone & Internet,Telstra Business Plan,REF-00001,Telstra,498.79,45.34,453.45,GST on Expenses,Receive Money
+2024-11-29,411,Printing,Business cards,REF-00358,Snap Printing,1897.02,172.46,1724.56,GST on Expenses,Receive Money
+2024-11-30,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00070,Officeworks,4894.38,444.94,4449.44,GST on Expenses,Bill
+2024-11-30,400,Office Supplies,Officeworks - Stationery - November,REF-00359,Officeworks,183.16,16.65,166.51,GST on Expenses,Invoice
+2024-12-01,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00275,BP,1250.63,113.69,1136.94,GST on Expenses,Receive Money
+2024-12-01,440,Accounting Fees,BAS preparation - Q2,REF-00124,Accountant,440.6,40.05,400.55,GST on Expenses,Spend Money
+2024-12-01,411,Printing,Business cards - Monthly,REF-00007,Snap Printing,413.23,37.57,375.66,GST on Expenses,Bill
+2024-12-01,425,Rent,Commercial office rent - November,REF-00190,Landlord,377.87,34.35,343.52,GST on Expenses,Bill
+2024-12-02,412,Motor Vehicle Expenses,BP Fuel,REF-00086,BP,314.23,28.57,285.66,GST on Expenses,Invoice
+2024-12-02,412,Motor Vehicle Expenses,BP Fuel - Q2,REF-00138,BP,102.58,9.33,93.25,GST on Expenses,Bill
+2024-12-02,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00081,Telstra,4770.68,433.7,4336.98,GST on Expenses,Spend Money
+2024-12-03,200,Sales,Product sales - November,REF-00269,Customer,-10956.18,-996.02,-9960.16,GST on Income,Receive Money
+2024-12-03,200,Sales,Service revenue,REF-00250,Client,-4343.07,-394.82,-3948.25,GST on Income,Invoice
+2024-12-04,430,Travel,Overseas hotel accommodation - November,REF-00151,Hotel,81.24,7.39,73.85,GST on Expenses,Bill
+2024-12-05,440,Accounting Fees,BAS preparation - Q2,REF-00211,Accountant,2900.02,263.64,2636.38,GST on Expenses,Invoice
+2024-12-05,440,Accounting Fees,BAS preparation - November,REF-00141,Accountant,4585.15,416.83,4168.32,GST on Expenses,Invoice
+2024-12-05,200,Sales,Service revenue - November,REF-00145,Client,-8611.74,-782.89,-7828.85,GST on Income,Bill
+2024-12-06,445,Software,Netflix personal subscription #4944,REF-00261,Netflix,3663.17,333.02,3330.15,GST on Expenses,Receive Money
+2024-12-06,420,Entertainment,BWS - Beer for office,REF-00183,BWS,3763.15,342.1,3421.05,GST on Expenses,Invoice
+2024-12-06,400,Office Supplies,JB Hi-Fi - Personal laptop - Monthly,REF-00132,JB Hi-Fi,2339.71,212.7,2127.01,GST on Expenses,Spend Money
+2024-12-07,440,Accounting Fees,BAS preparation - Q2,REF-00405,Accountant,370.31,33.66,336.65,GST on Expenses,Receive Money
+2024-12-07,404,Telephone & Internet,Telstra Business Plan #2030,REF-00404,Telstra,2998.28,272.57,2725.71,GST on Expenses,Receive Money
+2024-12-07,429,Repairs & Maintenance,Plumber callout #1448,REF-00080,Plumber,3913.73,355.79,3557.94,GST on Expenses,Bill
+2024-12-07,411,Printing,Business cards - November,REF-00440,Snap Printing,828.63,75.33,753.3,GST on Expenses,Invoice
+2024-12-08,440,Accounting Fees,BAS preparation - November,REF-00287,Accountant,1391.48,126.5,1264.98,GST on Expenses,Spend Money
+2024-12-08,429,Repairs & Maintenance,Plumber callout,REF-00186,Plumber,1535.3,139.57,1395.73,GST on Expenses,Receive Money
+2024-12-08,440,Accounting Fees,BAS preparation - Monthly,REF-00312,Accountant,3230.84,293.71,2937.13,GST on Expenses,Spend Money
+2024-12-08,440,Accounting Fees,BAS preparation - Q2,REF-00074,Accountant,2349.36,213.58,2135.78,GST on Expenses,Spend Money
+2024-12-10,429,Repairs & Maintenance,Plumber callout - Monthly,REF-00361,Plumber,553.02,50.27,502.75,GST on Expenses,Invoice
+2024-12-10,428,Cleaning,Office cleaning - November,REF-00327,CleanCo,339.16,30.83,308.33,GST on Expenses,Receive Money
+2024-12-10,410,Advertising,Google Ads campaign,REF-00329,Google AU,4056.08,368.73,3687.35,GST on Expenses,Bill
+2024-12-10,404,Telephone & Internet,Telstra Business Plan,REF-00164,Telstra,4312.37,392.03,3920.34,GST on Expenses,Bill
+2024-12-11,411,Printing,Business cards,REF-00242,Snap Printing,2544.74,231.34,2313.4,GST on Expenses,Receive Money
+2024-12-11,445,Software,Netflix personal subscription - Monthly,REF-00149,Netflix,3131.9,284.72,2847.18,GST on Expenses,Spend Money
+2024-12-11,490,Government Charges,ASIC annual fee - Q2,REF-00366,ASIC,3444.28,313.12,3131.16,GST on Expenses,Invoice
+2024-12-12,460,Postage,Australia Post - November,REF-00340,AusPost,1528.86,138.99,1389.87,GST on Expenses,Spend Money
+2024-12-12,440,Accounting Fees,BAS preparation - Q2,REF-00346,Accountant,2726.19,247.84,2478.35,GST on Expenses,Receive Money
+2024-12-12,429,Repairs & Maintenance,Plumber callout - November,REF-00174,Plumber,617.33,56.12,561.21,GST on Expenses,Bill
+2024-12-14,420,Entertainment,BWS - Beer for office - Q2,REF-00425,BWS,717.54,65.23,652.31,GST on Expenses,Receive Money
+2024-12-14,490,Government Charges,Land tax - November,REF-00089,Revenue Office,2244.14,204.01,2040.13,GST on Expenses,Receive Money
+2024-12-14,470,Insurance,Workers compensation insurance,REF-00066,WorkCover,3399.76,309.07,3090.69,GST on Expenses,Spend Money
+2024-12-15,200,Sales,Service revenue - November,REF-00398,Client,-14786.95,-1344.27,-13442.68,GST on Income,Receive Money
+2024-12-15,428,Cleaning,Office cleaning - Q2,REF-00004,CleanCo,151.04,13.73,137.31,GST on Expenses,Spend Money
+2024-12-16,478,Superannuation,Super contribution - November,REF-00438,Super Fund,768.08,69.83,698.25,GST on Expenses,Spend Money
+2024-12-16,200,Sales,Consulting services - Q2,REF-00328,Client,-10340.81,-940.07,-9400.74,GST on Income,Invoice
+2024-12-16,411,Printing,Business cards - Monthly,REF-00409,Snap Printing,467.25,42.48,424.77,GST on Expenses,Bill
+2024-12-17,411,Printing,Business cards - Q2,REF-00351,Snap Printing,3098.55,281.69,2816.86,GST on Expenses,Invoice
+2024-12-17,428,Cleaning,Office cleaning #6895,REF-00003,CleanCo,4758.95,432.63,4326.32,GST on Expenses,Spend Money
+2024-12-18,445,Software,Slack subscription - USA - Monthly,REF-00295,Slack,1692.97,153.91,1539.06,GST on Expenses,Receive Money
+2024-12-18,411,Printing,Business cards #7410,REF-00442,Snap Printing,994.2,90.38,903.82,GST on Expenses,Bill
+2024-12-18,490,Government Charges,Building permit fee - Q2,REF-00314,Council,3521.0,320.09,3200.91,GST on Expenses,Bill
+2024-12-19,400,Office Supplies,Dell Computer workstation - Monthly,REF-00296,Dell,29761.44,2705.59,27055.85,GST on Expenses,Receive Money
+2024-12-19,411,Printing,Business cards #4415,REF-00332,Snap Printing,507.15,46.1,461.05,GST on Expenses,Receive Money
+2024-12-19,400,Office Supplies,Officeworks - Stationery #4624,REF-00158,Officeworks,362.13,32.92,329.21,GST on Expenses,Bill
+2024-12-19,425,Rent,Commercial office rent #8648,REF-00187,Landlord,518.61,47.15,471.46,GST on Expenses,Bill
+2024-12-20,440,Accounting Fees,BAS preparation - Monthly,REF-00041,Accountant,4670.35,424.58,4245.77,GST on Expenses,Bill
+2024-12-20,400,Office Supplies,Officeworks - Stationery - Monthly,REF-00178,Officeworks,4586.86,416.99,4169.87,GST on Expenses,Bill
+2024-12-20,425,Rent,Commercial office rent - November,REF-00072,Landlord,3362.25,305.66,3056.59,GST on Expenses,Spend Money
+2024-12-21,490,Government Charges,Building permit fee - Q2,REF-00266,Council,4532.2,412.02,4120.18,GST on Expenses,Spend Money
+2024-12-21,200,Sales,Product sales - November,REF-00427,Customer,-2215.8,-201.44,-2014.36,GST on Income,Receive Money
+2024-12-21,461,Bank Fees,ANZ account fees #5155,REF-00432,ANZ,3340.19,303.65,3036.54,GST on Expenses,Invoice
+2024-12-21,420,Entertainment,Restaurant - client dinner with drinks - Q2,REF-00330,Restaurant,2479.16,225.38,2253.78,GST on Expenses,Spend Money
+2024-12-22,400,Office Supplies,Officeworks - Stationery - Q2,REF-00305,Officeworks,1916.18,174.2,1741.98,GST on Expenses,Invoice
+2024-12-22,420,Entertainment,Liquorland - Champagne,REF-00265,Liquorland,4644.36,422.21,4222.15,GST on Expenses,Invoice
+2024-12-22,400,Office Supplies,JB Hi-Fi - Personal laptop - November,REF-00401,JB Hi-Fi,4033.84,366.71,3667.13,GST on Expenses,Spend Money
+2024-12-23,430,Travel,Qantas flight to Singapore - Q2,REF-00218,Qantas,1201.07,109.19,1091.88,GST on Expenses,Spend Money
+2024-12-23,495,Donations,Charity sponsorship - November,REF-00067,Charity,3658.99,332.64,3326.35,GST on Expenses,Spend Money
+2024-12-24,428,Cleaning,Office cleaning,REF-00283,CleanCo,1094.83,99.53,995.3,GST on Expenses,Spend Money
+2024-12-24,428,Cleaning,Office cleaning - Q2,REF-00192,CleanCo,4939.96,449.09,4490.87,GST on Expenses,Bill
+2024-12-25,411,Printing,Business cards - Monthly,REF-00244,Snap Printing,4975.72,452.34,4523.38,GST on Expenses,Invoice
+2024-12-25,461,Bank Fees,Westpac merchant fees,REF-00307,Westpac,2574.82,234.07,2340.75,GST on Expenses,Spend Money
+2024-12-25,200,Sales,Product sales - Q2,REF-00162,Customer,-4388.78,-398.98,-3989.8,GST on Income,Invoice
+2024-12-25,429,Repairs & Maintenance,Plumber callout - Q2,REF-00033,Plumber,2493.22,226.66,2266.56,GST on Expenses,Invoice
+2024-12-26,404,Telephone & Internet,Telstra Business Plan - Q2,REF-00019,Telstra,3032.41,275.67,2756.74,GST on Expenses,Receive Money
+2024-12-26,410,Advertising,Google Ads campaign,REF-00059,Google AU,2706.52,246.05,2460.47,GST on Expenses,Spend Money
+2024-12-27,400,Office Supplies,Officeworks - Stationery,REF-00348,Officeworks,578.57,52.6,525.97,GST on Expenses,Invoice
+2024-12-27,200,Sales,Consulting services,REF-00304,Client,-1428.08,-129.83,-1298.25,GST on Income,Invoice
+2024-12-27,412,Motor Vehicle Expenses,BP Fuel #8486,REF-00224,BP,4997.98,454.36,4543.62,GST on Expenses,Spend Money
+2024-12-28,429,Repairs & Maintenance,New air conditioning system - Monthly,REF-00313,AirCon Co,22466.76,2042.43,20424.33,GST on Expenses,Receive Money
+2024-12-28,404,Telephone & Internet,Telstra Business Plan - Monthly,REF-00011,Telstra,1399.1,127.19,1271.91,GST on Expenses,Receive Money
+2024-12-28,400,Office Supplies,Officeworks - Stationery,REF-00039,Officeworks,73.2,6.65,66.55,GST on Expenses,Spend Money

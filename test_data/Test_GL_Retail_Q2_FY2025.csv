@@ -1,0 +1,23 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,500,Inventory Purchases,Wholesale supplier - Clothing stock,PO-001,Fashion Wholesale,11000.0,1000.0,10000.0,GST on Expenses,Bill
+2024-10-04,500,Inventory Purchases,Accessories supplier - Jewellery,PO-002,Accessory World,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-06,200,Sales Revenue,Daily POS sales - Week 1,POS-W1,Cash Sales,-8800.0,-800.0,-8000.0,GST on Income,Invoice
+2024-10-13,200,Sales Revenue,Daily POS sales - Week 2,POS-W2,Cash Sales,-9350.0,-850.0,-8500.0,GST on Income,Invoice
+2024-10-08,610,Merchant Fees,Shopify monthly subscription - Canada,SHOP-001,Shopify,79.0,7.18,71.82,GST on Expenses,Bill
+2024-10-10,610,Merchant Fees,PayPal transaction fees,PP-001,PayPal,165.0,15.0,150.0,GST on Expenses,Bill
+2024-10-12,610,Merchant Fees,Stripe AU processing fees,STR-001,Stripe AU,220.0,20.0,200.0,GST on Expenses,Bill
+2024-10-14,200,Sales Revenue,Gift card sales - November,GC-NOV,Various,-1100.0,-100.0,-1000.0,GST on Income,Invoice
+2024-10-16,620,Staff Discounts,Staff purchase - Designer handbag at cost,STAFF-001,Employee Sarah,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-18,630,Shop Expenses,New shelving and display units,INV-001,Retail Fitouts,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-10-20,500,Inventory Purchases,Alibaba supplier - Phone cases bulk,IMP-001,Shenzhen Trading,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-22,630,Shop Expenses,Display mannequins x 6,INV-002,Retail Display Co,1980.0,180.0,1800.0,GST on Expenses,Bill
+2024-10-24,610,Merchant Fees,eBay seller fees,EBAY-001,eBay,440.0,40.0,400.0,GST on Expenses,Bill
+2024-10-26,610,Merchant Fees,Amazon AU referral fees,AMZ-001,Amazon AU,330.0,30.0,300.0,GST on Expenses,Bill
+2024-10-28,640,Marketing,Instagram influencer - Product promotion,INF-001,@fashionista_au,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-10-30,640,Marketing,Facebook Ads - November campaign,FB-001,Meta AU,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-01,650,Donations,Donation - Products for charity auction,DON-001,Cancer Council,330.0,30.0,300.0,GST on Expenses,Bill
+2024-11-03,660,Stock Adjustments,Inventory shrinkage - shoplifting,ADJ-001,Internal,770.0,70.0,700.0,GST on Expenses,Bill
+2024-11-05,670,Packaging,"Boxes, tissue paper, bags",INV-003,PackQuip,440.0,40.0,400.0,GST on Expenses,Bill
+2024-11-07,200,Sales Revenue,Export order - NZ customer,EXP-001,NZ Fashion Ltd,-2200.0,-200.0,-2000.0,GST on Income,Invoice
+2024-11-09,680,Rent,Shop rent - November,RENT-NOV,Westfield,4400.0,400.0,4000.0,GST on Expenses,Bill
+2024-11-11,680,Rent,Bond/security deposit - new location,BOND-001,New Landlord,8800.0,800.0,8000.0,GST on Expenses,Bill

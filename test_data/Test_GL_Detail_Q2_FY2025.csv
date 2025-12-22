@@ -1,0 +1,52 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,400,Office Supplies,Officeworks - Printer paper and ink,INV-001,Officeworks,165.0,15.0,150.0,GST on Expenses,Bill
+2024-10-04,404,Telephone & Internet,Telstra Business Monthly Plan,INV-002,Telstra,132.0,12.0,120.0,GST on Expenses,Bill
+2024-10-06,412,Motor Vehicle Expenses,BP Fuel - Company car,REF-001,BP,88.0,8.0,80.0,GST on Expenses,Spend Money
+2024-10-08,200,Sales,Consulting Services - ABC Corp,INV-1001,ABC Corp,-2200.0,-200.0,-2000.0,GST on Income,Invoice
+2024-10-11,420,Entertainment,Client dinner at The Rocks Restaurant - wine and meals,INV-003,The Rocks Restaurant,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-16,420,Entertainment,Dan Murphys - Wine for client gifts,REF-002,Dan Murphys,330.0,30.0,300.0,GST on Expenses,Spend Money
+2024-10-21,420,Entertainment,BWS - Beer for office party,REF-003,BWS,165.0,15.0,150.0,GST on Expenses,Spend Money
+2024-10-13,404,Telephone & Internet,Telstra personal mobile - John Smith personal,INV-004,Telstra,99.0,9.0,90.0,GST on Expenses,Bill
+2024-10-19,412,Motor Vehicle Expenses,Shell fuel - personal car holiday trip,REF-004,Shell,132.0,12.0,120.0,GST on Expenses,Spend Money
+2024-10-26,400,Office Supplies,JB Hi-Fi - Personal laptop for home use,INV-005,JB Hi-Fi,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-10-09,461,Bank Fees,ANZ Bank - Monthly account fees,REF-005,ANZ Bank,55.0,5.0,50.0,GST on Expenses,Spend Money
+2024-10-15,461,Bank Fees,Westpac - Merchant facility fees,INV-006,Westpac,110.0,10.0,100.0,GST on Expenses,Bill
+2024-10-23,480,Interest Expense,NAB Business Loan - Interest payment,INV-007,NAB,550.0,50.0,500.0,GST on Expenses,Bill
+2024-10-07,445,Software & Subscriptions,Adobe Creative Cloud Monthly - USA,INV-008,Adobe Inc,79.99,7.27,72.72,GST on Expenses,Bill
+2024-10-12,445,Software & Subscriptions,Microsoft 365 Business - Ireland,INV-009,Microsoft Ireland,33.0,3.0,30.0,GST on Expenses,Bill
+2024-10-17,445,Software & Subscriptions,Slack subscription - USA,INV-010,Slack Technologies,22.0,2.0,20.0,GST on Expenses,Bill
+2024-10-22,445,Software & Subscriptions,Zoom Pro Monthly - USA,INV-011,Zoom Video,25.99,2.36,23.63,GST on Expenses,Bill
+2024-10-10,490,Government Charges,ASIC Annual Company Registration Fee,REF-006,ASIC,287.0,26.09,260.91,GST on Expenses,Spend Money
+2024-10-18,490,Government Charges,Council Rates - Business premises,INV-012,Brisbane City Council,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-10-25,490,Government Charges,Land tax assessment,INV-013,QLD Revenue Office,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-05,400,Office Supplies,Dell Computer - New desktop workstation,INV-014,Dell Australia,2750.0,250.0,2500.0,GST on Expenses,Bill
+2024-10-14,400,Office Supplies,"Apple MacBook Pro 16"" M3",INV-015,Apple Store,4400.0,400.0,4000.0,GST on Expenses,Bill
+2024-10-20,429,Repairs & Maintenance,New air conditioning system installed,INV-016,Cool Air Services,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-10-31,477,Wages & Salaries,Staff wages - November 2024,PAY-001,Payroll,5500.0,500.0,5000.0,GST on Expenses,Spend Money
+2024-10-31,478,Superannuation,Super contribution - November 2024,SUP-001,AustralianSuper,550.0,50.0,500.0,GST on Expenses,Spend Money
+2024-10-03,470,Insurance,Workers Compensation Insurance Premium,INV-017,WorkCover QLD,1320.0,120.0,1200.0,GST on Expenses,Bill
+2024-10-24,470,Insurance,Life Insurance - Key Person Cover,INV-018,AIA Australia,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-27,495,Donations,Donation to Red Cross Australia,DON-001,Red Cross,550.0,50.0,500.0,GST on Expenses,Spend Money
+2024-10-29,495,Donations,Charity sponsorship - Local footy club,DON-002,Toowong FC,1100.0,100.0,1000.0,GST on Expenses,Spend Money
+2024-10-28,400,Office Supplies,Bunnings - Office furniture,REF-007,Bunnings,500.0,50.0,450.0,GST on Expenses,Spend Money
+2024-10-30,412,Motor Vehicle Expenses,Repco - Car parts,REF-008,Repco,220.0,20.0,200.0,GST on Expenses,Spend Money
+2024-11-01,492,Fines & Penalties,Parking fine - Company vehicle,FINE-001,Brisbane City Council,165.0,15.0,150.0,GST on Expenses,Spend Money
+2024-11-02,492,Fines & Penalties,ATO Late lodgement penalty,FINE-002,ATO,330.0,30.0,300.0,GST on Expenses,Spend Money
+2024-11-03,425,Rent,Residential property rent - staff accommodation,INV-019,ABC Property Management,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-11-04,430,Travel - International,Qantas flight to Singapore - business trip,INV-020,Qantas,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-05,430,Travel - International,Singapore hotel accommodation,INV-021,Marina Bay Sands,990.0,90.0,900.0,GST on Expenses,Bill
+2024-11-06,400,Office Supplies,Cash withdrawal - owner drawings,WD-001,ANZ Bank,1000.0,90.91,909.09,GST on Expenses,Spend Money
+2024-11-07,425,Rent,Commercial office rent - November,INV-022,CBD Properties,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-11-08,440,Accounting Fees,BDO - Quarterly BAS preparation,INV-023,BDO Australia,880.0,80.0,800.0,GST on Expenses,Bill
+2024-11-09,441,Legal Fees,Holding Redlich - Contract review,INV-024,Holding Redlich,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-10,200,Sales,Product sales - XYZ Pty Ltd,INV-1002,XYZ Pty Ltd,-5500.0,-500.0,-5000.0,GST on Income,Invoice
+2024-11-11,200,Sales,Service revenue - Monthly retainer,INV-1003,Retainer Client,-1100.0,-100.0,-1000.0,GST on Income,Invoice
+2024-11-12,410,Advertising & Marketing,Google Ads - November campaign,INV-025,Google Australia,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-13,411,Printing & Stationery,Snap Printing - Business cards,INV-026,Snap Printing,220.0,20.0,200.0,GST on Expenses,Bill
+2024-11-14,460,Postage & Freight,Australia Post - Parcel delivery,REF-009,Australia Post,44.0,4.0,40.0,GST on Expenses,Spend Money
+2024-11-15,428,Cleaning,CleanCo - Office cleaning November,INV-027,CleanCo,440.0,40.0,400.0,GST on Expenses,Bill
+2024-11-16,461,Bank Fees,PayPal transaction fees,PP-001,PayPal,55.0,5.0,50.0,GST on Expenses,Spend Money
+2024-11-17,479,Staff Amenities,First aid supplies and health checks,INV-028,St John Ambulance,330.0,30.0,300.0,GST on Expenses,Bill
+2024-11-18,429,Repairs & Maintenance,Plumber - Fix office toilet,INV-029,Jim's Plumbing,275.0,25.0,250.0,GST on Expenses,Bill
+2024-11-19,412,Motor Vehicle Expenses,RACQ - Business vehicle registration,INV-030,RACQ,770.0,70.0,700.0,GST on Expenses,Bill
+2024-11-20,445,Software & Subscriptions,Xero subscription - Monthly,INV-031,Xero,65.0,5.91,59.09,GST on Expenses,Bill

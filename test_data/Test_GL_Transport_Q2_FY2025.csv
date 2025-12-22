@@ -1,0 +1,24 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,Freight Revenue,Delivery services - Week 1,FRT-W1,Various,-11000.0,-1000.0,-10000.0,GST on Income,Invoice
+2024-10-09,200,Freight Revenue,Delivery services - Week 2,FRT-W2,Various,-12100.0,-1100.0,-11000.0,GST on Income,Invoice
+2024-10-04,200,Freight Revenue,Export freight to NZ,EXP-001,NZ Import Co,-3300.0,-300.0,-3000.0,GST on Income,Invoice
+2024-10-06,300,Fuel,Diesel - Fleet refuel,FUEL-001,BP Fleet,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-13,300,Fuel,Diesel - November week 2,FUEL-002,Caltex,4950.0,450.0,4500.0,GST on Expenses,Bill
+2024-10-20,300,Fuel,Diesel for heavy vehicles - FTC eligible,FUEL-003,Shell,6600.0,600.0,6000.0,GST on Expenses,Bill
+2024-10-08,310,Registration,Truck registration renewal,REGO-001,RMS NSW,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-10,310,Registration,NHVR registration charges,NHVR-001,NHVR,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-10-12,320,Tolls,Linkt toll charges - November,TOLL-001,Linkt,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-14,330,Repairs & Maintenance,Truck service - Isuzu,REP-001,Isuzu Trucks,1320.0,120.0,1200.0,GST on Expenses,Bill
+2024-10-16,330,Repairs & Maintenance,New delivery van purchase,VEH-001,Dealer,44000.0,4000.0,40000.0,GST on Expenses,Bill
+2024-10-18,340,Insurance,CTP Green Slip,CTP-001,NRMA,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-10-22,340,Insurance,Fleet comprehensive insurance,INS-001,NTI,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-24,350,Fines,Parking infringement - Driver,FINE-001,Council,275.0,25.0,250.0,GST on Expenses,Bill
+2024-10-26,350,Fines,Speeding fine - Company vehicle,FINE-002,Revenue NSW,495.0,45.0,450.0,GST on Expenses,Bill
+2024-10-28,360,Wages,Driver wages - November,PAY-NOV,Payroll,11000.0,1000.0,10000.0,GST on Expenses,Bill
+2024-10-30,370,Subcontractors,Casual driver - no ABN,SUB-001,John Driver,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-01,370,Subcontractors,ABC Couriers - overflow work,SUB-002,ABC Couriers,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-11-03,380,Technology,Fleet GPS subscription - USA,GPS-001,Samsara,165.0,15.0,150.0,GST on Expenses,Bill
+2024-11-05,380,Technology,Dispatch software - AU,SOFT-001,DeliverEase,330.0,30.0,300.0,GST on Expenses,Bill
+2024-11-07,390,Uniforms,Steel cap boots - taken home,UNI-001,RSEA,220.0,20.0,200.0,GST on Expenses,Bill
+2024-11-09,390,Uniforms,Branded polo shirts,UNI-002,Embroidery Co,440.0,40.0,400.0,GST on Expenses,Bill
+2024-11-11,400,Storage,Auckland warehouse storage,STOR-001,NZ Logistics,1100.0,100.0,1000.0,GST on Expenses,Bill

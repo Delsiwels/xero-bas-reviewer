@@ -1,0 +1,23 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,Medical Consultations,Patient consultations - Week 1,MED-W1,Patients,-8500.0,0.0,-8500.0,GST Free,Invoice
+2024-10-09,200,Medical Consultations,Patient consultations - Week 2,MED-W2,Patients,-9200.0,0.0,-9200.0,GST Free,Invoice
+2024-10-16,200,Medical Consultations,Specialist referral consultations,SPEC-001,Patients,-3300.0,-300.0,-3000.0,GST on Income,Invoice
+2024-10-04,210,Cosmetic Services,Botox treatments,COS-001,Patients,-2200.0,-200.0,-2000.0,GST on Income,Invoice
+2024-10-06,210,Cosmetic Services,Dermal fillers,COS-002,Patients,-1650.0,0.0,-1650.0,GST Free,Invoice
+2024-10-08,300,Medical Supplies,"Syringes, bandages, medical consumables",INV-001,Medical Supplies Co,1100.0,0.0,1100.0,GST Free,Bill
+2024-10-10,300,Medical Supplies,Surgical gloves and masks,INV-002,Medshop,330.0,30.0,300.0,GST on Expenses,Bill
+2024-10-12,310,Pharmaceuticals,Prescription medications for practice,INV-003,Pharmacy Wholesaler,880.0,80.0,800.0,GST on Expenses,Bill
+2024-10-14,400,Office Supplies,"Printer paper, pens, folders",INV-004,Officeworks,165.0,15.0,150.0,GST on Expenses,Bill
+2024-10-18,320,Medical Equipment,ECG Machine,INV-005,Medical Devices AU,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-10-20,320,Medical Equipment,Portable Ultrasound,INV-006,GE Healthcare,33000.0,3000.0,30000.0,GST on Expenses,Bill
+2024-10-22,410,Professional Registration,AHPRA Medical Registration,REG-001,AHPRA,892.0,81.09,810.91,GST on Expenses,Bill
+2024-10-24,420,Insurance,Medical indemnity insurance,INS-001,MDA National,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-26,420,Insurance,Income protection insurance - Dr Smith,INS-002,TAL,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-28,430,Rent,Medical suite rent - November,RENT-NOV,Medical Centre,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-30,430,Rent,Apartment for visiting specialist,LOCUM-001,Airbnb Host,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-11-01,440,Training & CPD,Medical conference registration,CPD-001,RACGP,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-03,220,Medicare Rebates,Medicare bulk billing receipts,MBS-001,Medicare,-4400.0,-400.0,-4000.0,GST on Income,Receive Money
+2024-11-05,500,Pathology Costs,External pathology tests,PATH-001,QML Pathology,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-07,450,Donations,Donation to Heart Foundation,DON-001,Heart Foundation,550.0,50.0,500.0,GST on Expenses,Bill
+2024-11-09,460,Cleaning,Medical practice cleaning,CLN-NOV,HealthClean,440.0,40.0,400.0,GST on Expenses,Bill
+2024-11-11,470,Wages,Receptionist wages,PAY-NOV,Payroll,4400.0,400.0,4000.0,GST on Expenses,Bill

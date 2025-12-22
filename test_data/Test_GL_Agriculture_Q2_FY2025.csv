@@ -1,0 +1,24 @@
+Date,Account Code,Account,Description,Reference,Contact,Gross,GST,Net,GST Rate Name,Source
+2024-10-02,200,Livestock Sales,Sale of cattle - 20 head,LVS-001,Meat Works,-44000.0,0.0,-44000.0,GST Free,Invoice
+2024-10-04,210,Grain Sales,Wheat harvest sale,GRN-001,GrainCorp,-55000.0,0.0,-55000.0,GST Free,Invoice
+2024-10-06,220,Wool Sales,Wool clip - November,WOL-001,Elders,-22000.0,0.0,-22000.0,GST Free,Invoice
+2024-10-08,230,Processed Sales,Farm shop - sausages and mince,PRO-001,Farm Shop,-1100.0,0.0,-1100.0,GST Free,Invoice
+2024-10-10,300,Livestock Purchases,Breeding cattle - 10 heifers,LVP-001,Stud Farm,22000.0,2000.0,20000.0,GST on Expenses,Bill
+2024-10-12,310,Feed & Fodder,Hay and silage,FEE-001,Fodder King,5500.0,500.0,5000.0,GST on Expenses,Bill
+2024-10-14,310,Feed & Fodder,Pelletised stockfeed,FEE-002,Ridley,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-16,320,Fertiliser,Urea and superphosphate,FER-001,Incitec Pivot,8800.0,800.0,8000.0,GST on Expenses,Bill
+2024-10-18,330,Seeds,Wheat seed for planting,SED-001,Seed Supplier,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-20,340,Fuel,Diesel for farm machinery,FUL-001,BP Rural,4400.0,400.0,4000.0,GST on Expenses,Bill
+2024-10-22,350,Repairs & Maintenance,New John Deere tractor,TRC-001,JD Dealer,110000.0,10000.0,100000.0,GST on Expenses,Bill
+2024-10-24,350,Repairs & Maintenance,Header repairs,REP-001,Farm Mech,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-26,360,Water,Irrigation water charges,WAT-001,SunWater,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-10-28,370,Council Rates,Rural property rates,RAT-001,Council,2200.0,200.0,2000.0,GST on Expenses,Bill
+2024-10-30,370,Council Rates,Land tax assessment,LTX-001,OSR QLD,4400.0,400.0,4000.0,GST on Expenses,Bill
+2024-11-01,380,Shearing,Shearing contractor - no invoice,SHR-001,Shearer,3300.0,300.0,3000.0,GST on Expenses,Bill
+2024-11-03,390,Veterinary,Cattle vet visit and vaccines,VET-001,Rural Vet,1100.0,100.0,1000.0,GST on Expenses,Bill
+2024-11-05,240,Grants,Drought assistance grant,GRT-001,Govt,-11000.0,-1000.0,-10000.0,GST on Income,Receive Money
+2024-11-07,250,FMD Income,Farm management deposit withdrawal,FMD-001,Bank,-22000.0,-2000.0,-20000.0,GST on Income,Receive Money
+2024-11-09,340,Fuel,Family car fuel - personal,PERS-001,BP,220.0,20.0,200.0,GST on Expenses,Bill
+2024-11-11,400,Electricity,Farmhouse electricity - 100% claimed,ELC-001,Origin,660.0,60.0,600.0,GST on Expenses,Bill
+2024-11-13,410,Fencing,Fencing wire and posts,FNC-001,Landmark,1650.0,150.0,1500.0,GST on Expenses,Bill
+2024-11-15,260,Carbon Credits,ACCU sale,ACU-001,Carbon Market,-5500.0,-500.0,-5000.0,GST on Income,Invoice
