@@ -684,7 +684,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    displayResults(data);
+                    displayResults(data, true);  // true = upload mode (no Push to Xero)
                 } else {
                     let errorMsg = data.error || 'Review failed (no error details)';
                     if (data.hint) errorMsg += '\n\nHint: ' + data.hint;
@@ -730,8 +730,10 @@
 
         // Store flagged items globally for filtering
         let allFlaggedItems = [];
+        let isUploadMode = false;  // Track if results are from file upload
 
-        function displayResults(data) {
+        function displayResults(data, uploadMode = false) {
+            isUploadMode = uploadMode;  // Store for later use
             // Store results for download
             reviewResults = data;
 
@@ -866,7 +868,10 @@
                             }))
                         };
                         const journalDataStr = btoa(JSON.stringify(journalData));
-                        journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-top:8px; padding:4px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero (Draft)</button>`;
+                        // Only show Push to Xero button if NOT in upload mode (Xero connection required)
+                        if (!uploadMode) {
+                            journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-top:8px; padding:4px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero (Draft)</button>`;
+                        }
                     } else {
                         // Provide helpful review guidance based on issue type
                         let reviewMsg = 'Please review';
@@ -909,12 +914,14 @@
                 tableHtml += '</tbody></table>';
                 container.innerHTML = tableHtml;
                 document.getElementById('download-btn').style.display = 'inline-block';
-                // Show Push All button only if there are flagged items with journals
+                // Show Push All button only if there are flagged items with journals AND not in upload mode
                 const hasJournals = data.flagged_items && data.flagged_items.some(item =>
                     item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0
                 );
-                if (hasJournals) {
+                if (hasJournals && !uploadMode) {
                     document.getElementById('push-all-btn').style.display = 'inline-block';
+                } else {
+                    document.getElementById('push-all-btn').style.display = 'none';
                 }
             }
 
