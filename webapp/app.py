@@ -2271,6 +2271,9 @@ def upload_review():
                 # International/domestic travel GST - always use rule-based for consistent Division 38 reference
                 if transaction.get('travel_gst'):
                     is_useful_ai_comment = False
+                # Grants/sponsorship - always use rule-based for consistent GSTR 2012/2 reference
+                if transaction.get('grants_sponsorship_gst'):
+                    is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
@@ -3085,6 +3088,9 @@ def run_review():
                     is_useful_ai_comment = False
                 # International/domestic travel GST - always use rule-based for consistent Division 38 reference
                 if transaction.get('travel_gst'):
+                    is_useful_ai_comment = False
+                # Grants/sponsorship - always use rule-based for consistent GSTR 2012/2 reference
+                if transaction.get('grants_sponsorship_gst'):
                     is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
