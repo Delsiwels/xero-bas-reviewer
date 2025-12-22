@@ -2274,7 +2274,7 @@ def upload_review():
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
                 comments.append('Grant income with GST - verify if supply made')
             if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries - NO GST applies')
+                comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
@@ -2932,7 +2932,7 @@ def run_review():
             if transaction.get('grants_sponsorship_gst') == 'grant_with_gst':
                 comments.append('Grant income with GST - verify if supply made')
             if transaction.get('wages_gst_error'):
-                comments.append('Wages/salaries - NO GST applies')
+                comments.append('Wages/salaries/super - should be BAS Excluded (no GST)')
             if transaction.get('allowance_gst_error'):
                 comments.append('Allowance - NO GST credit (not a purchase from supplier)')
             if transaction.get('reimbursement_gst'):
@@ -3332,6 +3332,34 @@ def generate_correcting_journal(transaction):
                 'account_name': account_name,
                 'debit': 0,
                 'credit': gross,
+                'tax_code': 'GST on Expenses',
+                'description': std_desc
+            })
+
+    if transaction.get('wages_gst_error') or transaction.get('allowance_gst_error'):
+        # Wages/Salaries/Superannuation/Allowances - NO GST applies
+        # These are NOT supplies and should be BAS Excluded (not reportable on BAS)
+        trans_desc = transaction.get('description', '')[:50] or 'No description'
+        std_desc = f"GST adjustment - {trans_desc}"
+
+        if gst > 0:
+            # Debit: Same account with BAS Excluded (correct - wages/super not reportable)
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': gst,
+                'credit': 0,
+                'tax_code': 'BAS Excluded',
+                'description': std_desc
+            })
+            # Credit: Reverse the incorrect GST on Expenses entry
+            journal_entries.append({
+                'line': len(journal_entries) + 1,
+                'account_code': account_code,
+                'account_name': account_name,
+                'debit': 0,
+                'credit': gst,
                 'tax_code': 'GST on Expenses',
                 'description': std_desc
             })
@@ -4269,8 +4297,22 @@ def check_input_taxed_gst(transaction):
     Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/input-taxed-sales/financial-supplies
     """
     description = transaction.get('description', '').lower()
+    account = transaction.get('account', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
     gst_rate_name = transaction.get('gst_rate_name', '').lower()
+
+    # Skip wages/salary/super accounts - these are handled by check_wages_gst_error
+    # Wages/super are BAS Excluded, not Input Taxed (different treatment)
+    wage_account_keywords = ['wage', 'salary', 'payroll', 'superannuation', 'super ']
+    is_wage_account = any(keyword in account for keyword in wage_account_keywords)
+    if is_wage_account:
+        return False
+
+    # Skip wage/super descriptions - handled by check_wages_gst_error
+    wage_description_keywords = ['wage', 'salary', 'payroll', 'super contribution', 'super guarantee', 'sgc', 'superannuation contribution']
+    is_wage_description = any(keyword in description for keyword in wage_description_keywords)
+    if is_wage_description:
+        return False
 
     # Credit card fees/merchant fees to BUSINESSES CAN have GST - exclude from input-taxed check
     # These are fees charged by payment processors (Square, Stripe, etc.) - TAXABLE
