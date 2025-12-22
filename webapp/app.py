@@ -2347,6 +2347,8 @@ def upload_review():
                     comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
                 elif transaction.get('payment_processor_fees'):
                     comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
+                if transaction.get('borrowing_expenses_error'):
+                    comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
 
             # Generate correcting journal entry
             try:
@@ -3165,6 +3167,8 @@ def run_review():
                     comments.append(ato_comment or 'Merchant/Stripe/eBay fees - GST INCLUDED. These fees include GST and credits can be claimed. Recode to GST on Expenses.')
                 elif transaction.get('payment_processor_fees'):
                     comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
+                if transaction.get('borrowing_expenses_error'):
+                    comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
 
             # Generate correcting journal entry
             try:
@@ -7469,7 +7473,7 @@ def check_borrowing_expenses_error(transaction):
         'title search', 'valuation fee', 'valuation for loan', 'bank valuation',
         'lmi', 'lender mortgage insurance', 'mortgage insurance',
         'loan documentation', 'mortgage documentation', 'mortgage stamp duty',
-        'loan stamp duty', 'discharge fee', 'settlement fee',
+        'loan stamp duty', 'discharge fee', 'loan settlement fee',
         'borrowing cost', 'borrowing expense', 'loan cost',
     ]
 
