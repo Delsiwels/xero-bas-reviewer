@@ -3297,8 +3297,12 @@ def generate_correcting_journal(transaction):
                           'travel international', 'accommodation', 'airfare', 'motor vehicle']
         is_travel_account = any(keyword in account_name.lower() for keyword in travel_accounts)
 
-        if is_travel_account:
-            # Don't suggest recoding travel accounts - they're fine
+        # Skip if this is a PERSONAL item - let personal_in_business_account handle it
+        # Personal items should go to Owner Drawings, not suggested business account
+        is_personal = transaction.get('personal_in_business_account')
+
+        if is_travel_account or is_personal:
+            # Don't suggest recoding - travel accounts are fine, personal items have dedicated handler
             pass
         else:
             # Determine suggested correct account based on description
@@ -4063,7 +4067,11 @@ def generate_correcting_journal(transaction):
                 'description': f"Reverse expense - should be capitalized as asset"
             })
 
-    if transaction.get('computer_equipment_expense'):
+    # Skip computer equipment capitalization if it's a PERSONAL item (personal takes priority)
+    # Personal items go to Owner Drawings, not Computer Equipment asset
+    is_personal_item = transaction.get('personal_in_business_account')
+
+    if transaction.get('computer_equipment_expense') and not recode_done and not is_personal_item:
         # Computer equipment coded to expense account should be capitalized as asset
         # Even with instant asset write-off, should go through asset account for tracking
         # ATO effective life: Laptops 2 years, Computers 4 years
@@ -4088,8 +4096,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',
                 'description': f"Reverse expense - should be capitalized as computer equipment"
             })
+            recode_done = True
 
-    if transaction.get('borrowing_expenses_error'):
+    if transaction.get('borrowing_expenses_error') and not recode_done:
         # Borrowing expenses > $100 should be capitalized and spread over 5 years
         # This is an account coding error - move from expense to prepaid/deferred asset
         if gross > 0:
@@ -4113,8 +4122,9 @@ def generate_correcting_journal(transaction):
                 'tax_code': 'GST Free',
                 'description': f"Reverse expense - borrowing costs > $100 must be capitalized"
             })
+            recode_done = True
 
-    if transaction.get('personal_in_business_account'):
+    if transaction.get('personal_in_business_account') and not recode_done:
         # Personal expense incorrectly coded to business expense account
         # Need to move from business account (e.g., Telephone) to Owner Drawings
         # AND reverse any GST claimed (personal expenses can't claim GST)
@@ -4143,6 +4153,7 @@ def generate_correcting_journal(transaction):
                 'tax_code': original_tax_code,
                 'description': std_desc
             })
+            recode_done = True
 
     return {
         'narration': narration,
