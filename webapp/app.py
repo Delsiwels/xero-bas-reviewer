@@ -2488,7 +2488,11 @@ def upload_review():
             if transaction.get('reimbursement_gst'):
                 comments.append('Reimbursement > $82.50 - verify tax invoice exists for GST credit')
             if transaction.get('voucher_gst'):
-                comments.append('Voucher/gift card - check face value (no GST) vs non-face value (GST at sale)')
+                voucher_type = transaction.get('voucher_gst')
+                if voucher_type == 'face_value_with_gst':
+                    comments.append('Gift card/voucher sale - Per GSTR 2003/5, NO GST at point of sale for face value vouchers. GST only applies at redemption. Remove GST from this sale.')
+                else:
+                    comments.append('Voucher/gift card - verify if face value (no GST at sale) or non-face value (GST at sale per GSTR 2003/5)')
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
@@ -3356,7 +3360,11 @@ def run_review():
             if transaction.get('reimbursement_gst'):
                 comments.append('Reimbursement > $82.50 - verify tax invoice exists for GST credit')
             if transaction.get('voucher_gst'):
-                comments.append('Voucher/gift card - check face value (no GST) vs non-face value (GST at sale)')
+                voucher_type = transaction.get('voucher_gst')
+                if voucher_type == 'face_value_with_gst':
+                    comments.append('Gift card/voucher sale - Per GSTR 2003/5, NO GST at point of sale for face value vouchers. GST only applies at redemption. Remove GST from this sale.')
+                else:
+                    comments.append('Voucher/gift card - verify if face value (no GST at sale) or non-face value (GST at sale per GSTR 2003/5)')
             if transaction.get('general_expenses'):
                 comments.append('General/Sundry Expenses - recode to specific category (audit risk)')
             if transaction.get('travel_gst') == 'international_with_gst':
@@ -6926,8 +6934,8 @@ def check_voucher_gst(transaction):
         'prepaid card', 'prepaid voucher', 'visa gift', 'mastercard gift',
         'eftpos gift', 'amex gift',
         # General vouchers sold
-        'voucher sale', 'sold voucher', 'voucher issued',
-        'gift card sale', 'gift card sold',
+        'voucher sale', 'voucher sales', 'sold voucher', 'voucher issued',
+        'gift card sale', 'gift card sales', 'gift card sold',
     ]
 
     # Non-face value voucher keywords (specific goods/services - GST at sale)
@@ -6954,12 +6962,14 @@ def check_voucher_gst(transaction):
     is_non_face_value_voucher = any(keyword in description for keyword in non_face_value_keywords)
 
     # Check if it's an income/sales transaction (voucher being SOLD)
-    is_income = gross > 0 and (
+    # Note: For income/sales, gross is typically negative (credit) in Xero
+    is_income_account = (
         'income' in account or
         'sales' in account or
         'revenue' in account or
         'liability' in account  # Gift cards often go to liability account
     )
+    is_income = is_income_account  # Just check account type, not sign
 
     # Flag 1: Face value voucher SALE with GST (incorrect - should be no GST at sale)
     if is_face_value_voucher and is_income and gst_amount > 0:
