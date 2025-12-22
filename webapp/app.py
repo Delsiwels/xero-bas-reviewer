@@ -2265,6 +2265,9 @@ def upload_review():
                 # Export GST errors - always use rule-based for consistent GSTR 2002/6 reference
                 if transaction.get('export_gst_error'):
                     is_useful_ai_comment = False
+                # Wages GST errors - always use rule-based for consistent BAS Excluded reference
+                if transaction.get('wages_gst_error'):
+                    is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
             if is_useful_ai_comment:
@@ -3065,6 +3068,9 @@ def run_review():
                     is_useful_ai_comment = False
                 # Export GST errors - always use rule-based for consistent GSTR 2002/6 reference
                 if transaction.get('export_gst_error'):
+                    is_useful_ai_comment = False
+                # Wages GST errors - always use rule-based for consistent BAS Excluded reference
+                if transaction.get('wages_gst_error'):
                     is_useful_ai_comment = False
 
             # Always prioritize AI comments, use rule-based as fallback only
