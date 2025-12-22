@@ -3489,33 +3489,10 @@ def generate_correcting_journal(transaction):
                 'description': std_desc
             })
 
-    if transaction.get('overseas_subscription_gst'):
-        # Overseas subscription - GST should not be claimed
-        # Correcting journal: reverse original GST coding and re-enter as GST Free
-        trans_desc = transaction.get('description', '')[:50] or 'No description'
-        std_desc = f"GST Free Expenses to GST on Expenses - {trans_desc}"
-
-        if gross > 0:
-            # Debit: Re-enter with GST Free Expenses (correct - overseas suppliers shouldn't charge GST)
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': gross,
-                'credit': 0,
-                'tax_code': 'GST Free Expenses',
-                'description': std_desc
-            })
-            # Credit: Reverse the original GST on Expenses entry
-            journal_entries.append({
-                'line': len(journal_entries) + 1,
-                'account_code': account_code,
-                'account_name': account_name,
-                'debit': 0,
-                'credit': gross,
-                'tax_code': 'GST on Expenses',
-                'description': std_desc
-            })
+    # REMOVED: overseas_subscription_gst check
+    # Both GST and GST-Free are valid for overseas digital services (Adobe, Slack, Zoom, etc.)
+    # - With GST: Netflix tax or reverse charge applied = valid
+    # - Without GST: GST Free = valid
 
     # Group government charges and fines/penalties together (fines are a type of government charge)
     # Only generate if not already corrected
@@ -4831,90 +4808,21 @@ def check_motor_vehicle_gst_limit(transaction):
 
 def check_overseas_subscription_gst(transaction):
     """
-    Check if GST is incorrectly claimed on overseas/international subscriptions
-    and imported digital products/services.
+    Check overseas/international subscriptions and imported digital products/services.
 
-    Per ATO rules for GST-registered businesses:
-    - Overseas suppliers should NOT charge you GST if you provide your ABN
-    - If GST is charged, it may NOT be a valid GST credit (no valid Australian tax invoice)
-    - If charged GST incorrectly, seek a refund from supplier by providing your ABN
-    - REVERSE CHARGE RULES: When no GST is charged, business self-assesses 10% GST
-      and claims it back as input credit (usually net zero for taxable business use)
-    - Non-resident suppliers with $75K+ AUD turnover must register for GST
+    UPDATED: This check is now DISABLED.
 
-    Imported services and digital products include:
-    - Digital content (e-books, movies, music, streaming, online news)
-    - Online games, game codes, apps, software
-    - Software subscriptions, SaaS, cloud services
-    - Automation platforms (Zapier, Make.com, Integromat, Workato)
-    - AI services (OpenAI, ChatGPT, Anthropic, Midjourney)
-    - Digital advertising (Google Ads, Facebook Ads)
-    - Online education and courses
-    - Developer tools (Heroku, Vercel, Netlify, AWS)
-    - Overseas booking services
-    - Online consulting/professional services from overseas
+    Per ATO rules, BOTH scenarios are valid for overseas digital services:
+    1. WITH GST - Overseas supplier charges GST (Netflix tax) OR business applies reverse charge
+       = Valid, GST credit CAN be claimed
+    2. WITHOUT GST - Coded as GST Free
+       = Valid, reverse charge may apply but nets to zero for most businesses
 
-    NOTE: This check only applies to EXPENSE accounts (claiming GST credits).
-    Income/Sales accounts are excluded as they don't claim GST credits.
+    Since both scenarios are acceptable, we no longer flag overseas subscriptions.
 
-    Source: https://www.ato.gov.au/businesses-and-organisations/international-tax-for-business/gst-for-non-resident-businesses/gst-on-imported-services-and-digital-products
+    Source: https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/international-transactions/reverse-charge-gst-on-offshore-goods-and-services-purchases
     """
-    description = transaction.get('description', '').lower()
-    account_name = transaction.get('account', '').lower()
-    gst_amount = abs(transaction.get('gst', 0))
-
-    # This check is for EXPENSES only (claiming GST credits on overseas purchases)
-    # Skip income/sales/revenue accounts - they don't claim GST credits
-    income_account_keywords = ['sales', 'income', 'revenue', 'fees earned', 'interest received']
-    if any(keyword in account_name for keyword in income_account_keywords):
-        return False
-
-    # Skip accounts that should NOT be checked for overseas subscriptions
-    # Travel, depreciation, fixed assets, etc. have their own GST checks
-    excluded_account_keywords = [
-        # Travel accounts - handled by separate travel GST check
-        'travel', 'airfare', 'flight', 'accommodation', 'hotel', 'meals',
-        # Depreciation and fixed assets
-        'depreciation', 'accumulated depreciation', 'amortisation', 'amortization',
-        'fixed asset', 'asset', 'equipment', 'furniture', 'plant', 'machinery',
-        'vehicle', 'motor vehicle', 'computer equipment', 'office equipment',
-        'leasehold improvement', 'building', 'land', 'property',
-        # Office and operational expenses
-        'printing', 'stationery', 'office supplies', 'office expense', 'office expenses',
-        'wages', 'salary', 'superannuation', 'payroll', 'rent', 'utilities',
-        'telephone', 'electricity', 'gas', 'water', 'light', 'power', 'heating',
-        'insurance', 'repairs',
-        'maintenance', 'cleaning', 'postage', 'freight', 'courier',
-        # Other physical goods/services
-        'advertising', 'marketing', 'promotion', 'bank fee', 'bank charge',
-        'interest', 'legal', 'accounting', 'audit', 'consulting', 'professional'
-    ]
-    if any(keyword in account_name for keyword in excluded_account_keywords):
-        return False
-
-    # Overseas subscription/software/digital product keywords
-    # Only flag as overseas if description EXPLICITLY indicates overseas origin
-    # Many SaaS companies (Xero, Canva, Atlassian) are Australian - don't flag these!
-
-    # Explicit overseas indicators in the description
-    explicit_overseas_indicators = [
-        'overseas', 'international', 'foreign', 'offshore',
-        'usd', 'us$', 'us dollar', 'eur', 'euro', 'gbp', '£', 'pound',
-        'usa', 'united states', 'uk ', 'u.k.', 'europe',
-        'imported service', 'non-resident', 'reverse charge',
-    ]
-
-    has_explicit_overseas_indicator = any(indicator in description for indicator in explicit_overseas_indicators)
-
-    if not has_explicit_overseas_indicator:
-        return False
-
-    # Flag if GST is claimed on overseas subscription/digital product
-    # (Business should provide ABN to avoid GST, or use reverse charge)
-    # GST charged by non-resident suppliers may not be valid for credit
-    if gst_amount > 0:
-        return True
-
+    # DISABLED - both GST and GST-Free are valid for overseas digital services
     return False
 
 
