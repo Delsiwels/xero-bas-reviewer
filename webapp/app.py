@@ -5978,8 +5978,20 @@ def check_export_gst_error(transaction):
     is_income_account = (
         'sales' in account or
         'income' in account or
-        'revenue' in account
+        'revenue' in account or
+        'export' in account or
+        'overseas' in account or
+        'international' in account or
+        'foreign' in account or
+        'trading' in account or
+        'turnover' in account
     )
+
+    # If account check fails but description clearly indicates export sale, still proceed
+    if not is_income_account:
+        # Check if description strongly indicates it's an export sale
+        if 'export' in description and ('sale' in description or 'invoice' in description):
+            is_income_account = True  # Allow it to proceed
 
     if not is_income_account:
         return False
@@ -6001,6 +6013,7 @@ def check_export_gst_error(transaction):
         'consulting overseas', 'services overseas',
         # Specific countries/regions (common export destinations)
         'usa sale', 'us sale', 'uk sale', 'nz sale', 'new zealand',
+        ' nz', 'to nz', 'nz -', 'nz-',  # NZ abbreviations
         'singapore', 'hong kong', 'japan', 'china', 'europe',
         'asia pacific', 'apac',
         # Currency indicators for sales
