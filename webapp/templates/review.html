@@ -225,6 +225,25 @@
             background: #AAEEC4;
             color: #222;
         }
+        /* Group header styles */
+        .group-header {
+            transition: background 0.2s ease;
+        }
+        .group-header:hover {
+            filter: brightness(0.97);
+        }
+        .group-header td {
+            border-bottom: none !important;
+        }
+        .group-content {
+            display: table-row-group;
+        }
+        .group-content tr:first-child td {
+            border-top: none;
+        }
+        #group-controls {
+            display: flex;
+        }
         .comment-cell {
             font-size: 13px;
             color: #444;
@@ -876,6 +895,106 @@
         // Store flagged items globally for filtering
         let allFlaggedItems = [];
         let isUploadMode = false;  // Track if results are from file upload
+        let groupedView = true;  // Default to grouped view
+
+        // Issue type definitions with display names and colors
+        const ISSUE_TYPES = {
+            'export_gst': { name: 'Export GST Errors', color: '#e74c3c', icon: '🌏' },
+            'entertainment': { name: 'Entertainment Expenses', color: '#9b59b6', icon: '🎉' },
+            'wages': { name: 'Wages/Salary GST', color: '#3498db', icon: '💼' },
+            'government_charges': { name: 'Government Charges', color: '#1abc9c', icon: '🏛️' },
+            'grants': { name: 'Grants & Sponsorship', color: '#f39c12', icon: '💰' },
+            'residential': { name: 'Residential Property', color: '#e67e22', icon: '🏠' },
+            'input_taxed': { name: 'Input Taxed Supplies', color: '#34495e', icon: '🏦' },
+            'insurance': { name: 'Insurance GST', color: '#16a085', icon: '🛡️' },
+            'travel': { name: 'Travel GST', color: '#2980b9', icon: '✈️' },
+            'fines': { name: 'Fines & Penalties', color: '#c0392b', icon: '⚠️' },
+            'donations': { name: 'Donations', color: '#27ae60', icon: '❤️' },
+            'asset': { name: 'Asset Capitalization', color: '#8e44ad', icon: '🏗️' },
+            'drawings': { name: 'Drawings/Loan', color: '#d35400', icon: '👤' },
+            'personal': { name: 'Personal Expenses', color: '#c0392b', icon: '🚫' },
+            'missing_gst': { name: 'Missing GST', color: '#e74c3c', icon: '❌' },
+            'account_coding': { name: 'Account Coding', color: '#7f8c8d', icon: '📝' },
+            'general_expenses': { name: 'General/Sundry Expenses', color: '#95a5a6', icon: '📋' },
+            'other': { name: 'Other Issues', color: '#bdc3c7', icon: '❓' }
+        };
+
+        // Determine issue type from transaction flags
+        function getIssueType(item) {
+            if (item.export_gst_error) return 'export_gst';
+            if (item.client_entertainment_gst || item.staff_entertainment_gst || item.alcohol_gst_error) return 'entertainment';
+            if (item.wages_gst_error || item.allowance_gst_error) return 'wages';
+            if (item.government_charges_gst) return 'government_charges';
+            if (item.grants_sponsorship_gst) return 'grants';
+            if (item.residential_premises_gst) return 'residential';
+            if (item.input_taxed_gst_error) return 'input_taxed';
+            if (item.insurance_gst_error || item.life_insurance_personal) return 'insurance';
+            if (item.travel_gst) return 'travel';
+            if (item.fines_penalties_gst) return 'fines';
+            if (item.donations_gst) return 'donations';
+            if (item.asset_capitalization_error || item.computer_equipment_expense) return 'asset';
+            if (item.drawings_loan_error) return 'drawings';
+            if (item.personal_in_business_account) return 'personal';
+            if (item.missing_gst_error) return 'missing_gst';
+            if (item.account_coding_suspicious) return 'account_coding';
+            if (item.general_expenses) return 'general_expenses';
+            return 'other';
+        }
+
+        // Group items by issue type
+        function groupByIssueType(items) {
+            const groups = {};
+            items.forEach(item => {
+                const issueType = getIssueType(item);
+                if (!groups[issueType]) {
+                    groups[issueType] = [];
+                }
+                groups[issueType].push(item);
+            });
+            return groups;
+        }
+
+        // Toggle grouped view
+        function toggleGroupedView() {
+            groupedView = !groupedView;
+            const btn = document.getElementById('toggle-group-btn');
+            btn.textContent = groupedView ? 'List View' : 'Group by Issue';
+            btn.style.background = groupedView ? '#FA5D29' : '#6c757d';
+            renderFlaggedItems(allFlaggedItems);
+        }
+
+        // Toggle group expand/collapse
+        function toggleGroup(groupId) {
+            const content = document.getElementById('group-content-' + groupId);
+            const icon = document.getElementById('group-icon-' + groupId);
+            if (content.style.display === 'none') {
+                content.style.display = 'table-row-group';
+                icon.textContent = '▼';
+            } else {
+                content.style.display = 'none';
+                icon.textContent = '▶';
+            }
+        }
+
+        // Expand all groups
+        function expandAllGroups() {
+            document.querySelectorAll('[id^="group-content-"]').forEach(el => {
+                el.style.display = 'table-row-group';
+            });
+            document.querySelectorAll('[id^="group-icon-"]').forEach(el => {
+                el.textContent = '▼';
+            });
+        }
+
+        // Collapse all groups
+        function collapseAllGroups() {
+            document.querySelectorAll('[id^="group-content-"]').forEach(el => {
+                el.style.display = 'none';
+            });
+            document.querySelectorAll('[id^="group-icon-"]').forEach(el => {
+                el.textContent = '▶';
+            });
+        }
 
         function displayResults(data, uploadMode = false) {
             isUploadMode = uploadMode;  // Store for later use
@@ -911,9 +1030,12 @@
             } else {
                 let tableHtml = `
                     <div class="filter-controls" style="margin-bottom: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <label style="font-weight: 500; font-size: 14px;">Filter:</label>
-                        </div>
+                        <button id="toggle-group-btn" onclick="toggleGroupedView()" style="padding: 8px 16px; background: #FA5D29; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">List View</button>
+                        <div style="border-left: 1px solid #ddd; height: 24px; margin: 0 5px;"></div>
+                        <select id="filter-issue-type" onchange="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+                            <option value="">All Issue Types</option>
+                            ${Object.entries(ISSUE_TYPES).map(([key, val]) => `<option value="${key}">${val.icon} ${val.name}</option>`).join('')}
+                        </select>
                         <input type="text" id="filter-description" placeholder="Description..." oninput="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 150px;">
                         <input type="text" id="filter-account" placeholder="Account..." oninput="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; width: 120px;">
                         <select id="filter-severity" onchange="applyFilters()" style="padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
@@ -932,6 +1054,10 @@
                         </select>
                         <button onclick="clearFilters()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;">Clear</button>
                         <span id="filter-count" style="margin-left: auto; font-size: 14px; color: #666;"></span>
+                        <div id="group-controls" style="display: flex; gap: 5px;">
+                            <button onclick="expandAllGroups()" style="padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 12px;">Expand All</button>
+                            <button onclick="collapseAllGroups()" style="padding: 4px 8px; background: #eee; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; font-size: 12px;">Collapse All</button>
+                        </div>
                     </div>
                     <div id="table-scroll-wrapper" style="overflow-x: auto; width: 100%;">
                     <table class="flagged-table" id="results-table">
@@ -954,20 +1080,17 @@
                         <tbody id="results-tbody">
                 `;
 
-                flaggedItems.forEach(item => {
-                    // Escape all user-controlled data to prevent XSS
+                // Helper function to render a single item row
+                function renderItemRow(item, uploadMode) {
                     const desc = escapeHtml(item.description);
                     const comments = escapeHtml(item.comments || '');
-                    // Split comments by pipe and format as list (already escaped)
                     const commentParts = comments.split(' | ').filter(c => c.trim());
                     const formattedComments = commentParts.length > 1
                         ? '<ul style="margin:0; padding-left:18px;">' + commentParts.map(c => '<li>' + c + '</li>').join('') + '</ul>'
                         : comments;
 
-                    // Format correcting journal with escaped data
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
-                        // Build the journal table HTML inline
                         journalHtml = '<table class="journal-table"><thead><tr><th>Acc</th><th>DR</th><th>CR</th><th>Tax</th></tr></thead><tbody>';
                         item.correcting_journal.entries.forEach(entry => {
                             const dr = entry.debit > 0 ? '$' + parseFloat(entry.debit).toLocaleString('en-AU', {minimumFractionDigits: 2}) : '';
@@ -980,27 +1103,15 @@
                             journalHtml += '</tr>';
                         });
                         journalHtml += '</tbody></table>';
-                        // Add Push to Xero button - store journal data as base64 encoded JSON
-                        // Check if account is a revenue/income account based on name only
                         const isRevenueAcct = (accountCode, accountName) => {
                             const name = (accountName || '').toLowerCase();
-                            // Only check by name - code ranges vary by organization
-                            if (name.includes('sales') || name.includes('income') || name.includes('revenue') ||
-                                name.includes('fees earned') || name.includes('interest received') ||
-                                name.includes('consulting revenue') || name.includes('service revenue')) {
-                                return true;
-                            }
-                            return false;
+                            return name.includes('sales') || name.includes('income') || name.includes('revenue') ||
+                                name.includes('fees earned') || name.includes('interest received');
                         };
-                        // Map tax codes to Xero Australia TaxType values based on account type
                         const mapTaxCode = (taxCode, accountCode, accountName) => {
                             const isRevenue = isRevenueAcct(accountCode, accountName);
-                            if (taxCode === 'GST on Expenses' || taxCode === 'GST on Income') {
-                                return isRevenue ? 'OUTPUT' : 'INPUT';
-                            }
-                            if (taxCode === 'GST Free' || taxCode === 'GST Free Expenses' || taxCode === 'GST Free Income') {
-                                return isRevenue ? 'EXEMPTOUTPUT' : 'EXEMPTEXPENSES';
-                            }
+                            if (taxCode === 'GST on Expenses' || taxCode === 'GST on Income') return isRevenue ? 'OUTPUT' : 'INPUT';
+                            if (taxCode === 'GST Free' || taxCode === 'GST Free Expenses' || taxCode === 'GST Free Income') return isRevenue ? 'EXEMPTOUTPUT' : 'EXEMPTEXPENSES';
                             if (taxCode === 'BAS Excluded' || taxCode === 'NONE') return 'BASEXCLUDED';
                             if (taxCode === 'Input Taxed') return 'INPUTTAXED';
                             return 'BASEXCLUDED';
@@ -1016,34 +1127,27 @@
                             }))
                         };
                         const journalDataStr = btoa(JSON.stringify(journalData));
-                        // Only show Push to Xero button if NOT in upload mode (Xero connection required)
                         if (!uploadMode) {
                             journalHtml += `<button class="btn-push-xero" onclick="pushJournalToXero('${journalDataStr}', this)" style="margin-left:5px; padding:6px 10px; font-size:12px; background:#13B5EA; color:white; border:none; border-radius:4px; cursor:pointer;">Push to Xero</button>`;
                         }
                     } else {
-                        // Provide helpful review guidance based on issue type
                         let reviewMsg = 'Review';
-                        if (item.account_coding_suspicious || (item.comments && item.comments.toLowerCase().includes('account'))) {
-                            reviewMsg = 'Review account';
-                        } else if (item.missing_gst_error || item.input_taxed_gst_error || (item.comments && (item.comments.toLowerCase().includes('gst') || item.comments.toLowerCase().includes('tax')))) {
-                            reviewMsg = 'Review GST';
-                        } else if (item.comments && item.comments.toLowerCase().includes('capitaliz')) {
-                            reviewMsg = 'Review asset';
-                        } else {
-                            reviewMsg = 'Review';
-                        }
+                        if (item.account_coding_suspicious || (item.comments && item.comments.toLowerCase().includes('account'))) reviewMsg = 'Review account';
+                        else if (item.missing_gst_error || item.input_taxed_gst_error || (item.comments && item.comments.toLowerCase().includes('gst'))) reviewMsg = 'Review GST';
+                        else if (item.comments && item.comments.toLowerCase().includes('capitaliz')) reviewMsg = 'Review asset';
                         journalHtml = `<em style="color:#666;">${reviewMsg}</em>`;
                     }
 
-                    // Sanitize severity to only allow known values
                     const safeSeverity = ['low', 'medium', 'high'].includes(item.severity) ? item.severity : 'medium';
+                    const issueType = getIssueType(item);
 
-                    tableHtml += `
+                    return `
                         <tr class="severity-${safeSeverity}"
                             data-description="${escapeHtml(item.description || '').toLowerCase()}"
                             data-account="${escapeHtml(item.account || '').toLowerCase()} ${escapeHtml(item.account_code || '').toLowerCase()}"
                             data-severity="${safeSeverity}"
                             data-source="${escapeHtml(item.source || '').toLowerCase()}"
+                            data-issue-type="${issueType}"
                             data-row-number="${escapeHtml(item.row_number)}">
                             <td><button class="delete-row-btn" onclick="deleteRow(this, ${item.row_number})" title="Remove from report">×</button></td>
                             <td>${escapeHtml(item.row_number)}</td>
@@ -1059,7 +1163,37 @@
                             <td class="journal-cell">${journalHtml}</td>
                         </tr>
                     `;
-                });
+                }
+
+                // Render items - grouped or flat
+                if (groupedView) {
+                    const groups = groupByIssueType(flaggedItems);
+                    // Sort groups by count (most items first)
+                    const sortedGroups = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+
+                    sortedGroups.forEach(([issueType, items]) => {
+                        const issueInfo = ISSUE_TYPES[issueType] || ISSUE_TYPES['other'];
+                        tableHtml += `
+                            <tr class="group-header" onclick="toggleGroup('${issueType}')" style="cursor: pointer; background: linear-gradient(135deg, ${issueInfo.color}15, ${issueInfo.color}08);">
+                                <td colspan="12" style="padding: 12px 15px; border-left: 4px solid ${issueInfo.color};">
+                                    <span id="group-icon-${issueType}" style="margin-right: 8px; font-size: 12px;">▼</span>
+                                    <span style="font-size: 16px; margin-right: 8px;">${issueInfo.icon}</span>
+                                    <strong style="font-size: 14px; color: #222;">${issueInfo.name}</strong>
+                                    <span style="margin-left: 10px; background: ${issueInfo.color}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600;">${items.length}</span>
+                                </td>
+                            </tr>
+                        `;
+                        tableHtml += `<tbody id="group-content-${issueType}" class="group-content">`;
+                        items.forEach(item => {
+                            tableHtml += renderItemRow(item, uploadMode);
+                        });
+                        tableHtml += `</tbody>`;
+                    });
+                } else {
+                    flaggedItems.forEach(item => {
+                        tableHtml += renderItemRow(item, uploadMode);
+                    });
+                }
 
                 tableHtml += '</tbody></table></div>';
                 container.innerHTML = tableHtml;
@@ -1183,30 +1317,58 @@
             const accountFilter = (document.getElementById('filter-account')?.value || '').toLowerCase();
             const severityFilter = document.getElementById('filter-severity')?.value || '';
             const sourceFilter = (document.getElementById('filter-source')?.value || '').toLowerCase();
+            const issueTypeFilter = document.getElementById('filter-issue-type')?.value || '';
 
             // Preserve horizontal scroll position of the table scroll wrapper
             const scrollWrapper = document.getElementById('table-scroll-wrapper');
             const scrollLeft = scrollWrapper ? scrollWrapper.scrollLeft : 0;
 
-            const rows = document.querySelectorAll('#results-tbody > tr');
+            // Get all data rows (not group headers)
+            const rows = document.querySelectorAll('#results-table tr[data-row-number]');
             let visibleCount = 0;
+            const visibleGroups = new Set();
 
             rows.forEach(row => {
                 const desc = row.dataset.description || '';
                 const account = row.dataset.account || '';
                 const severity = row.dataset.severity || '';
                 const source = row.dataset.source || '';
+                const issueType = row.dataset.issueType || '';
 
                 const matchDesc = !descFilter || desc.includes(descFilter);
                 const matchAccount = !accountFilter || account.includes(accountFilter);
                 const matchSeverity = !severityFilter || severity === severityFilter;
                 const matchSource = !sourceFilter || source.includes(sourceFilter);
+                const matchIssueType = !issueTypeFilter || issueType === issueTypeFilter;
 
-                if (matchDesc && matchAccount && matchSeverity && matchSource) {
+                if (matchDesc && matchAccount && matchSeverity && matchSource && matchIssueType) {
                     row.style.display = '';
                     visibleCount++;
+                    if (issueType) visibleGroups.add(issueType);
                 } else {
                     row.style.display = 'none';
+                }
+            });
+
+            // Show/hide group headers based on whether they have visible items
+            document.querySelectorAll('.group-header').forEach(header => {
+                const groupId = header.querySelector('[id^="group-icon-"]')?.id?.replace('group-icon-', '');
+                if (groupId) {
+                    if (issueTypeFilter && groupId !== issueTypeFilter) {
+                        header.style.display = 'none';
+                    } else if (visibleGroups.has(groupId) || (!descFilter && !accountFilter && !severityFilter && !sourceFilter && !issueTypeFilter)) {
+                        header.style.display = '';
+                    } else {
+                        header.style.display = visibleGroups.has(groupId) ? '' : 'none';
+                    }
+                }
+            });
+
+            // Show/hide group contents based on filters
+            document.querySelectorAll('.group-content').forEach(content => {
+                const groupId = content.id?.replace('group-content-', '');
+                if (groupId && issueTypeFilter && groupId !== issueTypeFilter) {
+                    content.style.display = 'none';
                 }
             });
 
@@ -1233,11 +1395,18 @@
             const accountInput = document.getElementById('filter-account');
             const severitySelect = document.getElementById('filter-severity');
             const sourceSelect = document.getElementById('filter-source');
+            const issueTypeSelect = document.getElementById('filter-issue-type');
 
             if (descInput) descInput.value = '';
             if (accountInput) accountInput.value = '';
             if (severitySelect) severitySelect.value = '';
             if (sourceSelect) sourceSelect.value = '';
+            if (issueTypeSelect) issueTypeSelect.value = '';
+
+            // Show all groups again
+            document.querySelectorAll('.group-header, .group-content').forEach(el => {
+                el.style.display = '';
+            });
 
             applyFilters();
         }
