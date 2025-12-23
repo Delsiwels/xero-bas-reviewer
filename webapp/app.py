@@ -2391,6 +2391,18 @@ def upload_review():
                 if transaction.get('borrowing_expenses_error'):
                     comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
 
+            # Fallback checks for common issues that might not have been caught above
+            # These run if no comments have been added yet, to avoid generic "Requires review"
+            if not comments:
+                desc = transaction.get('description', '').lower()
+                acct = transaction.get('account', '').lower()
+
+                # Parking in wrong account
+                parking_keywords = ['parking', 'car park', 'carpark']
+                wrong_parking_accounts = ['legal', 'entertainment', 'consulting', 'professional', 'subscriptions']
+                if any(pk in desc for pk in parking_keywords) and any(wa in acct for wa in wrong_parking_accounts):
+                    comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
+
             # Generate correcting journal entry
             try:
                 correcting_journal = generate_correcting_journal(transaction)
@@ -2596,6 +2608,18 @@ def upload_review():
                 comments.append(ato_comment or 'Export sale - should be GST-FREE (no GST charged)')
             if transaction.get('borrowing_expenses_error'):
                 comments.append('Borrowing expenses > $100 - must be spread over 5 years')
+
+            # Fallback checks for common issues that might not have been caught above
+            # These run if no comments have been added yet, to avoid generic "Requires review"
+            if not comments:
+                desc = transaction.get('description', '').lower()
+                acct = transaction.get('account', '').lower()
+
+                # Parking in wrong account
+                parking_keywords = ['parking', 'car park', 'carpark']
+                wrong_parking_accounts = ['legal', 'entertainment', 'consulting', 'professional', 'subscriptions']
+                if any(pk in desc for pk in parking_keywords) and any(wa in acct for wa in wrong_parking_accounts):
+                    comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
 
             # Generate correcting journal entry
             try:
@@ -3332,6 +3356,18 @@ def run_review():
                     comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
                 if transaction.get('borrowing_expenses_error'):
                     comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
+
+            # Fallback checks for common issues that might not have been caught above
+            # These run if no comments have been added yet, to avoid generic "Requires review"
+            if not comments:
+                desc = transaction.get('description', '').lower()
+                acct = transaction.get('account', '').lower()
+
+                # Parking in wrong account
+                parking_keywords = ['parking', 'car park', 'carpark']
+                wrong_parking_accounts = ['legal', 'entertainment', 'consulting', 'professional', 'subscriptions']
+                if any(pk in desc for pk in parking_keywords) and any(wa in acct for wa in wrong_parking_accounts):
+                    comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
 
             # Generate correcting journal entry
             try:
