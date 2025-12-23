@@ -857,9 +857,9 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
                 txn_type = txn.get('Type', '')
                 is_refund = gross < 0
                 if txn_type == 'SPEND':
-                    source = 'Refund Received' if is_refund else 'Bank Payment'
+                    source = 'Refund Received' if is_refund else 'Spend Money'
                 elif txn_type == 'RECEIVE':
-                    source = 'Refund Given' if is_refund else 'Bank Receipt'
+                    source = 'Refund Given' if is_refund else 'Receive Money'
                 else:
                     source = txn_type
 
