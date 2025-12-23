@@ -1771,29 +1771,35 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 def enrich_transactions_with_accounts(transactions):
     """Add account names to transactions using Chart of Accounts"""
     # Fetch chart of accounts
-    data = xero_api_request('Accounts')
-    if not data or 'Accounts' not in data:
-        return transactions
+    try:
+        data = xero_api_request('Accounts')
+    except Exception as e:
+        print(f"Error fetching accounts: {e}")
+        data = None
 
     # Build account code to name mapping
     account_map = {}
-    for acc in data.get('Accounts', []):
-        code = acc.get('Code', '')
-        name = acc.get('Name', '')
-        acc_type = acc.get('Type', '')
-        if code:
-            account_map[code] = {'name': name, 'type': acc_type}
+    if data and 'Accounts' in data:
+        for acc in data.get('Accounts', []):
+            code = str(acc.get('Code', '')).strip()
+            name = acc.get('Name', '')
+            acc_type = acc.get('Type', '')
+            if code:
+                account_map[code] = {'name': name, 'type': acc_type}
+        print(f"Loaded {len(account_map)} accounts from Chart of Accounts")
+    else:
+        print("Warning: Could not fetch Chart of Accounts - account names will be missing")
 
     # Enrich transactions
     for txn in transactions:
-        code = txn.get('account_code', '')
+        code = str(txn.get('account_code', '')).strip()
         if code and code in account_map:
             txn['account'] = f"{account_map[code]['name']} ({code})"
             txn['account_type'] = account_map[code]['type']
         elif code:
-            # Code exists but not in chart of accounts
-            txn['account'] = f"Unknown Account ({code})"
-            txn['account_type'] = ''
+            # Code exists but not in chart of accounts - show code at least
+            txn['account'] = f"Account {code}"
+            txn['account_type'] = txn.get('account_type', '')
         else:
             # No account code - flag this
             txn['account'] = 'No Account Assigned'
