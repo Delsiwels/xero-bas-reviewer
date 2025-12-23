@@ -1770,38 +1770,42 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
 def enrich_transactions_with_accounts(transactions):
     """Add account names to transactions using Chart of Accounts"""
-    # Fetch chart of accounts - include all accounts (active and archived)
-    try:
-        # First try without parameters
-        data = xero_api_request('Accounts')
-        print(f"DEBUG enrich: Accounts API response keys: {list(data.keys()) if data else 'None'}")
-        if data and 'Accounts' in data:
-            print(f"DEBUG enrich: Got {len(data.get('Accounts', []))} accounts")
-            if data.get('Accounts'):
-                sample = data['Accounts'][0]
-                print(f"DEBUG enrich: Sample account: Code={sample.get('Code')}, Name={sample.get('Name')}")
-    except Exception as e:
-        print(f"Error fetching accounts: {e}")
-        import traceback
-        traceback.print_exc()
-        data = None
-
-    # Build account code to name mapping
+    # Build account code to name mapping with pagination
     account_map = {}
-    if data and 'Accounts' in data:
-        for acc in data.get('Accounts', []):
+    page = 1
+    total_accounts = 0
+
+    while True:
+        try:
+            data = xero_api_request('Accounts', params={'page': page})
+        except Exception as e:
+            print(f"Error fetching accounts page {page}: {e}")
+            break
+
+        if not data or 'Accounts' not in data:
+            if page == 1:
+                print(f"Warning: Accounts API returned no data")
+            break
+
+        accounts = data.get('Accounts', [])
+        if not accounts:
+            break
+
+        for acc in accounts:
             code = str(acc.get('Code', '')).strip()
             name = acc.get('Name', '')
             acc_type = acc.get('Type', '')
             if code:
                 account_map[code] = {'name': name, 'type': acc_type}
-        print(f"Loaded {len(account_map)} accounts from Chart of Accounts")
-        # Print sample of codes for debugging
-        sample_codes = list(account_map.keys())[:10]
-        print(f"DEBUG enrich: Sample account codes in map: {sample_codes}")
-    else:
-        print("Warning: Could not fetch Chart of Accounts - account names will be missing")
-        print(f"DEBUG enrich: data={data}")
+
+        total_accounts += len(accounts)
+
+        # Xero returns max 100 per page
+        if len(accounts) < 100:
+            break
+        page += 1
+
+    print(f"Loaded {total_accounts} accounts from Chart of Accounts ({len(account_map)} with codes)")
 
     # Enrich transactions
     missing_codes = set()
