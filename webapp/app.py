@@ -2289,6 +2289,53 @@ def upload_review():
                 # Check if it's a personal expense - if so, skip business-specific rules like capitalization
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
+                # Account coding suspicious - expense in wrong account type
+                if transaction.get('account_coding_suspicious'):
+                    desc = transaction.get('description', '').lower()
+                    acct = transaction.get('account', '').lower()
+                    acct_type = transaction.get('account_type', '').upper()
+
+                    # Check for expense coded to revenue account
+                    is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
+                    expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
+                                       'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
+                                       'freight', 'courier', 'repairs', 'maintenance',
+                                       'bunnings', 'hardware', 'materials', 'supplies', 'parts',
+                                       'purchase', 'bought', 'tools', 'equipment',
+                                       'officeworks', 'supercheap', 'repco', 'total tools',
+                                       'staff', 'team', 'employee', 'christmas party', 'end of year',
+                                       'golf ball', 'balls', 'reorder', 'stock', 'inventory']
+                    is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                    # Check for staff entertainment/meals
+                    staff_entertainment_keywords = ['staff lunch', 'staff dinner', 'staff meal', 'team lunch',
+                                                   'team dinner', 'team meeting', 'staff meeting', 'team building',
+                                                   'christmas party', 'end of year', 'staff party', 'team party']
+                    is_staff_entertainment = any(kw in desc for kw in staff_entertainment_keywords)
+
+                    # Check for parking in wrong account
+                    is_parking = 'parking' in desc or 'car park' in desc or 'carpark' in desc
+                    wrong_parking_acct = 'legal' in acct or 'consulting' in acct or 'professional' in acct or 'entertainment' in acct
+
+                    # Check for bank transfers
+                    transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer']
+                    is_transfer = any(kw in desc for kw in transfer_keywords)
+
+                    if is_transfer and is_revenue_acct:
+                        comments.append(f'BANK TRANSFER coded to REVENUE - "{desc[:40]}" is an internal transfer, not income.')
+                    elif is_staff_entertainment and is_revenue_acct:
+                        comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424).')
+                    elif is_revenue_acct and is_expense_item:
+                        comments.append(f'EXPENSE coded to REVENUE account - "{desc[:40]}" should be in an Expense account, not Sales/Revenue.')
+                    elif is_parking and wrong_parking_acct:
+                        comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
+                    elif is_transfer:
+                        comments.append(f'Bank transfer - "{desc[:40]}" should be coded to a clearing account or balance sheet account with BAS Excluded.')
+                    elif is_staff_entertainment:
+                        comments.append(f'Staff entertainment - should be coded to Entertainment (424). 50% non-deductible, GST claimable only if FBT paid.')
+                    else:
+                        comments.append('Account coding may be incorrect - review if expense is in the correct category.')
+
                 if transaction.get('life_insurance_personal'):
                     desc = transaction.get('description', '').lower()
                     # Check if it's specifically life insurance or income protection
@@ -3274,6 +3321,53 @@ def run_review():
                 # Fallback to rule-based comments when AI doesn't provide useful info
                 # Check if it's a personal expense - if so, skip business-specific rules like capitalization
                 is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
+
+                # Account coding suspicious - expense in wrong account type
+                if transaction.get('account_coding_suspicious'):
+                    desc = transaction.get('description', '').lower()
+                    acct = transaction.get('account', '').lower()
+                    acct_type = transaction.get('account_type', '').upper()
+
+                    # Check for expense coded to revenue account
+                    is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
+                    expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
+                                       'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
+                                       'freight', 'courier', 'repairs', 'maintenance',
+                                       'bunnings', 'hardware', 'materials', 'supplies', 'parts',
+                                       'purchase', 'bought', 'tools', 'equipment',
+                                       'officeworks', 'supercheap', 'repco', 'total tools',
+                                       'staff', 'team', 'employee', 'christmas party', 'end of year',
+                                       'golf ball', 'balls', 'reorder', 'stock', 'inventory']
+                    is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                    # Check for staff entertainment/meals
+                    staff_entertainment_keywords = ['staff lunch', 'staff dinner', 'staff meal', 'team lunch',
+                                                   'team dinner', 'team meeting', 'staff meeting', 'team building',
+                                                   'christmas party', 'end of year', 'staff party', 'team party']
+                    is_staff_entertainment = any(kw in desc for kw in staff_entertainment_keywords)
+
+                    # Check for parking in wrong account
+                    is_parking = 'parking' in desc or 'car park' in desc or 'carpark' in desc
+                    wrong_parking_acct = 'legal' in acct or 'consulting' in acct or 'professional' in acct or 'entertainment' in acct
+
+                    # Check for bank transfers
+                    transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer']
+                    is_transfer = any(kw in desc for kw in transfer_keywords)
+
+                    if is_transfer and is_revenue_acct:
+                        comments.append(f'BANK TRANSFER coded to REVENUE - "{desc[:40]}" is an internal transfer, not income.')
+                    elif is_staff_entertainment and is_revenue_acct:
+                        comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424).')
+                    elif is_revenue_acct and is_expense_item:
+                        comments.append(f'EXPENSE coded to REVENUE account - "{desc[:40]}" should be in an Expense account, not Sales/Revenue.')
+                    elif is_parking and wrong_parking_acct:
+                        comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
+                    elif is_transfer:
+                        comments.append(f'Bank transfer - "{desc[:40]}" should be coded to a clearing account or balance sheet account with BAS Excluded.')
+                    elif is_staff_entertainment:
+                        comments.append(f'Staff entertainment - should be coded to Entertainment (424). 50% non-deductible, GST claimable only if FBT paid.')
+                    else:
+                        comments.append('Account coding may be incorrect - review if expense is in the correct category.')
 
                 if transaction.get('life_insurance_personal'):
                     desc = transaction.get('description', '').lower()
