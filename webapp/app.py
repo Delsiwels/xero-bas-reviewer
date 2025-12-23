@@ -791,7 +791,8 @@ def fetch_xero_bank_transactions(from_date_str, to_date_str):
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
-    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day})'
+    # Filter by date and status - exclude DELETED transactions (only include AUTHORISED)
+    where_clause = f'Date >= DateTime({from_date.year},{from_date.month},{from_date.day}) AND Date <= DateTime({to_date.year},{to_date.month},{to_date.day}) AND Status == "AUTHORISED"'
 
     page = 1
     while True:
