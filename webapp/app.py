@@ -2419,7 +2419,11 @@ def upload_review():
                 is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
                 expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
                                    'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
-                                   'freight', 'courier', 'repairs', 'maintenance']
+                                   'freight', 'courier', 'repairs', 'maintenance',
+                                   # Hardware/materials/supplies - clearly purchases not revenue
+                                   'bunnings', 'hardware', 'materials', 'supplies', 'parts',
+                                   'purchase', 'bought', 'tools', 'equipment',
+                                   'officeworks', 'supercheap', 'repco', 'total tools']
                 is_expense_item = any(kw in desc for kw in expense_keywords)
 
                 # Check for software subscription in wrong account
@@ -3324,7 +3328,11 @@ def run_review():
                 is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
                 expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
                                    'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
-                                   'freight', 'courier', 'repairs', 'maintenance']
+                                   'freight', 'courier', 'repairs', 'maintenance',
+                                   # Hardware/materials/supplies - clearly purchases not revenue
+                                   'bunnings', 'hardware', 'materials', 'supplies', 'parts',
+                                   'purchase', 'bought', 'tools', 'equipment',
+                                   'officeworks', 'supercheap', 'repco', 'total tools']
                 is_expense_item = any(kw in desc for kw in expense_keywords)
 
                 # Check for software subscription in wrong account
