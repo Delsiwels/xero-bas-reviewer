@@ -8251,7 +8251,7 @@ ATO GST Rules to check:
 6. OVERSEAS DIGITAL SERVICES (GST FREE IS CORRECT): Adobe, Slack, Zoom, Canva, Google Ads, Facebook Ads, Microsoft 365, AWS, Dropbox, and other overseas SaaS - when billed from USA/Ireland/Singapore WITHOUT GST, code as GST Free. Do NOT flag these as missing GST. Reverse charge may apply but results in net zero for most businesses.
 7. ENTERTAINMENT: Non-deductible, NO GST credits (includes alcohol in social context)
 8. RESIDENTIAL PROPERTY: Input-taxed - NO GST credit on property management, repairs, maintenance, agent fees. IMPORTANT: Body corporate fees, strata fees, and owners corporation fees can be for EITHER residential OR commercial properties - do NOT assume they are residential unless the transaction explicitly says "residential". Commercial strata fees DO have GST credits claimable.
-9. Software subscriptions should be coded to Subscriptions, NOT Consulting
+9. Software subscriptions should be coded to Subscriptions, NOT Consulting. Note: Some businesses may choose to code accounting software (Xero, MYOB, QuickBooks) under "Accounting & Consulting" which is also a valid expense account - flag but acknowledge this alternative.
 10. Parking should be coded to Motor Vehicle, NOT Legal Expenses
 11. Office supplies (toner, cartridges) MUST include GST (10%)
 12. GRANTS (per GSTR 2012/2): "Other Income" is a VALID account for grants - do NOT flag as wrong account. Grants are typically GST-FREE unless there's a binding obligation to provide specific services/goods in return. Only flag GST treatment if GST is charged on a grant that appears to have no supply obligation.
