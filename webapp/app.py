@@ -3649,7 +3649,28 @@ def run_review():
 
 
 def generate_correcting_journal(transaction):
-    """Generate suggested correcting journal entry for flagged transaction"""
+    """
+    Generate suggested correcting journal entry for flagged transaction.
+
+    ACCOUNTING EQUATION: Assets = Liabilities + Equity
+
+    DEBIT/CREDIT RULES BY ACCOUNT TYPE:
+    ┌─────────────────┬──────────┬──────────┐
+    │ Account Type    │ Increase │ Decrease │
+    ├─────────────────┼──────────┼──────────┤
+    │ Assets          │ DEBIT    │ Credit   │
+    │ Liabilities     │ Credit   │ DEBIT    │
+    │ Equity          │ Credit   │ DEBIT    │
+    │ Revenue/Income  │ Credit   │ DEBIT    │
+    │ Expenses        │ DEBIT    │ Credit   │
+    └─────────────────┴──────────┴──────────┘
+
+    For CORRECTING JOURNALS:
+    - Revenue/Income accounts: DEBIT to reverse wrong entry, CREDIT with correct tax code
+    - Expense accounts: CREDIT to reverse wrong entry, DEBIT with correct tax code
+
+    Source: Double-entry bookkeeping principles
+    """
     description = transaction.get('description', '').lower()
     account_code = str(transaction.get('account_code', '') or '').strip()
     account_name = str(transaction.get('account', '') or '').strip()
@@ -8142,6 +8163,33 @@ ATO_RULING_QUERIES = {
             'title': 'Body corporate fees GST treatment',
             'summary': 'Body corporate/strata fees for commercial property include GST (credits claimable). Residential strata fees are input-taxed (no GST credits).',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/property'
+        }
+    },
+    'accounting_principles': {
+        'query': 'double entry bookkeeping debits credits accounting equation',
+        'fallback': {
+            'ruling': 'Double-Entry Bookkeeping',
+            'title': 'Accounting Equation and Debit/Credit Rules',
+            'summary': 'Assets=Liabilities+Equity. Assets/Expenses increase with DEBIT. Liabilities/Equity/Revenue increase with CREDIT. For correcting journals: reverse wrong entry then record correct entry.',
+            'url': 'https://courses.lumenlearning.com/suny-finaccounting/chapter/general-rules-for-debits-and-credits/'
+        }
+    },
+    'interest_income_gst': {
+        'query': 'interest income GST free input taxed BAS site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Division 40',
+            'title': 'Interest income is input-taxed',
+            'summary': 'Interest is an input-taxed financial supply. Should be GST Free Income or Input Taxed on BAS - NOT BAS Excluded. BAS Excluded means it won\'t appear on BAS at all.',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/financial-services-and-insurance/gst-and-financial-supplies'
+        }
+    },
+    'sales_bas_excluded_error': {
+        'query': 'sales revenue GST on income BAS excluded site:ato.gov.au',
+        'fallback': {
+            'ruling': 'GST Act - Section 9-5',
+            'title': 'Sales must never be BAS Excluded',
+            'summary': 'Sales/Revenue MUST be GST on Income (10%) or GST Free Income - NEVER BAS Excluded. BAS Excluded is only for non-business items (personal, wages, loans).',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/completing-your-bas'
         }
     }
 }
