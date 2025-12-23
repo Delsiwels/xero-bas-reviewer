@@ -2206,12 +2206,8 @@ def upload_review():
                 rule_flagged.append(transaction)
 
         # Second pass: AI review for flagged items (batch processing)
-        # Limit AI review to 200 items to prevent timeout on large datasets
-        MAX_AI_REVIEW = 200
-        ai_review_limit = min(len(rule_flagged), MAX_AI_REVIEW)
-
-        if len(rule_flagged) > MAX_AI_REVIEW:
-            print(f"Large dataset: {len(rule_flagged)} flagged items, limiting AI review to {MAX_AI_REVIEW}")
+        # All flagged items go through AI review (no limit)
+        ai_review_limit = len(rule_flagged)
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
@@ -3239,12 +3235,8 @@ def run_review():
                 rule_flagged.append(transaction)
 
         # Second pass: AI review for flagged items (batch processing)
-        # Limit AI review to 200 items to prevent timeout on large datasets
-        MAX_AI_REVIEW = 200
-        ai_review_limit = min(len(rule_flagged), MAX_AI_REVIEW)
-
-        if len(rule_flagged) > MAX_AI_REVIEW:
-            print(f"Large dataset: {len(rule_flagged)} flagged items, limiting AI review to {MAX_AI_REVIEW}")
+        # All flagged items go through AI review (no limit)
+        ai_review_limit = len(rule_flagged)
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
