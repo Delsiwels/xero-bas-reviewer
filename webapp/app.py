@@ -1770,11 +1770,20 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
 def enrich_transactions_with_accounts(transactions):
     """Add account names to transactions using Chart of Accounts"""
-    # Fetch chart of accounts
+    # Fetch chart of accounts - include all accounts (active and archived)
     try:
+        # First try without parameters
         data = xero_api_request('Accounts')
+        print(f"DEBUG enrich: Accounts API response keys: {list(data.keys()) if data else 'None'}")
+        if data and 'Accounts' in data:
+            print(f"DEBUG enrich: Got {len(data.get('Accounts', []))} accounts")
+            if data.get('Accounts'):
+                sample = data['Accounts'][0]
+                print(f"DEBUG enrich: Sample account: Code={sample.get('Code')}, Name={sample.get('Name')}")
     except Exception as e:
         print(f"Error fetching accounts: {e}")
+        import traceback
+        traceback.print_exc()
         data = None
 
     # Build account code to name mapping
@@ -1787,24 +1796,36 @@ def enrich_transactions_with_accounts(transactions):
             if code:
                 account_map[code] = {'name': name, 'type': acc_type}
         print(f"Loaded {len(account_map)} accounts from Chart of Accounts")
+        # Print sample of codes for debugging
+        sample_codes = list(account_map.keys())[:10]
+        print(f"DEBUG enrich: Sample account codes in map: {sample_codes}")
     else:
         print("Warning: Could not fetch Chart of Accounts - account names will be missing")
+        print(f"DEBUG enrich: data={data}")
 
     # Enrich transactions
+    missing_codes = set()
+    found_codes = set()
     for txn in transactions:
         code = str(txn.get('account_code', '')).strip()
         if code and code in account_map:
             txn['account'] = f"{account_map[code]['name']} ({code})"
             txn['account_type'] = account_map[code]['type']
+            found_codes.add(code)
         elif code:
             # Code exists but not in chart of accounts - show code at least
             txn['account'] = f"Account {code}"
             txn['account_type'] = txn.get('account_type', '')
+            missing_codes.add(code)
         else:
             # No account code - flag this
             txn['account'] = 'No Account Assigned'
             txn['account_code'] = ''
             txn['account_type'] = ''
+
+    if missing_codes:
+        print(f"DEBUG enrich: Missing from Chart of Accounts: {missing_codes}")
+    print(f"DEBUG enrich: Enriched {len(found_codes)} unique codes, {len(missing_codes)} missing")
 
     return transactions
 
