@@ -2306,7 +2306,10 @@ def upload_review():
                 if transaction.get('asset_capitalization_error') and not is_personal:
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense') and not is_personal:
-                    comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
+                    # Use actual asset type based on description
+                    asset_suggestion = suggest_asset_account(transaction.get('description', ''))
+                    asset_name = asset_suggestion.get('name', 'Asset') if asset_suggestion else 'Asset'
+                    comments.append(f'{asset_name} over $300 - should be capitalized as asset, not expensed directly')
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     desc = transaction.get('description', '').lower()
@@ -2485,7 +2488,9 @@ def upload_review():
             if transaction.get('asset_capitalization_error') and not is_personal:
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
             if transaction.get('computer_equipment_expense') and not is_personal:
-                comments.append('Computer equipment over $300 - should be capitalized as asset')
+                asset_suggestion = suggest_asset_account(transaction.get('description', ''))
+                asset_name = asset_suggestion.get('name', 'Asset') if asset_suggestion else 'Asset'
+                comments.append(f'{asset_name} over $300 - should be capitalized')
             # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
             if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
@@ -3238,7 +3243,10 @@ def run_review():
                 if transaction.get('asset_capitalization_error') and not is_personal:
                     comments.append('Asset over $20,000 - should be capitalized per ATO instant asset write-off rules, not expensed')
                 if transaction.get('computer_equipment_expense') and not is_personal:
-                    comments.append('Computer equipment over $300 - should be capitalized as asset, not expensed to Office Supplies')
+                    # Use actual asset type based on description
+                    asset_suggestion = suggest_asset_account(transaction.get('description', ''))
+                    asset_name = asset_suggestion.get('name', 'Asset') if asset_suggestion else 'Asset'
+                    comments.append(f'{asset_name} over $300 - should be capitalized as asset, not expensed directly')
                 if transaction.get('insurance_gst_error') and not transaction.get('life_insurance_personal'):
                     # Only add if life_insurance_personal not already flagged (avoid duplicate)
                     desc = transaction.get('description', '').lower()
@@ -3417,7 +3425,9 @@ def run_review():
             if transaction.get('asset_capitalization_error') and not is_personal:
                 comments.append('Asset over $20,000 - should be capitalized per ATO rules')
             if transaction.get('computer_equipment_expense') and not is_personal:
-                comments.append('Computer equipment over $300 - should be capitalized as asset')
+                asset_suggestion = suggest_asset_account(transaction.get('description', ''))
+                asset_name = asset_suggestion.get('name', 'Asset') if asset_suggestion else 'Asset'
+                comments.append(f'{asset_name} over $300 - should be capitalized')
             # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
             if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
                 comments.append('Interest should be GST Free Income or Input Taxed only')
