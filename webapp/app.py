@@ -2447,10 +2447,20 @@ def upload_review():
                 # Check for parking in wrong account
                 is_parking = 'parking' in desc or 'car park' in desc
 
-                if is_staff_entertainment and is_revenue_acct:
+                # Check for bank transfers coded to revenue/expense
+                transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer',
+                                    'transfer between', 'to savings', 'from savings', 'to offset',
+                                    'from offset', 'sweep', 'move to', 'move from']
+                is_transfer = any(kw in desc for kw in transfer_keywords)
+
+                if is_transfer and is_revenue_acct:
+                    comments.append(f'BANK TRANSFER coded to REVENUE - "{desc[:40]}" is an internal transfer, not income. Should be coded to a clearing account, bank account, or Owner Funds Introduced (880) with BAS Excluded.')
+                elif is_staff_entertainment and is_revenue_acct:
                     comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424). Staff meals/entertainment: 50% non-deductible, GST claimable only if FBT paid.')
                 elif is_revenue_acct and is_expense_item:
                     comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_transfer:
+                    comments.append(f'Bank transfer - "{desc[:40]}" should be coded to a clearing account or balance sheet account with BAS Excluded, not an expense/income account.')
                 elif is_staff_entertainment:
                     comments.append(f'Staff entertainment - should be coded to Entertainment (424). Note: 50% non-deductible for tax, GST claimable only if FBT is paid on the benefit.')
                 elif is_software and wrong_software_acct:
@@ -3369,10 +3379,20 @@ def run_review():
                 # Check for parking in wrong account
                 is_parking = 'parking' in desc or 'car park' in desc
 
-                if is_staff_entertainment and is_revenue_acct:
+                # Check for bank transfers coded to revenue/expense
+                transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer',
+                                    'transfer between', 'to savings', 'from savings', 'to offset',
+                                    'from offset', 'sweep', 'move to', 'move from']
+                is_transfer = any(kw in desc for kw in transfer_keywords)
+
+                if is_transfer and is_revenue_acct:
+                    comments.append(f'BANK TRANSFER coded to REVENUE - "{desc[:40]}" is an internal transfer, not income. Should be coded to a clearing account, bank account, or Owner Funds Introduced (880) with BAS Excluded.')
+                elif is_staff_entertainment and is_revenue_acct:
                     comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424). Staff meals/entertainment: 50% non-deductible, GST claimable only if FBT paid.')
                 elif is_revenue_acct and is_expense_item:
                     comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_transfer:
+                    comments.append(f'Bank transfer - "{desc[:40]}" should be coded to a clearing account or balance sheet account with BAS Excluded, not an expense/income account.')
                 elif is_staff_entertainment:
                     comments.append(f'Staff entertainment - should be coded to Entertainment (424). Note: 50% non-deductible for tax, GST claimable only if FBT is paid on the benefit.')
                 elif is_software and wrong_software_acct:
