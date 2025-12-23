@@ -2423,8 +2423,17 @@ def upload_review():
                                    # Hardware/materials/supplies - clearly purchases not revenue
                                    'bunnings', 'hardware', 'materials', 'supplies', 'parts',
                                    'purchase', 'bought', 'tools', 'equipment',
-                                   'officeworks', 'supercheap', 'repco', 'total tools']
+                                   'officeworks', 'supercheap', 'repco', 'total tools',
+                                   # Staff related expenses
+                                   'staff', 'team', 'employee', 'christmas party', 'end of year']
                 is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                # Check for staff entertainment/meals
+                staff_entertainment_keywords = ['staff lunch', 'staff dinner', 'staff meal', 'team lunch',
+                                               'team dinner', 'team meeting', 'staff meeting', 'team building',
+                                               'christmas party', 'end of year', 'staff party', 'team party',
+                                               'staff amenities', 'morning tea', 'afternoon tea']
+                is_staff_entertainment = any(kw in desc for kw in staff_entertainment_keywords)
 
                 # Check for software subscription in wrong account
                 software_keywords = ['xero', 'myob', 'quickbooks', 'microsoft', 'adobe', 'subscription']
@@ -2438,8 +2447,12 @@ def upload_review():
                 # Check for parking in wrong account
                 is_parking = 'parking' in desc or 'car park' in desc
 
-                if is_revenue_acct and is_expense_item:
+                if is_staff_entertainment and is_revenue_acct:
+                    comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424). Staff meals/entertainment: 50% non-deductible, GST claimable only if FBT paid.')
+                elif is_revenue_acct and is_expense_item:
                     comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_staff_entertainment:
+                    comments.append(f'Staff entertainment - should be coded to Entertainment (424). Note: 50% non-deductible for tax, GST claimable only if FBT is paid on the benefit.')
                 elif is_software and wrong_software_acct:
                     comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
                 elif is_alcohol:
@@ -3332,8 +3345,17 @@ def run_review():
                                    # Hardware/materials/supplies - clearly purchases not revenue
                                    'bunnings', 'hardware', 'materials', 'supplies', 'parts',
                                    'purchase', 'bought', 'tools', 'equipment',
-                                   'officeworks', 'supercheap', 'repco', 'total tools']
+                                   'officeworks', 'supercheap', 'repco', 'total tools',
+                                   # Staff related expenses
+                                   'staff', 'team', 'employee', 'christmas party', 'end of year']
                 is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                # Check for staff entertainment/meals
+                staff_entertainment_keywords = ['staff lunch', 'staff dinner', 'staff meal', 'team lunch',
+                                               'team dinner', 'team meeting', 'staff meeting', 'team building',
+                                               'christmas party', 'end of year', 'staff party', 'team party',
+                                               'staff amenities', 'morning tea', 'afternoon tea']
+                is_staff_entertainment = any(kw in desc for kw in staff_entertainment_keywords)
 
                 # Check for software subscription in wrong account
                 software_keywords = ['xero', 'myob', 'quickbooks', 'microsoft', 'adobe', 'subscription']
@@ -3347,8 +3369,12 @@ def run_review():
                 # Check for parking in wrong account
                 is_parking = 'parking' in desc or 'car park' in desc
 
-                if is_revenue_acct and is_expense_item:
+                if is_staff_entertainment and is_revenue_acct:
+                    comments.append(f'STAFF ENTERTAINMENT coded to REVENUE - {desc[:40]} should be in Entertainment (424). Staff meals/entertainment: 50% non-deductible, GST claimable only if FBT paid.')
+                elif is_revenue_acct and is_expense_item:
                     comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_staff_entertainment:
+                    comments.append(f'Staff entertainment - should be coded to Entertainment (424). Note: 50% non-deductible for tax, GST claimable only if FBT is paid on the benefit.')
                 elif is_software and wrong_software_acct:
                     comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
                 elif is_alcohol:
