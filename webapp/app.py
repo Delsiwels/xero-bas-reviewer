@@ -2410,7 +2410,40 @@ def upload_review():
             is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
             if transaction['account_coding_suspicious']:
-                comments.append('Account coding may be incorrect')
+                # Generate specific comment based on the type of coding issue
+                desc = transaction.get('description', '').lower()
+                acct = transaction.get('account', '').lower()
+                acct_type = transaction.get('account_type', '').upper()
+
+                # Check for expense coded to revenue account
+                is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
+                expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
+                                   'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
+                                   'freight', 'courier', 'repairs', 'maintenance']
+                is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                # Check for software subscription in wrong account
+                software_keywords = ['xero', 'myob', 'quickbooks', 'microsoft', 'adobe', 'subscription']
+                is_software = any(kw in desc for kw in software_keywords)
+                wrong_software_acct = 'consulting' in acct or 'professional' in acct or 'legal' in acct
+
+                # Check for alcohol in wrong account
+                alcohol_keywords = ['dan murphy', 'bws', 'liquorland', 'wine', 'beer', 'alcohol']
+                is_alcohol = any(kw in desc for kw in alcohol_keywords)
+
+                # Check for parking in wrong account
+                is_parking = 'parking' in desc or 'car park' in desc
+
+                if is_revenue_acct and is_expense_item:
+                    comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_software and wrong_software_acct:
+                    comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
+                elif is_alcohol:
+                    comments.append('Alcohol purchase - should be coded to Entertainment (GST Free, not deductible) unless for hospitality stock.')
+                elif is_parking and 'legal' in acct:
+                    comments.append('Parking expense coded to Legal - should be Motor Vehicle Expenses or Travel.')
+                else:
+                    comments.append('Account coding may be incorrect - review if expense is in the correct category.')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error'] and not transaction.get('life_insurance_personal'):
@@ -3282,7 +3315,40 @@ def run_review():
             is_personal = transaction.get('life_insurance_personal') or transaction.get('personal_in_business_account')
 
             if transaction['account_coding_suspicious']:
-                comments.append('Account coding may be incorrect')
+                # Generate specific comment based on the type of coding issue
+                desc = transaction.get('description', '').lower()
+                acct = transaction.get('account', '').lower()
+                acct_type = transaction.get('account_type', '').upper()
+
+                # Check for expense coded to revenue account
+                is_revenue_acct = 'sales' in acct or 'revenue' in acct or acct_type == 'REVENUE'
+                expense_keywords = ['flight', 'hotel', 'parking', 'taxi', 'uber', 'office', 'software',
+                                   'meal', 'lunch', 'dinner', 'insurance', 'phone', 'internet',
+                                   'freight', 'courier', 'repairs', 'maintenance']
+                is_expense_item = any(kw in desc for kw in expense_keywords)
+
+                # Check for software subscription in wrong account
+                software_keywords = ['xero', 'myob', 'quickbooks', 'microsoft', 'adobe', 'subscription']
+                is_software = any(kw in desc for kw in software_keywords)
+                wrong_software_acct = 'consulting' in acct or 'professional' in acct or 'legal' in acct
+
+                # Check for alcohol in wrong account
+                alcohol_keywords = ['dan murphy', 'bws', 'liquorland', 'wine', 'beer', 'alcohol']
+                is_alcohol = any(kw in desc for kw in alcohol_keywords)
+
+                # Check for parking in wrong account
+                is_parking = 'parking' in desc or 'car park' in desc
+
+                if is_revenue_acct and is_expense_item:
+                    comments.append(f'EXPENSE coded to REVENUE account - {desc[:40]} should be in an Expense account, not Sales/Revenue. This affects both P&L accuracy and BAS reporting.')
+                elif is_software and wrong_software_acct:
+                    comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
+                elif is_alcohol:
+                    comments.append('Alcohol purchase - should be coded to Entertainment (GST Free, not deductible) unless for hospitality stock.')
+                elif is_parking and 'legal' in acct:
+                    comments.append('Parking expense coded to Legal - should be Motor Vehicle Expenses or Travel.')
+                else:
+                    comments.append('Account coding may be incorrect - review if expense is in the correct category.')
             if transaction['alcohol_gst_error']:
                 comments.append('Entertainment expense - should be GST Free Expenses')
             if transaction['input_taxed_gst_error'] and not transaction.get('life_insurance_personal'):
