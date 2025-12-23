@@ -2448,7 +2448,8 @@ def upload_review():
                 is_alcohol = any(kw in desc for kw in alcohol_keywords)
 
                 # Check for parking in wrong account
-                is_parking = 'parking' in desc or 'car park' in desc
+                is_parking = 'parking' in desc or 'car park' in desc or 'carpark' in desc
+                wrong_parking_acct = 'legal' in acct or 'consulting' in acct or 'professional' in acct
 
                 # Check for bank transfers coded to revenue/expense
                 transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer',
@@ -2470,8 +2471,8 @@ def upload_review():
                     comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
                 elif is_alcohol:
                     comments.append('Alcohol purchase - should be coded to Entertainment (GST Free, not deductible) unless for hospitality stock.')
-                elif is_parking and 'legal' in acct:
-                    comments.append('Parking expense coded to Legal - should be Motor Vehicle Expenses or Travel.')
+                elif is_parking and wrong_parking_acct:
+                    comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
                 else:
                     comments.append('Account coding may be incorrect - review if expense is in the correct category.')
             if transaction['alcohol_gst_error']:
@@ -3385,7 +3386,8 @@ def run_review():
                 is_alcohol = any(kw in desc for kw in alcohol_keywords)
 
                 # Check for parking in wrong account
-                is_parking = 'parking' in desc or 'car park' in desc
+                is_parking = 'parking' in desc or 'car park' in desc or 'carpark' in desc
+                wrong_parking_acct = 'legal' in acct or 'consulting' in acct or 'professional' in acct
 
                 # Check for bank transfers coded to revenue/expense
                 transfer_keywords = ['transfer to', 'transfer from', 'bank transfer', 'internal transfer',
@@ -3407,8 +3409,8 @@ def run_review():
                     comments.append(f'Software subscription coded to {acct} - suggest recoding to Subscriptions. Note: Some businesses may prefer to keep accounting software (Xero/MYOB) under Accounting & Consulting.')
                 elif is_alcohol:
                     comments.append('Alcohol purchase - should be coded to Entertainment (GST Free, not deductible) unless for hospitality stock.')
-                elif is_parking and 'legal' in acct:
-                    comments.append('Parking expense coded to Legal - should be Motor Vehicle Expenses or Travel.')
+                elif is_parking and wrong_parking_acct:
+                    comments.append(f'Parking expense "{desc[:30]}" coded to wrong account ({acct}) - should be Motor Vehicle Expenses (449) or Travel.')
                 else:
                     comments.append('Account coding may be incorrect - review if expense is in the correct category.')
             if transaction['alcohol_gst_error']:
