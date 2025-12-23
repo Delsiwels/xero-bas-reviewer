@@ -2390,6 +2390,26 @@ def upload_review():
                     comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
                 if transaction.get('borrowing_expenses_error'):
                     comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
+                # Interest GST error - should be GST Free Income or Input Taxed
+                if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
+                    gst_rate = transaction.get('gst_rate_name', '').lower()
+                    if 'bas excluded' in gst_rate:
+                        comments.append('Interest Income coded as BAS Excluded - INCORRECT. Interest is an INPUT-TAXED financial supply. Should be GST Free Income (shows on BAS but no GST). BAS Excluded means it won\'t appear on BAS at all.')
+                    else:
+                        comments.append('Interest Income - should be GST Free Income or Input Taxed (no GST applies to interest).')
+                # Sales GST error - commercial services should have GST
+                if transaction.get('sales_gst_error'):
+                    desc = transaction.get('description', '').lower()
+                    gst_rate = transaction.get('gst_rate_name', '').lower()
+                    commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service', 'implementation', 'hourly', 'rate as agreed']
+                    is_commercial = any(kw in desc for kw in commercial_keywords)
+                    is_bas_excluded = 'bas excluded' in gst_rate
+                    if is_bas_excluded:
+                        comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                    elif is_commercial:
+                        comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                    else:
+                        comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
 
             # Fallback checks for common issues that might not have been caught above
             # These run if no comments have been added yet, to avoid generic "Requires review"
@@ -3356,6 +3376,26 @@ def run_review():
                     comments.append('Payment processor fee GST issue - PayPal (no GST), Stripe/eBay/bank (GST included)')
                 if transaction.get('borrowing_expenses_error'):
                     comments.append('Borrowing expenses > $100 - must be capitalized and spread over 5 years (not fully expensed)')
+                # Interest GST error - should be GST Free Income or Input Taxed
+                if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
+                    gst_rate = transaction.get('gst_rate_name', '').lower()
+                    if 'bas excluded' in gst_rate:
+                        comments.append('Interest Income coded as BAS Excluded - INCORRECT. Interest is an INPUT-TAXED financial supply. Should be GST Free Income (shows on BAS but no GST). BAS Excluded means it won\'t appear on BAS at all.')
+                    else:
+                        comments.append('Interest Income - should be GST Free Income or Input Taxed (no GST applies to interest).')
+                # Sales GST error - commercial services should have GST
+                if transaction.get('sales_gst_error'):
+                    desc = transaction.get('description', '').lower()
+                    gst_rate = transaction.get('gst_rate_name', '').lower()
+                    commercial_keywords = ['project management', 'consulting', 'advisory', 'training', 'software', 'it support', 'professional', 'service', 'implementation', 'hourly', 'rate as agreed']
+                    is_commercial = any(kw in desc for kw in commercial_keywords)
+                    is_bas_excluded = 'bas excluded' in gst_rate
+                    if is_bas_excluded:
+                        comments.append('Sales coded as BAS Excluded - INCORRECT. Sales must be GST on Income (10%) or GST Free Income. BAS Excluded is NEVER valid for sales.')
+                    elif is_commercial:
+                        comments.append('Commercial/professional service coded as GST Free - INCORRECT. Services like project management, consulting, IT support, training should have GST (10%). Only medical, accredited education, childcare, or exports can be GST-free.')
+                    else:
+                        comments.append('Sales coded as GST Free - verify this is a valid GST-free category (medical, accredited education, childcare, exports). If not, should be GST on Income (10%).')
 
             # Fallback checks for common issues that might not have been caught above
             # These run if no comments have been added yet, to avoid generic "Requires review"
