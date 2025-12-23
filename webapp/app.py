@@ -1000,6 +1000,151 @@ def fetch_xero_bills(from_date_str, to_date_str):
     return fetch_xero_invoices(from_date_str, to_date_str, invoice_type='ACCPAY')
 
 
+def fetch_xero_manual_journals(from_date_str, to_date_str):
+    """Fetch only MANUAL journals from Xero API (excludes auto-generated journals from invoices/bills)
+
+    Manual journals are identified by SourceType = "MANJOURNAL"
+    Only includes POSTED journals (excludes DRAFT, VOIDED, DELETED)
+    """
+    transactions = []
+
+    from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
+    to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+
+    # Xero Journals API uses offset-based pagination
+    offset = 0
+    last_journal_number = 0
+
+    while True:
+        params = {'offset': offset}
+        data = xero_api_request('Journals', params=params)
+
+        if not data or 'Journals' not in data:
+            break
+
+        journals = data.get('Journals', [])
+        if not journals:
+            break
+
+        for journal in journals:
+            # Only include MANUAL journals (SourceType = "MANJOURNAL")
+            source_type = journal.get('SourceType', '')
+            if source_type != 'MANJOURNAL':
+                continue
+
+            # Skip draft and voided journals - only include posted journals
+            journal_status = journal.get('Status', 'POSTED')
+            if journal_status in ['DRAFT', 'VOIDED', 'DELETED']:
+                continue
+
+            raw_date = journal.get('JournalDate', '')
+            journal_date = parse_xero_date(raw_date)
+
+            # Track the highest journal number for pagination
+            current_journal_number = journal.get('JournalNumber', 0)
+            if isinstance(current_journal_number, (int, float)):
+                last_journal_number = max(last_journal_number, int(current_journal_number))
+
+            # Filter by date range
+            if journal_date:
+                if journal_date < from_date or journal_date > to_date:
+                    continue
+
+            journal_number = journal.get('JournalNumber', '')
+            journal_id = journal.get('JournalID', '')
+            reference = journal.get('Reference', '')
+            narration = journal.get('Narration', '')  # Journal-level description
+
+            # Build Xero URL for manual journal
+            xero_url = f"https://go.xero.com/GeneralLedger/View.aspx?journalID={journal_id}" if journal_id else ''
+
+            # Process each journal line
+            for line in journal.get('JournalLines', []):
+                account_code = line.get('AccountCode', '')
+                account_name = line.get('AccountName', '')
+                description = line.get('Description', '') or narration or reference or 'Manual Journal'
+
+                # Skip lines without account codes
+                if not account_code:
+                    continue
+
+                # Get amounts
+                gross = float(line.get('GrossAmount', 0) or 0)
+                net = float(line.get('NetAmount', 0) or 0)
+                gst = float(line.get('TaxAmount', 0) or 0)
+
+                # Skip zero-value lines
+                if gross == 0 and net == 0 and gst == 0:
+                    continue
+
+                # Determine transaction type
+                account_type = line.get('AccountType', '')
+
+                # Skip balance sheet accounts - only review P&L accounts for BAS
+                balance_sheet_types = [
+                    'BANK', 'CURRENT', 'FIXED', 'INVENTORY', 'NONCURRENT', 'PREPAYMENT',
+                    'CURRLIAB', 'LIABILITY', 'TERMLIAB', 'PAYGLIABILITY', 'SUPERANNUATIONLIABILITY',
+                ]
+                if account_type in balance_sheet_types:
+                    continue
+
+                # Skip GST control accounts and balance sheet accounts by name
+                account_name_lower = account_name.lower()
+                skip_keywords = ['gst', 'accounts payable', 'accounts receivable', 'bank', 'petty cash',
+                                'clearing', 'suspense', 'control', 'payg', 'superannuation liability',
+                                'rounding', 'historical adjustment', 'retained earnings', 'current year earnings']
+                if any(x in account_name_lower for x in skip_keywords):
+                    continue
+
+                is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
+                date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
+
+                # Map tax type to GST rate name
+                tax_type = line.get('TaxType', '')
+                gst_rate_name = ''
+                if 'OUTPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Income'
+                elif 'INPUT' in tax_type.upper():
+                    gst_rate_name = 'GST on Expenses'
+                elif 'NONE' in tax_type.upper() or 'EXEMPT' in tax_type.upper():
+                    gst_rate_name = 'GST Free'
+                elif 'BASEXCLUDED' in tax_type.upper():
+                    gst_rate_name = 'BAS Excluded'
+                else:
+                    gst_rate_name = tax_type or 'Unknown'
+
+                transactions.append({
+                    'row_number': len(transactions) + 1,
+                    'date': date_str,
+                    'type': 'expense' if is_expense else 'income',
+                    'account_code': account_code,
+                    'account': account_name,
+                    'description': description,
+                    'gross': abs(gross),
+                    'gst': abs(gst),
+                    'net': abs(net),
+                    'gst_rate_name': gst_rate_name,
+                    'source': 'Manual Journal',
+                    'source_type': source_type,
+                    'reference': reference,
+                    'journal_number': journal_number,
+                    'account_type': account_type,
+                    'xero_url': xero_url
+                })
+
+        # Pagination: if we got fewer than 100 journals, we've reached the end
+        if len(journals) < 100:
+            break
+
+        # Use the last journal number + 1 as the next offset
+        if last_journal_number > 0:
+            offset = last_journal_number + 1
+        else:
+            offset += len(journals)
+
+    return transactions
+
+
 def fetch_xero_bas_report(report_id=None):
     """Fetch BAS (Business Activity Statement) Report from Xero API
 
@@ -2724,6 +2869,12 @@ def run_review():
         debug_info.append(f"Got {len(bank_txns) if bank_txns else 0} bank transactions")
         if bank_txns:
             transactions.extend(bank_txns)
+
+        debug_info.append(f"Fetching manual journals from {from_date_str} to {to_date_str}")
+        manual_journals = fetch_xero_manual_journals(from_date_str, to_date_str)
+        debug_info.append(f"Got {len(manual_journals) if manual_journals else 0} manual journal lines")
+        if manual_journals:
+            transactions.extend(manual_journals)
 
         # Enrich transactions with account names from Chart of Accounts
         if transactions:
