@@ -2494,7 +2494,11 @@ def upload_review():
                 comments.append(f'{asset_name} over $300 - should be capitalized')
             # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
             if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
-                comments.append('Interest should be GST Free Income or Input Taxed only')
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                if 'bas excluded' in gst_rate:
+                    comments.append('Interest Income coded as BAS Excluded - INCORRECT. Interest is an INPUT-TAXED financial supply. Should be GST Free Income (shows on BAS but no GST). BAS Excluded means it won\'t appear on BAS at all.')
+                else:
+                    comments.append('Interest Income - should be GST Free Income or Input Taxed (no GST applies to interest).')
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
@@ -3432,7 +3436,11 @@ def run_review():
                 comments.append(f'{asset_name} over $300 - should be capitalized')
             # Skip interest_gst_error if input_taxed_gst_error already handled (both are financial supply issues)
             if transaction.get('interest_gst_error') and not transaction.get('input_taxed_gst_error'):
-                comments.append('Interest should be GST Free Income or Input Taxed only')
+                gst_rate = transaction.get('gst_rate_name', '').lower()
+                if 'bas excluded' in gst_rate:
+                    comments.append('Interest Income coded as BAS Excluded - INCORRECT. Interest is an INPUT-TAXED financial supply. Should be GST Free Income (shows on BAS but no GST). BAS Excluded means it won\'t appear on BAS at all.')
+                else:
+                    comments.append('Interest Income - should be GST Free Income or Input Taxed (no GST applies to interest).')
             if transaction.get('other_income_error'):
                 comments.append('Other Income coded as BAS Excluded - INCORRECT for business income. Commission, rebates, insurance payouts, hire/rental income, service income, fees should be GST on Income (taxable) or GST Free. BAS Excluded is only for private income, gifts, loans, capital contributions. Source: ATO BAS reporting rules')
             if transaction.get('sales_gst_error'):
@@ -5545,13 +5553,15 @@ def check_interest_gst_error(transaction):
     gst_rate_name = transaction.get('gst_rate_name', '').lower()
     gst_amount = abs(transaction.get('gst', 0))
 
-    # Interest keywords
+    # Interest keywords - include standalone 'interest' for simple descriptions
     interest_keywords = ['interest income', 'interest received', 'interest earned',
                          'interest expense', 'interest paid', 'interest charge',
                          'loan interest', 'bank interest', 'term deposit interest']
     is_interest_account = 'interest' in account
+    # Also match if description is just "interest" or starts with "interest"
+    is_simple_interest = description.strip() == 'interest' or description.startswith('interest ')
 
-    is_interest = any(keyword in description for keyword in interest_keywords) or is_interest_account
+    is_interest = any(keyword in description for keyword in interest_keywords) or is_interest_account or is_simple_interest
 
     if not is_interest:
         return False
