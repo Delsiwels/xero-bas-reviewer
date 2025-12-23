@@ -3736,13 +3736,27 @@ def generate_correcting_journal(transaction):
         is_entertainment = (transaction.get('alcohol_gst_error') or
                            transaction.get('client_entertainment_gst') or
                            transaction.get('staff_entertainment_gst'))
-        # Also skip if account is already Entertainment (regardless of flags)
+        # Check if item in Entertainment account is actually NOT entertainment
+        # e.g., parking, office supplies incorrectly coded to Entertainment
         is_entertainment_account = 'entertainment' in account_name.lower()
+        non_entertainment_in_entertainment = is_entertainment_account and any(kw in description for kw in [
+            'parking', 'car park', 'carpark', 'office', 'stationery', 'supplies',
+            'software', 'subscription', 'phone', 'internet', 'fuel', 'petrol'
+        ])
         # Skip if account is Fines & Penalties - already correct account for fines
         is_fines_account = 'fines' in account_name.lower() or 'penalties' in account_name.lower()
+        # Check if expense/purchase is incorrectly coded to Sales/Revenue account
+        is_revenue_account = 'sales' in account_name.lower() or 'revenue' in account_name.lower()
+        purchase_in_revenue = is_revenue_account and any(kw in description for kw in [
+            'purchase', 'bought', 'buy', 'order', 'reorder', 'supplies', 'stock',
+            'balls', 'equipment', 'materials', 'parts', 'inventory'
+        ])
 
-        if is_travel_account or is_personal or is_entertainment or is_entertainment_account or is_fines_account:
+        if is_travel_account or is_personal or is_fines_account:
             # Don't suggest recoding - travel accounts are fine, personal items have dedicated handler
+            pass
+        elif is_entertainment and not non_entertainment_in_entertainment:
+            # Skip entertainment items - just fix tax code, don't recode account
             pass
         else:
             # Determine suggested correct account based on description
@@ -4768,12 +4782,18 @@ def suggest_correct_account(description):
         (['flight', 'qantas', 'virgin', 'jetstar', 'airline', 'airfare'], {'code': '420', 'name': 'Travel - National'}),
         (['hotel', 'accommodation', 'motel'], {'code': '420', 'name': 'Travel - National'}),
         (['taxi', 'uber', 'didi', 'ola'], {'code': '420', 'name': 'Travel - National'}),
-        (['parking', 'car park', 'wilson'], {'code': '449', 'name': 'Motor Vehicle Expenses'}),
+        (['parking', 'car park', 'carpark', 'wilson'], {'code': '449', 'name': 'Motor Vehicle Expenses'}),
 
         # Office & Admin
         (['stationery', 'officeworks', 'office supplies'], {'code': '453', 'name': 'Printing & Stationery'}),
         (['toner', 'ink', 'cartridge', 'printer'], {'code': '453', 'name': 'Printing & Stationery'}),
         (['postage', 'stamps', 'auspost'], {'code': '458', 'name': 'Postage'}),
+
+        # Stock/Inventory purchases (when incorrectly coded to Sales)
+        (['golf ball', 'balls', 'reorder', 'stock', 'inventory', 'merchandise'],
+         {'code': '500', 'name': 'Cost of Goods Sold'}),
+        (['purchase for resale', 'trading stock', 'goods for sale'],
+         {'code': '500', 'name': 'Cost of Goods Sold'}),
     ]
 
     # Meals & Entertainment - Only suggest for non-hospitality businesses
