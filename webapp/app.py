@@ -1813,12 +1813,13 @@ def enrich_transactions_with_accounts(transactions):
     for txn in transactions:
         code = str(txn.get('account_code', '')).strip()
         if code and code in account_map:
-            txn['account'] = f"{account_map[code]['name']} ({code})"
+            txn['account'] = account_map[code]['name']
             txn['account_type'] = account_map[code]['type']
             found_codes.add(code)
         elif code:
-            # Code exists but not in chart of accounts - show code at least
-            txn['account'] = f"Account {code}"
+            # Code exists but not in chart of accounts - keep existing account name if present
+            if not txn.get('account') or txn.get('account') == code:
+                txn['account'] = f"Account {code}"
             txn['account_type'] = txn.get('account_type', '')
             missing_codes.add(code)
         else:

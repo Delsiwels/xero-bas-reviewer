@@ -1153,7 +1153,7 @@
                             <td>${escapeHtml(item.row_number)}</td>
                             <td><span class="severity-badge ${safeSeverity}">${safeSeverity.toUpperCase()}</span></td>
                             <td>${formatDateAU(item.date)}</td>
-                            <td><strong>${escapeHtml(item.account_code)}</strong><br><small>${escapeHtml(item.account)}</small></td>
+                            <td>${escapeHtml(item.account || '')} <small style="color:#666;">(${escapeHtml(item.account_code || '')})</small></td>
                             <td>${desc}</td>
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
