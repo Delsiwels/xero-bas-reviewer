@@ -1768,23 +1768,41 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     return unique_transactions, debug_info
 
 
-def enrich_transactions_with_accounts(transactions):
-    """Add account names to transactions using Chart of Accounts"""
-    # Build account code to name mapping with pagination
+def fetch_chart_of_accounts_with_retry():
+    """Fetch Chart of Accounts from Xero with retry logic for rate limiting"""
+    import time
+
+    # Check if we have cached accounts in session (valid for 10 minutes)
+    cached = session.get('_cached_accounts')
+    cached_time = session.get('_cached_accounts_time', 0)
+    if cached and (time.time() - cached_time) < 600:  # 10 minute cache
+        print(f"Using cached Chart of Accounts ({len(cached)} accounts)")
+        return cached
+
     account_map = {}
     page = 1
     total_accounts = 0
+    max_retries = 3
 
     while True:
-        try:
-            data = xero_api_request('Accounts', params={'page': page})
-        except Exception as e:
-            print(f"Error fetching accounts page {page}: {e}")
-            break
+        data = None
+        for attempt in range(max_retries):
+            try:
+                data = xero_api_request('Accounts', params={'page': page})
+                break  # Success, exit retry loop
+            except Exception as e:
+                error_str = str(e)
+                if '429' in error_str or 'rate' in error_str.lower():
+                    wait_time = (attempt + 1) * 2  # 2, 4, 6 seconds
+                    print(f"Rate limited on Accounts API, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    print(f"Error fetching accounts page {page}: {e}")
+                    break
 
         if not data or 'Accounts' not in data:
             if page == 1:
-                print(f"Warning: Accounts API returned no data")
+                print(f"Warning: Accounts API returned no data after retries")
             break
 
         accounts = data.get('Accounts', [])
@@ -1806,6 +1824,19 @@ def enrich_transactions_with_accounts(transactions):
         page += 1
 
     print(f"Loaded {total_accounts} accounts from Chart of Accounts ({len(account_map)} with codes)")
+
+    # Cache in session if we got data
+    if account_map:
+        session['_cached_accounts'] = account_map
+        session['_cached_accounts_time'] = time.time()
+
+    return account_map
+
+
+def enrich_transactions_with_accounts(transactions):
+    """Add account names to transactions using Chart of Accounts"""
+    # Fetch accounts with retry and caching
+    account_map = fetch_chart_of_accounts_with_retry()
 
     # Enrich transactions
     missing_codes = set()
