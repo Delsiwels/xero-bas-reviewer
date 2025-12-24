@@ -1813,7 +1813,12 @@ def enrich_transactions_with_accounts(transactions):
     for txn in transactions:
         code = str(txn.get('account_code', '')).strip()
         if code and code in account_map:
-            txn['account'] = account_map[code]['name']
+            account_name = account_map[code]['name']
+            # Use the name if available, otherwise keep existing or use placeholder
+            if account_name:
+                txn['account'] = account_name
+            elif not txn.get('account') or txn.get('account') == code:
+                txn['account'] = f"Account {code}"
             txn['account_type'] = account_map[code]['type']
             found_codes.add(code)
         elif code:
