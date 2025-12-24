@@ -382,8 +382,10 @@ def refresh_token_if_needed():
     return True
 
 
-def xero_api_request(endpoint, params=None):
-    """Make authenticated request to Xero API"""
+def xero_api_request(endpoint, params=None, max_retries=3):
+    """Make authenticated request to Xero API with retry for rate limiting"""
+    import time
+
     if not refresh_token_if_needed():
         print(f"DEBUG xero_api_request: Token refresh failed for {endpoint}")
         return None
@@ -396,14 +398,24 @@ def xero_api_request(endpoint, params=None):
     }
 
     url = f"{XERO_API_URL}/{endpoint}"
-    print(f"DEBUG xero_api_request: Calling {url} with params={params}")
-    response = requests.get(url, headers=headers, params=params)
-    print(f"DEBUG xero_api_request: Response status={response.status_code}")
 
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"DEBUG xero_api_request: Error response: {response.text[:500]}")
+    for attempt in range(max_retries):
+        print(f"DEBUG xero_api_request: Calling {url} with params={params}")
+        response = requests.get(url, headers=headers, params=params)
+        print(f"DEBUG xero_api_request: Response status={response.status_code}")
+
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code == 429:
+            # Rate limited - wait and retry
+            retry_after = int(response.headers.get('Retry-After', (attempt + 1) * 2))
+            print(f"DEBUG xero_api_request: Rate limited, waiting {retry_after}s (attempt {attempt + 1}/{max_retries})")
+            time.sleep(retry_after)
+        else:
+            print(f"DEBUG xero_api_request: Error response: {response.text[:500]}")
+            return None
+
+    print(f"DEBUG xero_api_request: Failed after {max_retries} retries due to rate limiting")
     return None
 
 
@@ -1769,7 +1781,7 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
 
 def fetch_chart_of_accounts_with_retry():
-    """Fetch Chart of Accounts from Xero with retry logic for rate limiting"""
+    """Fetch Chart of Accounts from Xero with caching"""
     import time
 
     # Check if we have cached accounts in session (valid for 10 minutes)
@@ -1782,27 +1794,13 @@ def fetch_chart_of_accounts_with_retry():
     account_map = {}
     page = 1
     total_accounts = 0
-    max_retries = 3
 
     while True:
-        data = None
-        for attempt in range(max_retries):
-            try:
-                data = xero_api_request('Accounts', params={'page': page})
-                break  # Success, exit retry loop
-            except Exception as e:
-                error_str = str(e)
-                if '429' in error_str or 'rate' in error_str.lower():
-                    wait_time = (attempt + 1) * 2  # 2, 4, 6 seconds
-                    print(f"Rate limited on Accounts API, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(wait_time)
-                else:
-                    print(f"Error fetching accounts page {page}: {e}")
-                    break
+        data = xero_api_request('Accounts', params={'page': page})
 
         if not data or 'Accounts' not in data:
             if page == 1:
-                print(f"Warning: Accounts API returned no data after retries")
+                print(f"Warning: Accounts API returned no data")
             break
 
         accounts = data.get('Accounts', [])
