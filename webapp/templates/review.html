@@ -733,6 +733,22 @@
                 clearInterval(progressInterval);
                 progressFill.style.width = '100%';
 
+                // Check if response is OK before parsing JSON
+                if (!response.ok) {
+                    const text = await response.text();
+                    // Check if it's HTML (server error page)
+                    if (text.trim().startsWith('<')) {
+                        throw new Error(`Server error (${response.status}). The review may have timed out. Try a shorter date range.`);
+                    }
+                    // Try to parse as JSON error
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.error || `Server error: ${response.status}`);
+                    } catch (parseErr) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                }
+
                 const data = await response.json();
 
                 if (data.error) {
@@ -844,6 +860,21 @@
                 clearInterval(progressInterval);
                 progressFill.style.width = '100%';
                 statusText.textContent = 'Review complete!';
+
+                // Check for HTML error response before parsing JSON
+                if (!response.ok) {
+                    const text = await response.text();
+                    if (text.trim().startsWith('<')) {
+                        throw new Error(`Server error (${response.status}). The review may have timed out. Try a smaller file.`);
+                    }
+                    try {
+                        const errorData = JSON.parse(text);
+                        throw new Error(errorData.error || `Server error: ${response.status}`);
+                    } catch (parseErr) {
+                        if (parseErr.message.includes('Server error')) throw parseErr;
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                }
 
                 const data = await response.json();
 
