@@ -706,18 +706,37 @@
             const progressFill = document.getElementById('progress-fill');
             const statusText = document.getElementById('status-text');
 
-            if (reviewMode === 'deep') {
-                statusText.textContent = 'Scanning 12 months of history to learn patterns...';
-            } else {
-                statusText.textContent = 'Fetching transactions from Xero...';
-            }
+            // Progress stages with estimated timing
+            const stages = reviewMode === 'deep' ? [
+                { pct: 10, msg: 'Scanning 12 months of history to learn patterns...' },
+                { pct: 30, msg: 'Analyzing historical transaction patterns...' },
+                { pct: 50, msg: 'Fetching transactions for selected period...' },
+                { pct: 65, msg: 'Running BAS compliance checks...' },
+                { pct: 80, msg: 'AI reviewing flagged transactions...' },
+                { pct: 90, msg: 'Finalizing review (this may take a minute)...' }
+            ] : [
+                { pct: 15, msg: 'Fetching transactions from Xero...' },
+                { pct: 40, msg: 'Running BAS compliance checks...' },
+                { pct: 65, msg: 'AI reviewing flagged transactions...' },
+                { pct: 85, msg: 'Finalizing review...' }
+            ];
+
+            let stageIndex = 0;
+            statusText.textContent = stages[0].msg;
 
             const progressInterval = setInterval(() => {
                 if (progress < 90) {
-                    progress += Math.random() * (reviewMode === 'deep' ? 3 : 10);
-                    progressFill.style.width = Math.min(progress, 90) + '%';
+                    progress += Math.random() * (reviewMode === 'deep' ? 2 : 5);
+                    progress = Math.min(progress, 90);
+                    progressFill.style.width = progress + '%';
+
+                    // Update status message based on progress
+                    while (stageIndex < stages.length - 1 && progress >= stages[stageIndex + 1].pct) {
+                        stageIndex++;
+                        statusText.textContent = stages[stageIndex].msg;
+                    }
                 }
-            }, 500);
+            }, 800);
 
             try {
                 const response = await fetch('/api/run-review', {

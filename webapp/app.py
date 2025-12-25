@@ -2423,7 +2423,7 @@ def upload_review():
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
-            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=5)
+            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=8)
         except Exception as e:
             print(f"Error in batch AI review: {e}")
             ai_results = [{'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []} for _ in range(ai_review_limit)]
@@ -3240,7 +3240,7 @@ def run_review():
 
         # Use batch AI review for faster processing (5 transactions per API call)
         try:
-            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=5)
+            ai_results = review_batch_with_ai(rule_flagged[:ai_review_limit], batch_size=8)
         except Exception as e:
             print(f"Error in batch AI review: {e}")
             ai_results = [{'has_issues': True, 'severity': 'high', 'comments': '', 'issues': []} for _ in range(ai_review_limit)]
@@ -8573,9 +8573,9 @@ Transaction 2: [OK or ISSUE: brief description]
                     {'role': 'user', 'content': batch_prompt}
                 ],
                 'temperature': 0.3,
-                'max_tokens': 1000
+                'max_tokens': 1500
             },
-            timeout=60
+            timeout=90
         )
 
         if response.status_code == 200:
@@ -8678,7 +8678,7 @@ Transaction 2: [OK or ISSUE: brief description]
         return (batch_index, fallback)
 
 
-def review_batch_with_ai(transactions, batch_size=5, max_workers=4):
+def review_batch_with_ai(transactions, batch_size=8, max_workers=6):
     """Review multiple transactions in parallel batches with DeepSeek AI for faster processing"""
     if not DEEPSEEK_API_KEY or not transactions:
         # Return basic review without AI for all transactions
