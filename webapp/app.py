@@ -1046,6 +1046,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
+    print(f"[DEBUG] fetch_xero_manual_journals: from_date={from_date.date()}, to_date={to_date.date()}")
 
     # Xero Journals API uses offset-based pagination
     offset = 0
@@ -1088,6 +1089,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             journal_date_only = journal_date.date()
             from_date_only = from_date.date()
             to_date_only = to_date.date()
+
+            # Debug: log September dates that should be filtered
+            if journal_date_only.month == 9:
+                print(f"[DEBUG] Sept date found: {journal_date_only}, from_date={from_date_only}, should_skip={journal_date_only < from_date_only}")
+
             if journal_date_only < from_date_only or journal_date_only > to_date_only:
                 continue
 
