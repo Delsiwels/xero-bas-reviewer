@@ -1088,11 +1088,25 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
             journal_number = journal.get('JournalNumber', '')
             journal_id = journal.get('JournalID', '')
+            source_id = journal.get('SourceID', '')
             reference = journal.get('Reference', '')
             narration = journal.get('Narration', '')  # Journal-level description
 
-            # Build Xero URL for manual journal
-            xero_url = f"https://go.xero.com/GeneralLedger/View.aspx?journalID={journal_id}" if journal_id else ''
+            # Build Xero URL based on source type
+            xero_url = ''
+            if source_id:
+                if source_type in ['ACCREC', 'ACCRECCREDIT']:
+                    xero_url = f"https://go.xero.com/AccountsReceivable/View.aspx?InvoiceID={source_id}"
+                elif source_type in ['ACCPAY', 'ACCPAYCREDIT']:
+                    xero_url = f"https://go.xero.com/AccountsPayable/View.aspx?InvoiceID={source_id}"
+                elif source_type in ['CASHREC', 'CASHPAID', 'TRANSFER']:
+                    xero_url = f"https://go.xero.com/Bank/ViewTransaction.aspx?bankTransactionID={source_id}"
+                elif source_type == 'MANJOURNAL':
+                    xero_url = f"https://go.xero.com/Journal/View/{source_id}"
+                elif source_type == 'EXPCLAIM':
+                    xero_url = f"https://go.xero.com/ExpenseClaims/View.aspx?expenseClaimID={source_id}"
+            elif journal_id and source_type == 'MANJOURNAL':
+                xero_url = f"https://go.xero.com/Journal/View/{journal_id}"
 
             # Process each journal line
             for line in journal.get('JournalLines', []):
