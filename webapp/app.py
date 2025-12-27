@@ -3665,6 +3665,37 @@ def get_ato_references(transaction):
     Returns a list of dicts with 'title' and 'url' keys.
     """
     references = []
+    desc = (transaction.get('description') or '').lower()
+
+    # Account coding issues - add context-aware references
+    if transaction.get('account_coding_suspicious'):
+        # Check description for specific expense types to provide relevant guidance
+        if any(kw in desc for kw in ['flight', 'airfare', 'qantas', 'jetstar', 'virgin', 'travel', 'conference', 'seminar']):
+            references.append({
+                'title': 'Travel expenses - deductions',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses/travel-expenses'
+            })
+        elif any(kw in desc for kw in ['parking', 'car park', 'carpark']):
+            references.append({
+                'title': 'Motor vehicle expenses',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/motor-vehicle-expenses'
+            })
+        elif any(kw in desc for kw in ['meal', 'lunch', 'dinner', 'food', 'restaurant', 'cafe']):
+            references.append({
+                'title': 'Entertainment vs meal expenses',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment'
+            })
+        elif any(kw in desc for kw in ['software', 'subscription', 'license', 'licence', 'saas']):
+            references.append({
+                'title': 'Software and subscriptions',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+            })
+        else:
+            # General account coding guidance
+            references.append({
+                'title': 'Expense categories for business',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+            })
 
     # GST-related references
     if transaction.get('input_taxed_gst_error'):
@@ -3820,6 +3851,21 @@ def get_ato_references(transaction):
             'title': 'Deductions for borrowing expenses',
             'url': 'https://www.ato.gov.au/individuals-and-families/investments-and-assets/rental-properties/rental-expenses-to-claim/borrowing-expenses'
         })
+
+    # Fallback: if no specific references found, add general GST guidance
+    if not references:
+        # Check if it's a GST-related issue based on gst_rate_name
+        gst_rate = (transaction.get('gst_rate_name') or '').lower()
+        if 'gst' in gst_rate or transaction.get('gst', 0) != 0:
+            references.append({
+                'title': 'GST for business',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst'
+            })
+        else:
+            references.append({
+                'title': 'Business deductions',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions'
+            })
 
     # Remove duplicates while preserving order
     seen_urls = set()
