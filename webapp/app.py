@@ -1077,11 +1077,13 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             # Skip draft and voided journals - only include posted journals
             journal_status = journal.get('Status') or 'POSTED'  # Handle null status
 
-            # Debug: log status for manual journals
-            if source_type == 'MANJOURNAL':
-                print(f"DEBUG STATUS: Journal {journal.get('JournalNumber')} status={journal.get('Status')} source_type={source_type}")
+            # Debug: log all journal statuses to find voided ones
+            jnum = journal.get('JournalNumber')
+            if jnum and jnum > 400:  # Only log recent journals to reduce noise
+                print(f"DEBUG STATUS: Journal {jnum} status='{journal.get('Status')}' source_type={source_type} ref={journal.get('Reference', '')[:20]}")
 
             if journal_status.upper() in ['DRAFT', 'VOIDED', 'DELETED', 'ARCHIVED']:
+                print(f"DEBUG: SKIPPING voided/draft journal {jnum}")
                 continue
 
             raw_date = journal.get('JournalDate', '')
