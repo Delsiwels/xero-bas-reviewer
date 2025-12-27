@@ -1072,9 +1072,6 @@
             // Store all transactions for toggle view
             if (data.all_transactions) {
                 allTransactionsData = data.all_transactions;
-                console.log('Stored all_transactions:', allTransactionsData.length, 'items');
-            } else {
-                console.log('WARNING: No all_transactions in API response');
             }
 
             // Reset to flagged view when displaying new results
@@ -1622,12 +1619,7 @@
 
         // Toggle to show all transactions sorted by GST rate
         function showAllTransactions() {
-            console.log('showAllTransactions called, currentView:', currentView, 'allTransactionsData length:', allTransactionsData ? allTransactionsData.length : 'null');
-
-            if (currentView === 'all') {
-                console.log('Already showing all, returning');
-                return;  // Already showing all
-            }
+            if (currentView === 'all') return;  // Already showing all
             currentView = 'all';
 
             // Update card active states
@@ -1635,7 +1627,6 @@
             document.getElementById('flagged-card').classList.remove('active');
 
             if (!allTransactionsData || allTransactionsData.length === 0) {
-                console.log('No allTransactionsData, showing empty message');
                 document.getElementById('flagged-table-container').innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #666;">
                         <p>No transaction data available. Run a review first.</p>
@@ -1643,8 +1634,6 @@
                 `;
                 return;
             }
-
-            console.log('Building all transactions table with', allTransactionsData.length, 'transactions');
 
             // Custom sort order for GST rates
             const gstRateOrder = [
