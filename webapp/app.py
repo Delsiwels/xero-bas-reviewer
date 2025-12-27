@@ -1049,8 +1049,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     # Xero Journals API uses offset-based pagination
     offset = 0
     last_journal_number = 0
+    max_iterations = 20  # Limit API calls to prevent rate limiting (20 pages x 100 = 2000 journals max)
+    iterations = 0
 
-    while True:
+    while iterations < max_iterations:
+        iterations += 1
         params = {'offset': offset}
         data = xero_api_request('Journals', params=params)
 
@@ -1176,6 +1179,9 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             offset = last_journal_number + 1
         else:
             offset += len(journals)
+
+    if iterations >= max_iterations:
+        print(f"Manual journals: Reached max iterations ({max_iterations}), stopping to prevent rate limiting")
 
     return transactions
 
@@ -1614,8 +1620,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     offset = 0
     last_journal_number = 0
     total_journals_fetched = 0
+    max_iterations = 20  # Limit API calls to prevent rate limiting
+    iterations = 0
 
-    while True:
+    while iterations < max_iterations:
+        iterations += 1
         params = {'offset': offset}
         debug_info.append(f"Calling Journals API with offset={offset}")
         data = xero_api_request('Journals', params=params)
