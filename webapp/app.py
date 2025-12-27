@@ -2718,12 +2718,20 @@ def upload_review():
                 print(f"Error in generate_correcting_journal: {e}")
                 correcting_journal = {'narration': 'Error generating journal', 'entries': []}
 
+            # Get ATO references based on transaction flags
+            try:
+                ato_refs = get_ato_references(transaction)
+            except Exception as e:
+                print(f"Error in get_ato_references: {e}")
+                ato_refs = []
+
             flagged_items.append({
                 **transaction,
                 'severity': ai_result.get('severity', 'high'),
                 'comments': ' | '.join(comments) if comments else 'Requires review',
                 'issues': [],  # AI issues removed as they duplicate rule-based comments
-                'correcting_journal': correcting_journal
+                'correcting_journal': correcting_journal,
+                'ato_references': ato_refs
             })
 
         # Store results for download (only flagged items to save memory on large datasets)
@@ -3536,12 +3544,20 @@ def run_review():
                 print(f"Error in generate_correcting_journal: {e}")
                 correcting_journal = {'narration': 'Error generating journal', 'entries': []}
 
+            # Get ATO references based on transaction flags
+            try:
+                ato_refs = get_ato_references(transaction)
+            except Exception as e:
+                print(f"Error in get_ato_references: {e}")
+                ato_refs = []
+
             flagged_items.append({
                 **transaction,
                 'severity': ai_result.get('severity', 'high'),
                 'comments': ' | '.join(comments) if comments else 'Requires review',
                 'issues': [],  # AI issues removed as they duplicate rule-based comments
-                'correcting_journal': correcting_journal
+                'correcting_journal': correcting_journal,
+                'ato_references': ato_refs
             })
 
         # Store results in session for download (only flagged items to save memory)
@@ -3641,6 +3657,179 @@ def run_review():
     except Exception as e:
         import traceback
         return jsonify({'error': str(e), 'trace': traceback.format_exc()}), 500
+
+
+def get_ato_references(transaction):
+    """
+    Get relevant ATO references/rulings based on transaction flags.
+    Returns a list of dicts with 'title' and 'url' keys.
+    """
+    references = []
+
+    # GST-related references
+    if transaction.get('input_taxed_gst_error'):
+        references.append({
+            'title': 'GSTR 2002/2 - Input taxed financial supplies',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+        })
+
+    if transaction.get('missing_gst_error'):
+        references.append({
+            'title': 'GST and claiming credits',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits'
+        })
+
+    if transaction.get('alcohol_gst_error'):
+        references.append({
+            'title': 'Wine equalisation tax (WET)',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/wine-equalisation-tax'
+        })
+
+    # Entertainment - FBT and GST
+    if transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
+        references.append({
+            'title': 'GST and entertainment expenses',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/gst-issues-registers/food-and-beverages/gst-food-and-beverage-search-tool'
+        })
+        references.append({
+            'title': 'FBT - Entertainment',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment'
+        })
+
+    # Government charges - no GST
+    if transaction.get('government_charges_gst'):
+        references.append({
+            'title': 'Section 81-5 - Australian taxes not consideration',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/81-5'
+        })
+        references.append({
+            'title': 'Reg 81-15.01 - Government charges',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/81-15.01'
+        })
+
+    # Wages - BAS Excluded
+    if transaction.get('wages_gst_error'):
+        references.append({
+            'title': 'GST and employee wages',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/employee-wages-and-allowances'
+        })
+
+    # Motor vehicle GST cap
+    if transaction.get('motor_vehicle_gst_limit'):
+        references.append({
+            'title': 'GSTR 2006/3 - GST and motor vehicles',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20063/NAT/ATO/00001'
+        })
+        references.append({
+            'title': 'Car limit for depreciation',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/motor-vehicle-expenses/car-limit'
+        })
+
+    # Insurance
+    if transaction.get('insurance_gst_error') or transaction.get('life_insurance_personal'):
+        references.append({
+            'title': 'GSTR 2002/2 - Input taxed supplies (insurance)',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+        })
+        if transaction.get('life_insurance_personal'):
+            references.append({
+                'title': 'Life insurance deductibility',
+                'url': 'https://www.ato.gov.au/individuals-and-families/investments-and-assets/insurance-premiums-and-cover'
+            })
+
+    # Travel GST
+    if transaction.get('travel_gst'):
+        references.append({
+            'title': 'Division 38 - GST-free supplies (exports/travel)',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/38-190'
+        })
+
+    # Exports
+    if transaction.get('export_gst_error'):
+        references.append({
+            'title': 'GSTR 2002/6 - GST-free exports',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20026/NAT/ATO/00001'
+        })
+
+    # Grants and sponsorship
+    if transaction.get('grants_sponsorship_gst'):
+        references.append({
+            'title': 'GSTR 2012/2 - GST treatment of grants',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20122/NAT/ATO/00001'
+        })
+
+    # Asset capitalization
+    if transaction.get('asset_capitalization_error') or transaction.get('computer_equipment_expense'):
+        references.append({
+            'title': 'Instant asset write-off',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/simpler-depreciation-for-small-business/instant-asset-write-off'
+        })
+
+    # Fines and penalties
+    if transaction.get('fines_penalties_gst'):
+        references.append({
+            'title': 'Section 9-5 - Fines are not consideration',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/9-5'
+        })
+
+    # Donations
+    if transaction.get('donations_gst'):
+        references.append({
+            'title': 'GSTR 2012/1 - GST and gifts/donations',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20121/NAT/ATO/00001'
+        })
+
+    # Residential property
+    if transaction.get('residential_premises_gst'):
+        references.append({
+            'title': 'Subdivision 40-B - Residential premises',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/40-35'
+        })
+
+    # Overseas subscriptions
+    if transaction.get('overseas_subscription_gst'):
+        references.append({
+            'title': 'GST on imported services',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/gst-on-imported-services-and-digital-products'
+        })
+
+    # Payment processor fees
+    if transaction.get('payment_processor_fees'):
+        references.append({
+            'title': 'GSTR 2002/2 - Financial supplies',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+        })
+
+    # Drawings/personal expenses
+    if transaction.get('drawings_loan_error') or transaction.get('personal_in_business_account'):
+        references.append({
+            'title': 'Business vs personal expenses',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+        })
+
+    # Interest - input taxed
+    if transaction.get('interest_gst_error'):
+        references.append({
+            'title': 'GSTR 2002/2 - Financial supplies (interest)',
+            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+        })
+
+    # Borrowing expenses
+    if transaction.get('borrowing_expenses_error'):
+        references.append({
+            'title': 'Deductions for borrowing expenses',
+            'url': 'https://www.ato.gov.au/individuals-and-families/investments-and-assets/rental-properties/rental-expenses-to-claim/borrowing-expenses'
+        })
+
+    # Remove duplicates while preserving order
+    seen_urls = set()
+    unique_refs = []
+    for ref in references:
+        if ref['url'] not in seen_urls:
+            seen_urls.add(ref['url'])
+            unique_refs.append(ref)
+
+    return unique_refs
 
 
 def generate_correcting_journal(transaction):

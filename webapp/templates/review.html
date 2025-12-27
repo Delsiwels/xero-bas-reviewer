@@ -1134,9 +1134,19 @@
                     const desc = escapeHtml(item.description);
                     const comments = escapeHtml(item.comments || '');
                     const commentParts = comments.split(' | ').filter(c => c.trim());
-                    const formattedComments = commentParts.length > 1
+                    let formattedComments = commentParts.length > 1
                         ? '<ul style="margin:0; padding-left:18px;">' + commentParts.map(c => '<li>' + c + '</li>').join('') + '</ul>'
                         : comments;
+
+                    // Add ATO references below comments
+                    if (item.ato_references && item.ato_references.length > 0) {
+                        formattedComments += '<div class="ato-refs" style="margin-top:8px; padding-top:6px; border-top:1px dashed #ddd; font-size:11px;">';
+                        formattedComments += '<span style="color:#666; font-weight:500;">📚 ATO References:</span><br>';
+                        item.ato_references.forEach(ref => {
+                            formattedComments += `<a href="${escapeHtml(ref.url)}" target="_blank" rel="noopener" style="color:#0052CC; text-decoration:none; display:inline-block; margin:2px 0;">→ ${escapeHtml(ref.title)}</a><br>`;
+                        });
+                        formattedComments += '</div>';
+                    }
 
                     let journalHtml = '';
                     if (item.correcting_journal && item.correcting_journal.entries && item.correcting_journal.entries.length > 0) {
