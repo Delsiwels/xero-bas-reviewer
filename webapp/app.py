@@ -1084,7 +1084,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             # Filter by date range - skip if no valid date or outside range
             if not journal_date:
                 continue  # Skip transactions without valid dates
-            if journal_date < from_date or journal_date > to_date:
+            # Compare dates only (ignore time components)
+            journal_date_only = journal_date.date()
+            from_date_only = from_date.date()
+            to_date_only = to_date.date()
+            if journal_date_only < from_date_only or journal_date_only > to_date_only:
                 continue
 
             journal_number = journal.get('JournalNumber', '')
@@ -1782,7 +1786,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
             # Filter by date range - skip if no valid date or outside range
             if not journal_date:
                 continue  # Skip transactions without valid dates
-            if journal_date < from_date or journal_date > to_date:
+            # Compare dates only (ignore time components)
+            journal_date_only = journal_date.date()
+            from_date_only = from_date.date()
+            to_date_only = to_date.date()
+            if journal_date_only < from_date_only or journal_date_only > to_date_only:
                 continue
                 journals_in_range += 1
 
