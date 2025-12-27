@@ -1368,10 +1368,29 @@ def debug_invoice(invoice_number):
                     'LineItems': len(inv.get('LineItems', []))
                 })
 
-    # Search journals for this invoice reference
+    # Get the invoice IDs we're looking for
+    invoice_ids = [inv['InvoiceID'] for inv in results['invoices_found']]
+    results['invoice_ids_to_find'] = invoice_ids
+
+    # First, check the highest journal number by fetching with a very high offset
+    high_offset_data = xero_api_request('Journals', params={'offset': 999999})
+    if high_offset_data and high_offset_data.get('Journals'):
+        results['highest_journal_sample'] = high_offset_data['Journals'][0].get('JournalNumber')
+    else:
+        # Try progressively lower offsets to find where journals start
+        for test_offset in [500000, 200000, 100000, 50000, 20000, 10000]:
+            test_data = xero_api_request('Journals', params={'offset': test_offset})
+            if test_data and test_data.get('Journals'):
+                results['journals_exist_at_offset'] = test_offset
+                results['sample_journal_at_offset'] = test_data['Journals'][0].get('JournalNumber')
+                break
+
+    # Search journals from the beginning
     offset = 0
-    max_iterations = 100  # Limit for debug
+    max_iterations = 50  # Quick scan from start
     iterations = 0
+    results['lowest_journal_number'] = None
+    results['highest_journal_seen'] = 0
 
     while iterations < max_iterations:
         iterations += 1
@@ -1387,14 +1406,19 @@ def debug_invoice(invoice_number):
         results['total_journals_scanned'] += len(journals)
 
         for journal in journals:
+            jnum = journal.get('JournalNumber', 0)
+            if results['lowest_journal_number'] is None:
+                results['lowest_journal_number'] = jnum
+            results['highest_journal_seen'] = max(results['highest_journal_seen'], jnum)
+
             ref = journal.get('Reference', '') or ''
             narration = journal.get('Narration', '') or ''
             source_id = journal.get('SourceID', '')
 
-            # Check if this journal matches our invoice
-            if invoice_number.lower() in ref.lower() or invoice_number.lower() in narration.lower():
+            # Check if SourceID matches any invoice we found
+            if source_id in invoice_ids:
                 results['journals_found'].append({
-                    'JournalNumber': journal.get('JournalNumber'),
+                    'JournalNumber': jnum,
                     'JournalDate': journal.get('JournalDate'),
                     'SourceType': journal.get('SourceType'),
                     'SourceID': source_id,
@@ -1403,25 +1427,25 @@ def debug_invoice(invoice_number):
                     'Lines': len(journal.get('JournalLines', []))
                 })
 
-            # Also check if SourceID matches any invoice we found
-            for inv in results['invoices_found']:
-                if source_id == inv['InvoiceID']:
-                    if not any(j['SourceID'] == source_id for j in results['journals_found']):
-                        results['journals_found'].append({
-                            'JournalNumber': journal.get('JournalNumber'),
-                            'JournalDate': journal.get('JournalDate'),
-                            'SourceType': journal.get('SourceType'),
-                            'SourceID': source_id,
-                            'Reference': ref,
-                            'Status': journal.get('Status'),
-                            'Lines': len(journal.get('JournalLines', []))
-                        })
+            # Also check reference/narration
+            if invoice_number.lower() in ref.lower() or invoice_number.lower() in narration.lower():
+                if not any(j.get('JournalNumber') == jnum for j in results['journals_found']):
+                    results['journals_found'].append({
+                        'JournalNumber': jnum,
+                        'JournalDate': journal.get('JournalDate'),
+                        'SourceType': journal.get('SourceType'),
+                        'SourceID': source_id,
+                        'Reference': ref,
+                        'Status': journal.get('Status'),
+                        'Lines': len(journal.get('JournalLines', []))
+                    })
 
-        # Get highest journal number for pagination
         last_num = max((j.get('JournalNumber', 0) for j in journals), default=0)
         if len(journals) < 100:
             break
         offset = last_num + 1
+
+    results['message'] = f"Scanned journals {results['lowest_journal_number']} to {results['highest_journal_seen']}. Invoice journals may be at higher numbers."
 
     return jsonify(results)
 
