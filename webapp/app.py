@@ -7306,28 +7306,14 @@ def check_personal_expense_in_business_account(transaction):
     description = (transaction.get('description', '') or '').lower()
     account = (transaction.get('account', '') or '').lower()
 
-    # Keywords indicating personal expense (must be more specific than just "personal")
-    # "personal" alone is too broad - catches plan names like "telstra personal"
+    # Keywords indicating personal expense
     personal_keywords = [
-        'personal expense', 'personal use', 'private use', 'private expense',
-        'owner personal', 'directors personal', 'shareholder personal',
-        'for personal', 'personal purchase', 'personal item'
+        'personal', 'private', 'private use', 'personal use',
+        'owner personal', 'directors personal', 'shareholder personal'
     ]
 
     # Check if description indicates personal expense
     is_personal = any(keyword in description for keyword in personal_keywords)
-
-    # Also check for standalone "personal" but NOT when it's part of a product name
-    if not is_personal and 'personal' in description:
-        # Exclude product names like "telstra personal", "optus personal", "personal plan"
-        product_patterns = ['telstra personal', 'optus personal', 'vodafone personal',
-                           'personal plan', 'personal account', 'personal mobile']
-        is_product_name = any(pattern in description for pattern in product_patterns)
-        if not is_product_name:
-            # Check if "personal" appears to indicate personal use
-            # Look for patterns like "- personal" or "personal -" or description is just "personal"
-            if description.strip() == 'personal' or ' - personal' in description or 'personal -' in description:
-                is_personal = True
 
     if not is_personal:
         return False
