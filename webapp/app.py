@@ -1081,10 +1081,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             if isinstance(current_journal_number, (int, float)):
                 last_journal_number = max(last_journal_number, int(current_journal_number))
 
-            # Filter by date range
-            if journal_date:
-                if journal_date < from_date or journal_date > to_date:
-                    continue
+            # Filter by date range - skip if no valid date or outside range
+            if not journal_date:
+                continue  # Skip transactions without valid dates
+            if journal_date < from_date or journal_date > to_date:
+                continue
 
             journal_number = journal.get('JournalNumber', '')
             journal_id = journal.get('JournalID', '')
@@ -1102,11 +1103,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 elif source_type in ['CASHREC', 'CASHPAID', 'TRANSFER']:
                     xero_url = f"https://go.xero.com/Bank/ViewTransaction.aspx?bankTransactionID={source_id}"
                 elif source_type == 'MANJOURNAL':
-                    xero_url = f"https://go.xero.com/Journal/View/{source_id}"
+                    xero_url = f"https://go.xero.com/Journal/View.aspx?JournalID={source_id}"
                 elif source_type == 'EXPCLAIM':
                     xero_url = f"https://go.xero.com/ExpenseClaims/View.aspx?expenseClaimID={source_id}"
             elif journal_id and source_type == 'MANJOURNAL':
-                xero_url = f"https://go.xero.com/Journal/View/{journal_id}"
+                xero_url = f"https://go.xero.com/Journal/View.aspx?JournalID={journal_id}"
 
             # Process each journal line
             for line in journal.get('JournalLines', []):
@@ -1778,10 +1779,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
             if journal_status in ['DRAFT', 'VOIDED', 'DELETED']:
                 continue
 
-            # Filter by date range
-            if journal_date:
-                if journal_date < from_date or journal_date > to_date:
-                    continue
+            # Filter by date range - skip if no valid date or outside range
+            if not journal_date:
+                continue  # Skip transactions without valid dates
+            if journal_date < from_date or journal_date > to_date:
+                continue
                 journals_in_range += 1
 
             journal_number = journal.get('JournalNumber', '')
