@@ -1281,6 +1281,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     'gst_rate_name': gst_rate_name,
                     'source': source_name,
                     'source_type': source_type,
+                    'source_id': source_id,  # Invoice/Bill ID for deduplication
                     'reference': reference,
                     'journal_number': journal_number,
                     'account_type': account_type,
@@ -1328,38 +1329,31 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
     # Smart deduplication: Keep only the LATEST journal entries per source
     # When invoices/bills are edited, Xero creates reversal entries (old journals) and new entries (new journals)
-    # We want to keep only the entries from the highest journal number for each unique source+description
+    # All entries for the same invoice have the same source_id, so we group by source_id and keep highest journal
 
     for key, txns in txns_by_account_date.items():
         if len(txns) == 1:
             filtered_transactions.append(txns[0])
         else:
-            # Group by description to find related transactions
-            by_desc = {}
+            # Group by source_id to find all entries for the same invoice/bill
+            by_source = {}
             for txn in txns:
-                desc_key = (txn.get('description', '')[:50], abs(txn['gross']))  # Group by description prefix and amount
-                if desc_key not in by_desc:
-                    by_desc[desc_key] = []
-                by_desc[desc_key].append(txn)
+                # Use source_id if available, otherwise use description+amount as fallback
+                source_key = txn.get('source_id') or f"{txn.get('description', '')[:30]}_{abs(txn['gross'])}"
+                if source_key not in by_source:
+                    by_source[source_key] = []
+                by_source[source_key].append(txn)
 
-            for desc_key, desc_txns in by_desc.items():
-                if len(desc_txns) == 1:
-                    filtered_transactions.append(desc_txns[0])
+            for source_key, source_txns in by_source.items():
+                if len(source_txns) == 1:
+                    filtered_transactions.append(source_txns[0])
                 else:
-                    # Multiple transactions with same description and amount
-                    # Check if they're offsetting pairs (one positive, one negative)
-                    pos_txns = [t for t in desc_txns if t['gross'] > 0]
-                    neg_txns = [t for t in desc_txns if t['gross'] < 0]
-
-                    if len(pos_txns) > 0 and len(neg_txns) > 0:
-                        # Has both positive and negative - keep only from highest journal number
-                        # Sort by journal number descending
-                        sorted_txns = sorted(desc_txns, key=lambda t: t.get('journal_number', 0), reverse=True)
-                        # Keep the first one (highest journal number)
-                        filtered_transactions.append(sorted_txns[0])
-                    else:
-                        # All same sign - might be legitimate duplicates, keep all
-                        for txn in desc_txns:
+                    # Multiple entries for same source - keep only from highest journal number
+                    # This handles edited invoices where reversal and new entry have same source_id
+                    max_journal = max(t.get('journal_number', 0) for t in source_txns)
+                    # Keep all entries from the highest journal number (an invoice can have multiple lines)
+                    for txn in source_txns:
+                        if txn.get('journal_number', 0) == max_journal:
                             filtered_transactions.append(txn)
 
     print(f"DEBUG DEDUP: After dedup, {len(filtered_transactions)} transactions remain")
@@ -1388,10 +1382,11 @@ def debug_gst_report():
 
     # Try different endpoint variations
     endpoints = [
+        ('Reports/ActivityStatement', {'fromDate': from_date, 'toDate': to_date}),
+        ('Reports/ActivitySummary', {'fromDate': from_date, 'toDate': to_date}),
         ('Reports/GSTReport', {'fromDate': from_date, 'toDate': to_date}),
         ('Reports/GST103', {'fromDate': from_date, 'toDate': to_date}),
         ('Reports/AustralianBASReport', {}),
-        ('Reports/ExecutiveSummary', {'fromDate': from_date, 'toDate': to_date}),
         ('Reports/TrialBalance', {'date': to_date}),
     ]
 
