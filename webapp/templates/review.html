@@ -1706,6 +1706,13 @@
 
             // Render grouped by GST rate (using custom sort order)
             sortedGroups.forEach(([rate, txns]) => {
+                // Sort transactions by date (oldest first)
+                txns.sort((a, b) => {
+                    const dateA = new Date(a.date || '1900-01-01');
+                    const dateB = new Date(b.date || '1900-01-01');
+                    return dateA - dateB;
+                });
+
                 // Calculate totals for this group
                 const totalGross = txns.reduce((sum, t) => sum + (parseFloat(t.gross) || 0), 0);
                 const totalGst = txns.reduce((sum, t) => sum + (parseFloat(t.gst) || 0), 0);
