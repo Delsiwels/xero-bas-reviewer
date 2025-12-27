@@ -1116,21 +1116,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 # Determine transaction type
                 account_type = line.get('AccountType', '')
 
-                # Skip balance sheet accounts - only review P&L accounts for BAS
-                balance_sheet_types = [
-                    'BANK', 'CURRENT', 'FIXED', 'INVENTORY', 'NONCURRENT', 'PREPAYMENT',
-                    'CURRLIAB', 'LIABILITY', 'TERMLIAB', 'PAYGLIABILITY', 'SUPERANNUATIONLIABILITY',
-                ]
-                if account_type in balance_sheet_types:
-                    continue
-
-                # Skip GST control accounts and balance sheet accounts by name
+                # Skip only GST control accounts and true clearing accounts
+                # Don't skip balance sheet accounts - Activity Statement includes them under BAS Excluded
                 account_name_lower = account_name.lower()
-                # Note: 'bank' removed - was incorrectly skipping "Bank Fees" expense account
-                # Balance sheet bank accounts are already filtered by account_type above
-                skip_keywords = ['gst', 'accounts payable', 'accounts receivable', 'petty cash',
-                                'clearing', 'suspense', 'control', 'payg', 'superannuation liability',
-                                'rounding', 'historical adjustment', 'retained earnings', 'current year earnings']
+                skip_keywords = ['gst collected', 'gst paid', 'gst control', 'gst clearing',
+                                'rounding', 'retained earnings', 'current year earnings']
                 if any(x in account_name_lower for x in skip_keywords):
                     continue
 
