@@ -1051,24 +1051,18 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
-    # Use If-Modified-Since header to only fetch journals from around our date range
-    # This dramatically reduces the number of API calls for companies with many journals
-    # Set it to 30 days before from_date to capture any journals that might be relevant
-    modified_since = from_date - timedelta(days=30)
-    modified_since_header = modified_since.strftime('%a, %d %b %Y 00:00:00 GMT')
-    extra_headers = {'If-Modified-Since': modified_since_header}
-    print(f"DEBUG fetch_xero_manual_journals: Using If-Modified-Since: {modified_since_header}")
-
-    # Xero Journals API uses offset-based pagination
+    # Xero Journals API uses offset-based pagination (offset = JournalNumber to start from)
     offset = 0
     last_journal_number = 0
-    max_iterations = 100  # Increased limit since If-Modified-Since reduces results
+    max_iterations = 2000  # Allow up to 200,000 journals to handle large demo companies
     iterations = 0
+    found_in_range = 0  # Track how many journals we've found in date range
+    no_results_batches = 0  # Track consecutive batches with no results in date range
 
     while iterations < max_iterations:
         iterations += 1
         params = {'offset': offset}
-        data = xero_api_request('Journals', params=params, extra_headers=extra_headers)
+        data = xero_api_request('Journals', params=params)
 
         if not data or 'Journals' not in data:
             break
@@ -1077,6 +1071,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
         if not journals:
             break
 
+        batch_found = 0  # Count journals found in this batch within date range
         for journal in journals:
             source_type = journal.get('SourceType', '')
 
@@ -1263,6 +1258,24 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     'account_type': account_type,
                     'xero_url': xero_url
                 })
+                batch_found += 1
+                found_in_range += 1
+
+        # Track consecutive batches with no results in our date range
+        if batch_found == 0:
+            no_results_batches += 1
+        else:
+            no_results_batches = 0  # Reset counter when we find results
+
+        # Smart early termination: if we've found many journals in range and then
+        # gone through 50+ batches with no results, we've likely passed our date range
+        if found_in_range > 0 and no_results_batches >= 50:
+            print(f"Manual journals: Found {found_in_range} txns, stopping after {no_results_batches} empty batches")
+            break
+
+        # Log progress every 100 iterations
+        if iterations % 100 == 0:
+            print(f"Manual journals: iteration {iterations}, offset {offset}, found {found_in_range} txns so far")
 
         # Pagination: if we got fewer than 100 journals, we've reached the end
         if len(journals) < 100:
@@ -1275,7 +1288,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             offset += len(journals)
 
     if iterations >= max_iterations:
-        print(f"Manual journals: Reached max iterations ({max_iterations}), stopping to prevent rate limiting")
+        print(f"Manual journals: Reached max iterations ({max_iterations}), found {found_in_range} txns, stopping")
 
     # Remove duplicate/offsetting pairs (reversal entries from bill edits, accruals, etc.)
     # Group ALL transactions by account_code and date to find offsetting pairs
@@ -1753,25 +1766,20 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
-    # Use If-Modified-Since header to only fetch journals from around our date range
-    # This dramatically reduces the number of API calls for companies with many journals
-    modified_since = from_date - timedelta(days=30)
-    modified_since_header = modified_since.strftime('%a, %d %b %Y 00:00:00 GMT')
-    extra_headers = {'If-Modified-Since': modified_since_header}
-    debug_info.append(f"Using If-Modified-Since: {modified_since_header}")
-
-    # Xero Journals API uses offset-based pagination
+    # Xero Journals API uses offset-based pagination (offset = JournalNumber to start from)
     offset = 0
     last_journal_number = 0
     total_journals_fetched = 0
-    max_iterations = 100  # Increased limit since If-Modified-Since reduces results
+    max_iterations = 2000  # Allow up to 200,000 journals to handle large demo companies
     iterations = 0
+    found_in_range = 0
+    no_results_batches = 0
 
     while iterations < max_iterations:
         iterations += 1
         params = {'offset': offset}
         debug_info.append(f"Calling Journals API with offset={offset}")
-        data = xero_api_request('Journals', params=params, extra_headers=extra_headers)
+        data = xero_api_request('Journals', params=params)
         debug_info.append(f"API returned data={data is not None}")
 
         if not data or 'Journals' not in data:
@@ -1893,6 +1901,22 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                     'journal_number': journal_number,
                     'account_type': account_type
                 })
+                found_in_range += 1
+
+        # Track consecutive batches with no results in our date range
+        if journals_in_range == 0:
+            no_results_batches += 1
+        else:
+            no_results_batches = 0
+
+        # Smart early termination
+        if found_in_range > 0 and no_results_batches >= 50:
+            debug_info.append(f"Found {found_in_range} txns, stopping after {no_results_batches} empty batches")
+            break
+
+        # Log progress every 100 iterations
+        if iterations % 100 == 0:
+            debug_info.append(f"Progress: iteration {iterations}, offset {offset}, found {found_in_range} txns")
 
         # Pagination: if we got fewer than 100 journals, we've reached the end
         if len(journals) < 100:
@@ -1907,7 +1931,7 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
         debug_info.append(f"{journals_in_range} journals in date range from this batch")
 
-    debug_info.append(f"Total journals fetched: {total_journals_fetched}, Total transactions before dedup: {len(transactions)}")
+    debug_info.append(f"Total iterations: {iterations}, Total journals fetched: {total_journals_fetched}, Total transactions: {len(transactions)}")
 
     # Deduplicate: Keep only the LATEST journal entry for each unique transaction
     # When bills are edited, new journals are created with higher journal numbers
