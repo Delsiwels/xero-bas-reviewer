@@ -1132,8 +1132,8 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 if account_code_str in ['800', '810']:
                     continue
 
-                # Skip clearing accounts (but keep Tracking Transfers - it's BAS Excluded)
-                skip_keywords = ['unpaid expense claims', 'rounding',
+                # Skip clearing accounts
+                skip_keywords = ['tracking transfers', 'unpaid expense claims', 'rounding',
                                 'retained earnings', 'current year earnings', 'suspense',
                                 'owner a funds introduced']
                 if any(x in account_name_lower for x in skip_keywords):
