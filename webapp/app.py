@@ -1104,13 +1104,13 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 if not account_code:
                     continue
 
-                # Get amounts
-                gross = float(line.get('GrossAmount', 0) or 0)
-                net = float(line.get('NetAmount', 0) or 0)
-                gst = float(line.get('TaxAmount', 0) or 0)
+                # Get amounts (raw from Journals API - debits positive, credits negative)
+                raw_gross = float(line.get('GrossAmount', 0) or 0)
+                raw_net = float(line.get('NetAmount', 0) or 0)
+                raw_gst = float(line.get('TaxAmount', 0) or 0)
 
                 # Skip zero-value lines
-                if gross == 0 and net == 0 and gst == 0:
+                if raw_gross == 0 and raw_net == 0 and raw_gst == 0:
                     continue
 
                 # Determine transaction type
@@ -1132,7 +1132,23 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 if any(x in account_name_lower for x in skip_keywords):
                     continue
 
-                is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
+                # Adjust signs to match Activity Statement display:
+                # - Revenue accounts (REVENUE, OTHERINCOME): Credits are income, so flip sign
+                # - Expense accounts (EXPENSE, OVERHEADS, DIRECTCOSTS): Debits are expenses, keep as is
+                # - EQUITY accounts: flip sign (credits are positive equity)
+                revenue_types = ['REVENUE', 'OTHERINCOME', 'SALES']
+                if account_type in revenue_types:
+                    # Revenue: credits (negative in journals) should display as positive
+                    gross = -raw_gross
+                    net = -raw_net
+                    gst = -raw_gst
+                else:
+                    # Expenses and other P&L accounts: keep as is
+                    gross = raw_gross
+                    net = raw_net
+                    gst = raw_gst
+
+                is_expense = account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
                 date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
 
                 # Map source type to readable name
