@@ -3582,12 +3582,17 @@ def run_review():
             }
 
         # Prepare all transactions for complete audit trail
+        # Get set of flagged row numbers for quick lookup
+        flagged_row_numbers = set(item.get('row_number') for item in flagged_items)
+
         all_transactions_data = []
         for i, txn in enumerate(transactions):
+            row_num = i + 1
             all_transactions_data.append({
-                'row_number': i + 1,
+                'row_number': row_num,
                 'date': txn.get('date'),
                 'account_code': txn.get('account_code'),
+                'account': txn.get('account', ''),
                 'account_name': txn.get('account', ''),
                 'description': txn.get('description', ''),
                 'gross': txn.get('gross', 0),
@@ -3597,7 +3602,8 @@ def run_review():
                 'source': txn.get('source', ''),
                 'reference': txn.get('reference', ''),
                 'contact': txn.get('contact', ''),
-                'xero_url': txn.get('xero_url', '')
+                'xero_url': txn.get('xero_url', ''),
+                'is_flagged': row_num in flagged_row_numbers
             })
 
         # Auto-save review to Cloudflare D1 (if configured)

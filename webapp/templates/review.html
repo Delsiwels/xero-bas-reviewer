@@ -165,6 +165,18 @@
             padding: 20px;
             border-radius: 10px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 2px solid transparent;
+        }
+        .summary-card:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .summary-card.active {
+            border-color: #FA5D29;
+            background: #fff5f2;
         }
         .summary-card .number {
             font-size: 2em;
@@ -177,6 +189,10 @@
         }
         .summary-card.flagged .number {
             color: #dc3545;
+        }
+        .summary-card.flagged.active {
+            border-color: #dc3545;
+            background: #fff5f5;
         }
         table {
             width: 100%;
@@ -554,11 +570,11 @@
             <h2>Review Results</h2>
 
             <div class="summary-cards">
-                <div class="summary-card">
+                <div class="summary-card" id="total-card" onclick="showAllTransactions()">
                     <div class="number" id="total-count">0</div>
                     <div class="label">Total Transactions</div>
                 </div>
-                <div class="summary-card flagged">
+                <div class="summary-card flagged active" id="flagged-card" onclick="showFlaggedItems()">
                     <div class="number" id="flagged-count">0</div>
                     <div class="label">Flagged Items</div>
                 </div>
@@ -582,6 +598,8 @@
     <script>
         let selectedFile = null;
         let reviewResults = null;  // Store results for download
+        let allTransactionsData = [];  // Store all transactions for toggle view
+        let currentView = 'flagged';  // Track current view: 'flagged' or 'all'
 
         // XSS Protection - escape HTML entities in user-controlled data
         function escapeHtml(text) {
@@ -1050,6 +1068,16 @@
             isUploadMode = uploadMode;  // Store for later use
             // Store results for download
             reviewResults = data;
+
+            // Store all transactions for toggle view
+            if (data.all_transactions) {
+                allTransactionsData = data.all_transactions;
+            }
+
+            // Reset to flagged view when displaying new results
+            currentView = 'flagged';
+            document.getElementById('flagged-card').classList.add('active');
+            document.getElementById('total-card').classList.remove('active');
 
             // Hide progress, show results
             document.getElementById('progress-section').style.display = 'none';
@@ -1586,6 +1614,164 @@
                 btn.style.background = '#13B5EA';
                 btn.disabled = false;
                 alert('Error pushing journals: ' + error.message);
+            }
+        }
+
+        // Toggle to show all transactions sorted by GST rate
+        function showAllTransactions() {
+            if (currentView === 'all') return;  // Already showing all
+            currentView = 'all';
+
+            // Update card active states
+            document.getElementById('total-card').classList.add('active');
+            document.getElementById('flagged-card').classList.remove('active');
+
+            if (!allTransactionsData || allTransactionsData.length === 0) {
+                document.getElementById('flagged-table-container').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #666;">
+                        <p>No transaction data available. Run a review first.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort transactions by GST rate name
+            const sortedTransactions = [...allTransactionsData].sort((a, b) => {
+                const rateA = (a.gst_rate_name || 'ZZZ').toLowerCase();
+                const rateB = (b.gst_rate_name || 'ZZZ').toLowerCase();
+                return rateA.localeCompare(rateB);
+            });
+
+            // Group by GST rate
+            const groupedByRate = {};
+            sortedTransactions.forEach(txn => {
+                const rate = txn.gst_rate_name || 'Unknown';
+                if (!groupedByRate[rate]) {
+                    groupedByRate[rate] = [];
+                }
+                groupedByRate[rate].push(txn);
+            });
+
+            // Build the table
+            let tableHtml = `
+                <div style="margin-bottom: 15px; padding: 15px; background: #f0f7ff; border-radius: 8px; border-left: 4px solid #13B5EA;">
+                    <strong>All Transactions</strong> - Showing ${sortedTransactions.length} transactions reviewed by AI, grouped by GST Rate
+                </div>
+                <div style="overflow-x: auto; width: 100%;">
+                <table class="flagged-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 75px;">Date</th>
+                            <th style="width: 100px;">Account</th>
+                            <th style="width: 180px;">Description</th>
+                            <th style="width: 80px;">Gross</th>
+                            <th style="width: 60px;">GST</th>
+                            <th style="width: 80px;">Net</th>
+                            <th style="width: 100px;">GST Rate</th>
+                            <th style="width: 80px;">Source</th>
+                            <th style="width: 60px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Render grouped by GST rate
+            Object.entries(groupedByRate).sort((a, b) => a[0].localeCompare(b[0])).forEach(([rate, txns]) => {
+                // Group header
+                const totalGross = txns.reduce((sum, t) => sum + (parseFloat(t.gross) || 0), 0);
+                const totalGst = txns.reduce((sum, t) => sum + (parseFloat(t.gst) || 0), 0);
+                tableHtml += `
+                    <tr style="background: #f8f9fa; cursor: pointer;" onclick="toggleAllTxnGroup('${escapeHtml(rate.replace(/'/g, "\\'"))}')">
+                        <td colspan="9" style="padding: 12px 15px; border-bottom: 2px solid #dee2e6;">
+                            <span id="all-txn-icon-${escapeHtml(rate)}" style="margin-right: 8px;">▼</span>
+                            <strong>${escapeHtml(rate)}</strong>
+                            <span style="margin-left: 10px; background: #13B5EA; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${txns.length}</span>
+                            <span style="float: right; color: #666;">
+                                Gross: $${totalGross.toLocaleString('en-AU', {minimumFractionDigits: 2})} |
+                                GST: $${totalGst.toLocaleString('en-AU', {minimumFractionDigits: 2})}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+
+                tableHtml += `<tbody id="all-txn-group-${escapeHtml(rate)}" class="all-txn-group">`;
+                txns.forEach(txn => {
+                    const isFlagged = txn.flagged || txn.is_flagged;
+                    const statusBadge = isFlagged
+                        ? '<span style="background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Flagged</span>'
+                        : '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px;">OK</span>';
+
+                    tableHtml += `
+                        <tr style="${isFlagged ? 'background: #fff5f5;' : ''}">
+                            <td>${formatDateAU(txn.date)}</td>
+                            <td>${escapeHtml(txn.account || '')} <small style="color:#666;">(${escapeHtml(txn.account_code || '')})</small></td>
+                            <td>${escapeHtml(txn.description || '')}</td>
+                            <td style="text-align:right;">$${parseFloat(txn.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td style="text-align:right;">$${parseFloat(txn.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td style="text-align:right;">$${parseFloat(txn.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td><small>${escapeHtml(txn.gst_rate_name || '-')}</small></td>
+                            <td><small>${escapeHtml(txn.source || '-')}</small></td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                });
+                tableHtml += `</tbody>`;
+            });
+
+            tableHtml += '</tbody></table></div>';
+            document.getElementById('flagged-table-container').innerHTML = tableHtml;
+
+            // Hide the Push All button in this view
+            document.getElementById('push-all-btn').style.display = 'none';
+        }
+
+        // Toggle group expand/collapse for all transactions view
+        function toggleAllTxnGroup(rate) {
+            const content = document.getElementById('all-txn-group-' + rate);
+            const icon = document.getElementById('all-txn-icon-' + rate);
+            if (content && icon) {
+                if (content.style.display === 'none') {
+                    content.style.display = 'table-row-group';
+                    icon.textContent = '▼';
+                } else {
+                    content.style.display = 'none';
+                    icon.textContent = '▶';
+                }
+            }
+        }
+
+        // Toggle to show flagged items (default view)
+        function showFlaggedItems() {
+            if (currentView === 'flagged') return;  // Already showing flagged
+            currentView = 'flagged';
+
+            // Update card active states
+            document.getElementById('flagged-card').classList.add('active');
+            document.getElementById('total-card').classList.remove('active');
+
+            // Re-render the flagged items view
+            if (reviewResults) {
+                displayResults(reviewResults, isUploadMode);
+            }
+        }
+
+        // Render flagged items table (extracted for reuse)
+        function renderFlaggedItems(items) {
+            const container = document.getElementById('flagged-table-container');
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="no-issues">
+                        <div class="icon">✅</div>
+                        <h3>No Issues Found</h3>
+                        <p>All transactions appear to be correctly recorded.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Re-render using displayResults logic
+            if (reviewResults) {
+                displayResults(reviewResults, isUploadMode);
             }
         }
     </script>
