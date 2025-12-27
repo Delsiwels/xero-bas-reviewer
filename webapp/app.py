@@ -1371,6 +1371,28 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     return filtered_transactions
 
 
+@app.route('/debug/gst-report')
+def debug_gst_report():
+    """Debug endpoint to test the GST Report API"""
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    from_date = request.args.get('from', '2025-10-01')
+    to_date = request.args.get('to', '2025-12-31')
+
+    # Try the GST Report API
+    data = xero_api_request('Reports/GSTReport', params={
+        'fromDate': from_date,
+        'toDate': to_date
+    })
+
+    return jsonify({
+        'from_date': from_date,
+        'to_date': to_date,
+        'response': data
+    })
+
+
 @app.route('/debug/invoice/<invoice_number>')
 def debug_invoice(invoice_number):
     """Debug endpoint to search for a specific invoice and its journals"""
