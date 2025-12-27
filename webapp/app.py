@@ -1260,29 +1260,20 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     if iterations >= max_iterations:
         print(f"Manual journals: Reached max iterations ({max_iterations}), stopping to prevent rate limiting")
 
-    # Remove duplicate/offsetting pairs in BAS Excluded
-    # These are accrual/reversal journal entries that net to zero
-    # BUT don't deduplicate BANK accounts (conversion balances need to stay)
+    # Remove duplicate/offsetting pairs (reversal entries from bill edits, accruals, etc.)
+    # Group ALL transactions by account_code and date to find offsetting pairs
     filtered_transactions = []
-    bas_excluded_by_account_date = {}
+    txns_by_account_date = {}
 
-    # First, group BAS Excluded transactions by account_code and date
+    # Group all transactions by account_code and date
     for txn in transactions:
-        if txn['gst_rate_name'] == 'BAS Excluded':
-            # Don't deduplicate BANK accounts - keep all bank entries
-            if txn.get('account_type') == 'BANK':
-                filtered_transactions.append(txn)
-            else:
-                key = (txn['account_code'], txn['date'])
-                if key not in bas_excluded_by_account_date:
-                    bas_excluded_by_account_date[key] = []
-                bas_excluded_by_account_date[key].append(txn)
-        else:
-            # Non-BAS Excluded transactions pass through
-            filtered_transactions.append(txn)
+        key = (txn['account_code'], txn['date'])
+        if key not in txns_by_account_date:
+            txns_by_account_date[key] = []
+        txns_by_account_date[key].append(txn)
 
-    # For BAS Excluded (non-BANK), remove offsetting pairs (same amount, opposite signs)
-    for key, txns in bas_excluded_by_account_date.items():
+    # Remove offsetting pairs (same amount, opposite signs) - these are reversals from edits
+    for key, txns in txns_by_account_date.items():
         if len(txns) == 1:
             filtered_transactions.append(txns[0])
         else:
