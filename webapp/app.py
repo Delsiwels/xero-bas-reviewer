@@ -8224,7 +8224,7 @@ ATO_RULING_QUERIES = {
             'ruling': 'GSTR 2002/6',
             'title': 'When is a supply of goods or services GST-free under Division 38?',
             'summary': 'Division 38 zero-rates supplies for export consumption outside Australia.',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20026/NAT/ATO/00001'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-gst-applies-to/gst-free-sales'
         }
     },
     'entertainment': {
@@ -8233,7 +8233,7 @@ ATO_RULING_QUERIES = {
             'ruling': 'TR 97/17 & GSTR 2001/6',
             'title': 'Entertainment expenses - income tax and GST treatment',
             'summary': 'Entertainment is non-deductible and GST credits cannot be claimed unless FBT is paid on the benefit.',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=TXR/TR9717/NAT/ATO/00001'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment-related-fringe-benefits'
         }
     },
     'wages_gst_error': {
@@ -8278,7 +8278,7 @@ ATO_RULING_QUERIES = {
             'ruling': 'GSTR 2012/2',
             'title': 'Goods and services tax: government grants',
             'summary': 'Grants are typically GST-free unless there is a binding obligation to provide specific goods/services in return.',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20122/NAT/ATO/00001'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/when-to-charge-gst-and-when-not-to/grants-and-sponsorship'
         }
     },
     'residential_premises_gst': {
@@ -8341,7 +8341,7 @@ ATO_RULING_QUERIES = {
             'ruling': 'GST Act - Section 9-5',
             'title': 'Fines and penalties are not consideration for a supply',
             'summary': 'Fines do not satisfy section 9-5 requirements. BAS Excluded, not GST-Free.',
-            'url': 'https://www.ato.gov.au/law/view/document?docid=CLR/CR201332/NAT/ATO/00001'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/expenses-you-cant-claim'
         }
     },
     'asset_capitalization_error': {
