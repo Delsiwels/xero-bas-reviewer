@@ -1057,7 +1057,6 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     max_iterations = 2000  # Allow up to 200,000 journals to handle large demo companies
     iterations = 0
     found_in_range = 0  # Track how many journals we've found in date range
-    no_results_batches = 0  # Track consecutive batches with no results in date range
 
     while iterations < max_iterations:
         iterations += 1
@@ -1107,7 +1106,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             # Build Xero URL based on source type
             xero_url = ''
             if source_id:
-                if source_type in ['ACCREC', 'ACCRECCREDIT']:
+                if source_type in ['ACCREC', 'ACCRECCREDIT', 'INVOICE']:
                     xero_url = f"https://go.xero.com/AccountsReceivable/View.aspx?InvoiceID={source_id}"
                 elif source_type in ['ACCPAY', 'ACCPAYCREDIT']:
                     xero_url = f"https://go.xero.com/AccountsPayable/View.aspx?InvoiceID={source_id}"
@@ -1199,6 +1198,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 # Map source type to readable name
                 source_name_map = {
                     'ACCREC': 'Invoice',
+                    'INVOICE': 'Invoice',
                     'ACCPAY': 'Bill',
                     'ACCRECCREDIT': 'Credit Note',
                     'ACCPAYCREDIT': 'Supplier Credit',
@@ -1258,20 +1258,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     'account_type': account_type,
                     'xero_url': xero_url
                 })
-                batch_found += 1
                 found_in_range += 1
-
-        # Track consecutive batches with no results in our date range
-        if batch_found == 0:
-            no_results_batches += 1
-        else:
-            no_results_batches = 0  # Reset counter when we find results
-
-        # Smart early termination: if we've found many journals in range and then
-        # gone through 50+ batches with no results, we've likely passed our date range
-        if found_in_range > 0 and no_results_batches >= 50:
-            print(f"Manual journals: Found {found_in_range} txns, stopping after {no_results_batches} empty batches")
-            break
 
         # Log progress every 100 iterations
         if iterations % 100 == 0:
@@ -1773,7 +1760,6 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     max_iterations = 2000  # Allow up to 200,000 journals to handle large demo companies
     iterations = 0
     found_in_range = 0
-    no_results_batches = 0
 
     while iterations < max_iterations:
         iterations += 1
@@ -1902,17 +1888,6 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
                     'account_type': account_type
                 })
                 found_in_range += 1
-
-        # Track consecutive batches with no results in our date range
-        if journals_in_range == 0:
-            no_results_batches += 1
-        else:
-            no_results_batches = 0
-
-        # Smart early termination
-        if found_in_range > 0 and no_results_batches >= 50:
-            debug_info.append(f"Found {found_in_range} txns, stopping after {no_results_batches} empty batches")
-            break
 
         # Log progress every 100 iterations
         if iterations % 100 == 0:
