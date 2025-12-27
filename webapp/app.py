@@ -3672,184 +3672,167 @@ def get_ato_references(transaction):
         # Check description for specific expense types to provide relevant guidance
         if any(kw in desc for kw in ['flight', 'airfare', 'qantas', 'jetstar', 'virgin', 'travel', 'conference', 'seminar']):
             references.append({
-                'title': 'Travel expenses - deductions',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses/travel-expenses'
+                'title': 'Deductions for business travel expenses',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-business-travel-expenses'
             })
         elif any(kw in desc for kw in ['parking', 'car park', 'carpark']):
             references.append({
-                'title': 'Motor vehicle expenses',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/motor-vehicle-expenses'
+                'title': 'Deductions for motor vehicle expenses',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-motor-vehicle-expenses'
             })
         elif any(kw in desc for kw in ['meal', 'lunch', 'dinner', 'food', 'restaurant', 'cafe']):
             references.append({
-                'title': 'Entertainment vs meal expenses',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment'
+                'title': 'Entertainment-related fringe benefits',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment-related-fringe-benefits'
             })
         elif any(kw in desc for kw in ['software', 'subscription', 'license', 'licence', 'saas']):
             references.append({
-                'title': 'Software and subscriptions',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+                'title': 'Deductions for operating expenses',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions'
             })
         else:
             # General account coding guidance
             references.append({
-                'title': 'Expense categories for business',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+                'title': 'Deductions for business',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions'
             })
 
     # GST-related references
     if transaction.get('input_taxed_gst_error'):
         references.append({
-            'title': 'GSTR 2002/2 - Input taxed financial supplies',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+            'title': 'When you cannot claim a GST credit',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-cannot-claim-a-gst-credit'
         })
 
     if transaction.get('missing_gst_error'):
         references.append({
-            'title': 'GST and claiming credits',
+            'title': 'Claiming GST credits',
             'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits'
         })
 
     if transaction.get('alcohol_gst_error'):
         references.append({
             'title': 'Wine equalisation tax (WET)',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/wine-equalisation-tax'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/wet'
         })
 
     # Entertainment - FBT and GST
     if transaction.get('client_entertainment_gst') or transaction.get('staff_entertainment_gst'):
         references.append({
-            'title': 'GST and entertainment expenses',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/gst-issues-registers/food-and-beverages/gst-food-and-beverage-search-tool'
-        })
-        references.append({
-            'title': 'FBT - Entertainment',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment'
+            'title': 'Entertainment-related fringe benefits',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/hiring-and-paying-your-workers/fringe-benefits-tax/types-of-fringe-benefits/entertainment-related-fringe-benefits'
         })
 
     # Government charges - no GST
     if transaction.get('government_charges_gst'):
         references.append({
-            'title': 'Section 81-5 - Australian taxes not consideration',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/81-5'
-        })
-        references.append({
-            'title': 'Reg 81-15.01 - Government charges',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/81-15.01'
+            'title': 'When you cannot claim a GST credit',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-cannot-claim-a-gst-credit'
         })
 
     # Wages - BAS Excluded
     if transaction.get('wages_gst_error'):
         references.append({
-            'title': 'GST and employee wages',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/employee-wages-and-allowances'
+            'title': 'Claiming GST credits',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits'
         })
 
     # Motor vehicle GST cap
     if transaction.get('motor_vehicle_gst_limit'):
         references.append({
-            'title': 'GSTR 2006/3 - GST and motor vehicles',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20063/NAT/ATO/00001'
-        })
-        references.append({
-            'title': 'Car limit for depreciation',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/motor-vehicle-expenses/car-limit'
+            'title': 'Deductions for motor vehicle expenses',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-motor-vehicle-expenses'
         })
 
     # Insurance
     if transaction.get('insurance_gst_error') or transaction.get('life_insurance_personal'):
         references.append({
-            'title': 'GSTR 2002/2 - Input taxed supplies (insurance)',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+            'title': 'When you cannot claim a GST credit',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-cannot-claim-a-gst-credit'
         })
-        if transaction.get('life_insurance_personal'):
-            references.append({
-                'title': 'Life insurance deductibility',
-                'url': 'https://www.ato.gov.au/individuals-and-families/investments-and-assets/insurance-premiums-and-cover'
-            })
 
     # Travel GST
     if transaction.get('travel_gst'):
         references.append({
-            'title': 'Division 38 - GST-free supplies (exports/travel)',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/38-190'
+            'title': 'Deductions for business travel expenses',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/deductions-for-business-travel-expenses'
         })
 
     # Exports
     if transaction.get('export_gst_error'):
         references.append({
-            'title': 'GSTR 2002/6 - GST-free exports',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20026/NAT/ATO/00001'
+            'title': 'GST-free sales',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/what-gst-applies-to/gst-free-sales'
         })
 
     # Grants and sponsorship
     if transaction.get('grants_sponsorship_gst'):
         references.append({
-            'title': 'GSTR 2012/2 - GST treatment of grants',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20122/NAT/ATO/00001'
+            'title': 'Assessable government industry payments',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/income/assessable-government-industry-payments'
         })
 
     # Asset capitalization
     if transaction.get('asset_capitalization_error') or transaction.get('computer_equipment_expense'):
         references.append({
             'title': 'Instant asset write-off',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-allowances/simpler-depreciation-for-small-business/instant-asset-write-off'
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/depreciation-and-capital-expenses-and-allowances/simpler-depreciation-for-small-business/instant-asset-write-off'
         })
 
     # Fines and penalties
     if transaction.get('fines_penalties_gst'):
         references.append({
-            'title': 'Section 9-5 - Fines are not consideration',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/9-5'
+            'title': 'Expenses you cannot claim',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/expenses-you-cant-claim'
         })
 
     # Donations
     if transaction.get('donations_gst'):
         references.append({
-            'title': 'GSTR 2012/1 - GST and gifts/donations',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20121/NAT/ATO/00001'
+            'title': 'Gifts and donations',
+            'url': 'https://www.ato.gov.au/individuals-and-families/income-deductions-offsets-and-records/deductions-you-can-claim/other-deductions/gifts-and-donations'
         })
 
     # Residential property
     if transaction.get('residential_premises_gst'):
         references.append({
-            'title': 'Subdivision 40-B - Residential premises',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=PAC/19990055/40-35'
+            'title': 'GST and property',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/your-industry/property'
         })
 
     # Overseas subscriptions
     if transaction.get('overseas_subscription_gst'):
         references.append({
-            'title': 'GST on imported services',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/gst-on-imported-services-and-digital-products'
+            'title': 'GST on imported services and digital products',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/in-detail/rules-for-specific-transactions/international-transactions/gst-on-imported-services-and-digital-products'
         })
 
     # Payment processor fees
     if transaction.get('payment_processor_fees'):
         references.append({
-            'title': 'GSTR 2002/2 - Financial supplies',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+            'title': 'When you cannot claim a GST credit',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-cannot-claim-a-gst-credit'
         })
 
     # Drawings/personal expenses
     if transaction.get('drawings_loan_error') or transaction.get('personal_in_business_account'):
         references.append({
-            'title': 'Business vs personal expenses',
-            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions/deductions-for-operating-expenses'
+            'title': 'Expenses you cannot claim',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions/expenses-you-cant-claim'
         })
 
     # Interest - input taxed
     if transaction.get('interest_gst_error'):
         references.append({
-            'title': 'GSTR 2002/2 - Financial supplies (interest)',
-            'url': 'https://www.ato.gov.au/law/view/document?DocID=GST/GSTR20022/NAT/ATO/00001'
+            'title': 'When you cannot claim a GST credit',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/claiming-gst-credits/when-you-cannot-claim-a-gst-credit'
         })
 
     # Borrowing expenses
     if transaction.get('borrowing_expenses_error'):
         references.append({
-            'title': 'Deductions for borrowing expenses',
-            'url': 'https://www.ato.gov.au/individuals-and-families/investments-and-assets/rental-properties/rental-expenses-to-claim/borrowing-expenses'
+            'title': 'Deductions for business',
+            'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions'
         })
 
     # Fallback: if no specific references found, add general GST guidance
@@ -3863,8 +3846,8 @@ def get_ato_references(transaction):
             })
         else:
             references.append({
-                'title': 'Business deductions',
-                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/deductions'
+                'title': 'Deductions for business',
+                'url': 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/income-and-deductions-for-business/deductions'
             })
 
     # Remove duplicates while preserving order
