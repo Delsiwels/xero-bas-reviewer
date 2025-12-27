@@ -1121,6 +1121,7 @@
                                 <th style="width: 70px;">Gross</th>
                                 <th style="width: 55px;">GST</th>
                                 <th style="width: 70px;">Net</th>
+                                <th style="width: 90px;">GST Rate</th>
                                 <th style="width: 60px;">Source</th>
                                 <th style="width: 180px;">Comments</th>
                                 <th style="width: 280px;">Suggested Journal</th>
@@ -1217,6 +1218,7 @@
                             <td style="text-align:right;">$${parseFloat(item.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(item.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                            <td><small style="font-size: 11px;">${escapeHtml(item.gst_rate_name || '-')}</small></td>
                             <td><small>${escapeHtml(item.source || '-')}</small>${item.xero_url ? `<br><a href="${escapeHtml(item.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View</a>` : ''}</td>
                             <td class="comment-cell">${formattedComments}</td>
                             <td class="journal-cell">${journalHtml}</td>
@@ -1234,7 +1236,7 @@
                         const issueInfo = ISSUE_TYPES[issueType] || ISSUE_TYPES['other'];
                         tableHtml += `
                             <tr class="group-header" onclick="toggleGroup('${issueType}')" style="cursor: pointer; background: linear-gradient(135deg, ${issueInfo.color}15, ${issueInfo.color}08);">
-                                <td colspan="12" style="padding: 12px 15px; border-left: 4px solid ${issueInfo.color};">
+                                <td colspan="13" style="padding: 12px 15px; border-left: 4px solid ${issueInfo.color};">
                                     <span id="group-icon-${issueType}" style="margin-right: 8px; font-size: 12px;">▼</span>
                                     <span style="font-size: 16px; margin-right: 8px;">${issueInfo.icon}</span>
                                     <strong style="font-size: 14px; color: #222;">${issueInfo.name}</strong>
