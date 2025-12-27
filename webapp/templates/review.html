@@ -1635,21 +1635,39 @@
                 return;
             }
 
-            // Sort transactions by GST rate name
-            const sortedTransactions = [...allTransactionsData].sort((a, b) => {
-                const rateA = (a.gst_rate_name || 'ZZZ').toLowerCase();
-                const rateB = (b.gst_rate_name || 'ZZZ').toLowerCase();
-                return rateA.localeCompare(rateB);
-            });
+            // Custom sort order for GST rates
+            const gstRateOrder = [
+                'GST on Income',
+                'GST on Capital',
+                'GST on Expenses',
+                'GST Free Expenses',
+                'GST Free Income',
+                'GST Free',
+                'BAS Excluded',
+                'Input Taxed',
+                'Unknown'
+            ];
 
-            // Group by GST rate
+            // Function to get sort priority (lower = higher priority)
+            function getGstRatePriority(rateName) {
+                const rate = (rateName || 'Unknown').trim();
+                const index = gstRateOrder.findIndex(r => r.toLowerCase() === rate.toLowerCase());
+                return index >= 0 ? index : gstRateOrder.length; // Unknown rates go at the end
+            }
+
+            // Group by GST rate first
             const groupedByRate = {};
-            sortedTransactions.forEach(txn => {
+            allTransactionsData.forEach(txn => {
                 const rate = txn.gst_rate_name || 'Unknown';
                 if (!groupedByRate[rate]) {
                     groupedByRate[rate] = [];
                 }
                 groupedByRate[rate].push(txn);
+            });
+
+            // Sort groups by custom order
+            const sortedGroups = Object.entries(groupedByRate).sort((a, b) => {
+                return getGstRatePriority(a[0]) - getGstRatePriority(b[0]);
             });
 
             // Build the table
@@ -1675,8 +1693,8 @@
                     <tbody>
             `;
 
-            // Render grouped by GST rate
-            Object.entries(groupedByRate).sort((a, b) => a[0].localeCompare(b[0])).forEach(([rate, txns]) => {
+            // Render grouped by GST rate (using custom sort order)
+            sortedGroups.forEach(([rate, txns]) => {
                 // Group header
                 const totalGross = txns.reduce((sum, t) => sum + (parseFloat(t.gross) || 0), 0);
                 const totalGst = txns.reduce((sum, t) => sum + (parseFloat(t.gst) || 0), 0);
