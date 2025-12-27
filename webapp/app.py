@@ -1323,6 +1323,94 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     return filtered_transactions
 
 
+@app.route('/debug/invoice/<invoice_number>')
+def debug_invoice(invoice_number):
+    """Debug endpoint to search for a specific invoice and its journals"""
+    if 'access_token' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
+
+    results = {
+        'invoice_number': invoice_number,
+        'invoices_found': [],
+        'journals_found': [],
+        'total_journals_scanned': 0
+    }
+
+    # Search for the invoice using Invoices API
+    invoice_data = xero_api_request('Invoices', params={'InvoiceNumber': invoice_number})
+    if invoice_data and 'Invoices' in invoice_data:
+        for inv in invoice_data['Invoices']:
+            results['invoices_found'].append({
+                'InvoiceID': inv.get('InvoiceID'),
+                'InvoiceNumber': inv.get('InvoiceNumber'),
+                'Type': inv.get('Type'),
+                'Status': inv.get('Status'),
+                'Date': inv.get('Date'),
+                'DueDate': inv.get('DueDate'),
+                'Total': inv.get('Total'),
+                'TotalTax': inv.get('TotalTax'),
+                'Contact': inv.get('Contact', {}).get('Name'),
+                'LineItems': len(inv.get('LineItems', []))
+            })
+
+    # Search journals for this invoice reference
+    offset = 0
+    max_iterations = 100  # Limit for debug
+    iterations = 0
+
+    while iterations < max_iterations:
+        iterations += 1
+        data = xero_api_request('Journals', params={'offset': offset})
+
+        if not data or 'Journals' not in data:
+            break
+
+        journals = data.get('Journals', [])
+        if not journals:
+            break
+
+        results['total_journals_scanned'] += len(journals)
+
+        for journal in journals:
+            ref = journal.get('Reference', '') or ''
+            narration = journal.get('Narration', '') or ''
+            source_id = journal.get('SourceID', '')
+
+            # Check if this journal matches our invoice
+            if invoice_number.lower() in ref.lower() or invoice_number.lower() in narration.lower():
+                results['journals_found'].append({
+                    'JournalNumber': journal.get('JournalNumber'),
+                    'JournalDate': journal.get('JournalDate'),
+                    'SourceType': journal.get('SourceType'),
+                    'SourceID': source_id,
+                    'Reference': ref,
+                    'Status': journal.get('Status'),
+                    'Lines': len(journal.get('JournalLines', []))
+                })
+
+            # Also check if SourceID matches any invoice we found
+            for inv in results['invoices_found']:
+                if source_id == inv['InvoiceID']:
+                    if not any(j['SourceID'] == source_id for j in results['journals_found']):
+                        results['journals_found'].append({
+                            'JournalNumber': journal.get('JournalNumber'),
+                            'JournalDate': journal.get('JournalDate'),
+                            'SourceType': journal.get('SourceType'),
+                            'SourceID': source_id,
+                            'Reference': ref,
+                            'Status': journal.get('Status'),
+                            'Lines': len(journal.get('JournalLines', []))
+                        })
+
+        # Get highest journal number for pagination
+        last_num = max((j.get('JournalNumber', 0) for j in journals), default=0)
+        if len(journals) < 100:
+            break
+        offset = last_num + 1
+
+    return jsonify(results)
+
+
 def fetch_xero_bas_report(report_id=None):
     """Fetch BAS (Business Activity Statement) Report from Xero API
 
