@@ -1140,8 +1140,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     continue
 
                 # Skip BANK accounts unless it's a conversion balance (journal entry)
+                # Check both description and narration for "conversion"
                 description_lower = description.lower()
-                if account_type == 'BANK' and 'conversion' not in description_lower:
+                narration_lower = (narration or '').lower()
+                is_conversion = 'conversion' in description_lower or 'conversion' in narration_lower
+                if account_type == 'BANK' and not is_conversion:
                     continue
 
                 # Adjust signs to match Activity Statement display:
