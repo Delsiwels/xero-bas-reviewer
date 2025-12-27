@@ -3992,13 +3992,17 @@ def generate_correcting_journal(transaction):
                     'tax_code': correct_tax_code,
                     'description': std_desc
                 })
+                # Determine original tax code based on account type (income vs expense)
+                is_income_account = any(kw in account_name.lower() for kw in ['sales', 'revenue', 'income', 'fees earned', 'interest received'])
+                original_tax_code = 'GST on Income' if (gst > 0 and is_income_account) else ('GST on Expenses' if gst > 0 else 'GST Free')
+
                 journal_entries.append({
                     'line': 2,
                     'account_code': account_code,
                     'account_name': account_name,
                     'debit': 0 if gross > 0 else gross,
                     'credit': gross if gross > 0 else 0,
-                    'tax_code': 'GST on Expenses' if gst > 0 else 'GST Free',  # Original (being reversed)
+                    'tax_code': original_tax_code,  # Original (being reversed) - use correct tax type for account
                     'description': std_desc
                 })
                 recode_done = True
