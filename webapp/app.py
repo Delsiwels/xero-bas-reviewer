@@ -1120,13 +1120,24 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 xero_url = f"https://go.xero.com/Journal/View.aspx?JournalID={journal_id}"
 
             # Process each journal line
+            # Debug: trace specific journals
+            debug_journals = [639, 640, 644, 652]
+            if current_journal_number in debug_journals:
+                print(f"DEBUG: Processing journal {current_journal_number}, SourceType={source_type}, Lines={len(journal.get('JournalLines', []))}")
+
             for line in journal.get('JournalLines', []):
                 account_code = line.get('AccountCode', '')
                 account_name = line.get('AccountName', '')
                 description = line.get('Description', '') or narration or reference or 'Manual Journal'
 
+                # Debug: trace specific journals
+                if current_journal_number in debug_journals:
+                    print(f"DEBUG: Journal {current_journal_number} line: code={account_code}, name={account_name}, type={line.get('AccountType')}, gross={line.get('GrossAmount')}")
+
                 # Skip lines without account codes
                 if not account_code:
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - no account code")
                     continue
 
                 # Get amounts (raw from Journals API - debits positive, credits negative)
@@ -1136,6 +1147,8 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 # Skip zero-value lines
                 if raw_gross == 0 and raw_net == 0 and raw_gst == 0:
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - zero value")
                     continue
 
                 # Determine transaction type
@@ -1149,12 +1162,18 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 # Skip GST account (code 820)
                 if account_code_str == '820':
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - GST account 820")
                     continue
 
                 # Skip Accounts Receivable and Accounts Payable
                 if 'accounts receivable' in account_name_lower or 'accounts payable' in account_name_lower:
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - AR/AP account")
                     continue
                 if account_code_str in ['800', '810']:
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - account code 800/810")
                     continue
 
                 # Skip clearing accounts
@@ -1162,6 +1181,8 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                                 'retained earnings', 'current year earnings', 'suspense',
                                 'owner a funds introduced']
                 if any(x in account_name_lower for x in skip_keywords):
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - clearing account keyword")
                     continue
 
                 # Check description/narration for context
@@ -1170,10 +1191,14 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 # Skip ALL BANK accounts - they should not appear in BAS Excluded
                 if account_type == 'BANK':
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - BANK account")
                     continue
 
                 # Skip Historical Adjustment (it's the offsetting entry for other BAS Excluded items)
                 if 'historical adjustment' in account_name_lower:
+                    if current_journal_number in debug_journals:
+                        print(f"DEBUG: Skipping - historical adjustment")
                     continue
 
                 # Adjust signs to match Activity Statement display:
@@ -1239,6 +1264,9 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     gst_rate_name = 'BAS Excluded'
                 else:
                     gst_rate_name = tax_type or 'BAS Excluded'
+
+                if current_journal_number in debug_journals:
+                    print(f"DEBUG: ADDING transaction from journal {current_journal_number}: {account_code} {account_name} gross={gross}")
 
                 transactions.append({
                     'row_number': len(transactions) + 1,
