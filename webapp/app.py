@@ -1119,24 +1119,29 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 account_code_str = str(account_code)
 
                 # Skip clearing/control accounts that don't appear in Activity Statement
-                # But ALLOW legitimate BAS Excluded accounts (Owner Drawings, PAYG, Bank for conversions, etc.)
+                # Activity Statement BAS Excluded only shows: Owner Drawings, Conversion Balances,
+                # PAYG Withholdings, Wages, Historical Adjustment
 
-                # Skip GST control accounts
-                if 'gst' in account_name_lower and ('collected' in account_name_lower or
-                                                      'paid' in account_name_lower or
-                                                      'control' in account_name_lower or
-                                                      'clearing' in account_name_lower):
+                # Skip GST account (code 820)
+                if account_code_str == '820':
                     continue
 
-                # Skip Accounts Receivable and Accounts Payable (clearing accounts)
+                # Skip Accounts Receivable and Accounts Payable
                 if 'accounts receivable' in account_name_lower or 'accounts payable' in account_name_lower:
                     continue
-                if account_code_str in ['800', '810']:  # Common AR/AP codes
+                if account_code_str in ['800', '810']:
                     continue
 
-                # Skip other true clearing/system accounts
-                skip_keywords = ['rounding', 'retained earnings', 'current year earnings', 'suspense']
+                # Skip tracking/clearing accounts
+                skip_keywords = ['tracking transfers', 'unpaid expense claims', 'rounding',
+                                'retained earnings', 'current year earnings', 'suspense',
+                                'owner a funds introduced']
                 if any(x in account_name_lower for x in skip_keywords):
+                    continue
+
+                # Skip BANK accounts unless it's a conversion balance (journal entry)
+                description_lower = description.lower()
+                if account_type == 'BANK' and 'conversion' not in description_lower:
                     continue
 
                 # Adjust signs to match Activity Statement display:
