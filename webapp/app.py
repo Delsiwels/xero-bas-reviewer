@@ -1248,7 +1248,54 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     if iterations >= max_iterations:
         print(f"Manual journals: Reached max iterations ({max_iterations}), stopping to prevent rate limiting")
 
-    return transactions
+    # Remove duplicate/offsetting pairs in BAS Excluded
+    # These are accrual/reversal journal entries that net to zero
+    filtered_transactions = []
+    bas_excluded_by_account_date = {}
+
+    # First, group BAS Excluded transactions by account_code and date
+    for txn in transactions:
+        if txn['gst_rate_name'] == 'BAS Excluded':
+            key = (txn['account_code'], txn['date'])
+            if key not in bas_excluded_by_account_date:
+                bas_excluded_by_account_date[key] = []
+            bas_excluded_by_account_date[key].append(txn)
+        else:
+            # Non-BAS Excluded transactions pass through
+            filtered_transactions.append(txn)
+
+    # For BAS Excluded, remove offsetting pairs (same amount, opposite signs)
+    for key, txns in bas_excluded_by_account_date.items():
+        if len(txns) == 1:
+            filtered_transactions.append(txns[0])
+        else:
+            # Find and remove offsetting pairs
+            remaining = txns.copy()
+            used = set()
+
+            for i, txn1 in enumerate(remaining):
+                if i in used:
+                    continue
+                found_offset = False
+                for j, txn2 in enumerate(remaining):
+                    if j in used or i == j:
+                        continue
+                    # Check if they're offsetting (same amount, opposite signs)
+                    if abs(txn1['gross'] + txn2['gross']) < 0.01:
+                        # Found an offsetting pair - skip both
+                        used.add(i)
+                        used.add(j)
+                        found_offset = True
+                        break
+
+                if not found_offset and i not in used:
+                    filtered_transactions.append(txn1)
+
+    # Re-number the transactions
+    for i, txn in enumerate(filtered_transactions):
+        txn['row_number'] = i + 1
+
+    return filtered_transactions
 
 
 def fetch_xero_bas_report(report_id=None):
