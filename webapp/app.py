@@ -1115,12 +1115,27 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 # Determine transaction type
                 account_type = line.get('AccountType', '')
-
-                # Skip only GST control accounts and true clearing accounts
-                # Don't skip balance sheet accounts - Activity Statement includes them under BAS Excluded
                 account_name_lower = account_name.lower()
-                skip_keywords = ['gst collected', 'gst paid', 'gst control', 'gst clearing',
-                                'rounding', 'retained earnings', 'current year earnings']
+                account_code_str = str(account_code)
+
+                # Skip clearing/control accounts that don't appear in Activity Statement
+                # But ALLOW legitimate BAS Excluded accounts (Owner Drawings, PAYG, Bank for conversions, etc.)
+
+                # Skip GST control accounts
+                if 'gst' in account_name_lower and ('collected' in account_name_lower or
+                                                      'paid' in account_name_lower or
+                                                      'control' in account_name_lower or
+                                                      'clearing' in account_name_lower):
+                    continue
+
+                # Skip Accounts Receivable and Accounts Payable (clearing accounts)
+                if 'accounts receivable' in account_name_lower or 'accounts payable' in account_name_lower:
+                    continue
+                if account_code_str in ['800', '810']:  # Common AR/AP codes
+                    continue
+
+                # Skip other true clearing/system accounts
+                skip_keywords = ['rounding', 'retained earnings', 'current year earnings', 'suspense']
                 if any(x in account_name_lower for x in skip_keywords):
                     continue
 
