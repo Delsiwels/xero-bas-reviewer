@@ -103,6 +103,29 @@ def unauthorized():
         return jsonify({'error': 'Please log in to access this feature'}), 401
     return redirect(url_for('auth.login'))
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    """Global exception handler - return JSON for API routes"""
+    from flask import request, jsonify
+    import traceback
+    if request.path.startswith('/api/'):
+        print(f"Unhandled exception in {request.path}: {e}")
+        traceback.print_exc()
+        return jsonify({
+            'error': str(e) or 'Internal server error',
+            'type': type(e).__name__
+        }), 500
+    # Re-raise for non-API routes to show default error page
+    raise e
+
+@app.errorhandler(500)
+def handle_500(e):
+    """Handle 500 errors - return JSON for API routes"""
+    from flask import request, jsonify
+    if request.path.startswith('/api/'):
+        return jsonify({'error': 'Internal server error'}), 500
+    return e
+
 # Register blueprints
 from blueprints.auth import auth_bp
 app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -2371,42 +2394,43 @@ def upload_review():
 
             # Flag if any rule triggered (including new checks)
             # Note: split_allocation_warning removed from flagging - personal_in_business_account handles actual errors
+            # Using .get() with defaults to prevent KeyError if any check failed
             has_rule_issues = (
-                transaction['account_coding_suspicious'] or
-                transaction['alcohol_gst_error'] or
-                transaction['input_taxed_gst_error'] or
-                transaction['missing_gst_error'] or
-                not transaction['gst_calculation_correct'] or
-                transaction['drawings_loan_error'] or
-                transaction.get('personal_in_business_account') or
-                transaction['asset_capitalization_error'] or
-                transaction['computer_equipment_expense'] or
-                transaction['interest_gst_error'] or
-                transaction['other_income_error'] or
-                transaction['sales_gst_error'] or
-                transaction['motor_vehicle_gst_limit'] or
-                transaction['overseas_subscription_gst'] or
-                transaction['government_charges_gst'] or
-                transaction['client_entertainment_gst'] or
-                transaction['staff_entertainment_gst'] or
-                transaction['residential_premises_gst'] or
-                transaction['insurance_gst_error'] or
-                transaction['life_insurance_personal'] or
-                transaction['grants_sponsorship_gst'] or
-                transaction['wages_gst_error'] or
-                transaction['allowance_gst_error'] or
-                transaction['reimbursement_gst'] or
-                transaction['voucher_gst'] or
-                transaction['general_expenses'] or
-                transaction['travel_gst'] or
-                transaction['payment_processor_fees'] or
-                transaction['fines_penalties_gst'] or
-                transaction['donations_gst'] or
-                transaction['property_gst_withholding'] or
-                transaction['livestock_gst'] or
-                transaction['asset_disposal_gst'] or
-                transaction['export_gst_error'] or
-                transaction['borrowing_expenses_error']
+                transaction.get('account_coding_suspicious', False) or
+                transaction.get('alcohol_gst_error', False) or
+                transaction.get('input_taxed_gst_error', False) or
+                transaction.get('missing_gst_error', False) or
+                not transaction.get('gst_calculation_correct', True) or
+                transaction.get('drawings_loan_error', False) or
+                transaction.get('personal_in_business_account', False) or
+                transaction.get('asset_capitalization_error', False) or
+                transaction.get('computer_equipment_expense', False) or
+                transaction.get('interest_gst_error', False) or
+                transaction.get('other_income_error', False) or
+                transaction.get('sales_gst_error', False) or
+                transaction.get('motor_vehicle_gst_limit', False) or
+                transaction.get('overseas_subscription_gst', False) or
+                transaction.get('government_charges_gst', False) or
+                transaction.get('client_entertainment_gst', False) or
+                transaction.get('staff_entertainment_gst', False) or
+                transaction.get('residential_premises_gst', False) or
+                transaction.get('insurance_gst_error', False) or
+                transaction.get('life_insurance_personal', False) or
+                transaction.get('grants_sponsorship_gst', False) or
+                transaction.get('wages_gst_error', False) or
+                transaction.get('allowance_gst_error', False) or
+                transaction.get('reimbursement_gst', False) or
+                transaction.get('voucher_gst', False) or
+                transaction.get('general_expenses', False) or
+                transaction.get('travel_gst', False) or
+                transaction.get('payment_processor_fees', False) or
+                transaction.get('fines_penalties_gst', False) or
+                transaction.get('donations_gst', False) or
+                transaction.get('property_gst_withholding', False) or
+                transaction.get('livestock_gst', False) or
+                transaction.get('asset_disposal_gst', False) or
+                transaction.get('export_gst_error', False) or
+                transaction.get('borrowing_expenses_error', False)
             )
 
             # Skip flagging for correctly coded Telstra transactions
@@ -3188,42 +3212,43 @@ def run_review():
 
             # Flag if any rule triggered (including new checks)
             # Note: split_allocation_warning removed from flagging - personal_in_business_account handles actual errors
+            # Using .get() with defaults to prevent KeyError if any check failed
             has_rule_issues = (
-                transaction['account_coding_suspicious'] or
-                transaction['alcohol_gst_error'] or
-                transaction['input_taxed_gst_error'] or
-                transaction['missing_gst_error'] or
-                not transaction['gst_calculation_correct'] or
-                transaction['drawings_loan_error'] or
-                transaction.get('personal_in_business_account') or
-                transaction['asset_capitalization_error'] or
-                transaction['computer_equipment_expense'] or
-                transaction['interest_gst_error'] or
-                transaction['other_income_error'] or
-                transaction['sales_gst_error'] or
-                transaction['motor_vehicle_gst_limit'] or
-                transaction['overseas_subscription_gst'] or
-                transaction['government_charges_gst'] or
-                transaction['client_entertainment_gst'] or
-                transaction['staff_entertainment_gst'] or
-                transaction['residential_premises_gst'] or
-                transaction['insurance_gst_error'] or
-                transaction['life_insurance_personal'] or
-                transaction['grants_sponsorship_gst'] or
-                transaction['wages_gst_error'] or
-                transaction['allowance_gst_error'] or
-                transaction['reimbursement_gst'] or
-                transaction['voucher_gst'] or
-                transaction['general_expenses'] or
-                transaction['travel_gst'] or
-                transaction['payment_processor_fees'] or
-                transaction['fines_penalties_gst'] or
-                transaction['donations_gst'] or
-                transaction['property_gst_withholding'] or
-                transaction['livestock_gst'] or
-                transaction['asset_disposal_gst'] or
-                transaction['export_gst_error'] or
-                transaction['borrowing_expenses_error']
+                transaction.get('account_coding_suspicious', False) or
+                transaction.get('alcohol_gst_error', False) or
+                transaction.get('input_taxed_gst_error', False) or
+                transaction.get('missing_gst_error', False) or
+                not transaction.get('gst_calculation_correct', True) or
+                transaction.get('drawings_loan_error', False) or
+                transaction.get('personal_in_business_account', False) or
+                transaction.get('asset_capitalization_error', False) or
+                transaction.get('computer_equipment_expense', False) or
+                transaction.get('interest_gst_error', False) or
+                transaction.get('other_income_error', False) or
+                transaction.get('sales_gst_error', False) or
+                transaction.get('motor_vehicle_gst_limit', False) or
+                transaction.get('overseas_subscription_gst', False) or
+                transaction.get('government_charges_gst', False) or
+                transaction.get('client_entertainment_gst', False) or
+                transaction.get('staff_entertainment_gst', False) or
+                transaction.get('residential_premises_gst', False) or
+                transaction.get('insurance_gst_error', False) or
+                transaction.get('life_insurance_personal', False) or
+                transaction.get('grants_sponsorship_gst', False) or
+                transaction.get('wages_gst_error', False) or
+                transaction.get('allowance_gst_error', False) or
+                transaction.get('reimbursement_gst', False) or
+                transaction.get('voucher_gst', False) or
+                transaction.get('general_expenses', False) or
+                transaction.get('travel_gst', False) or
+                transaction.get('payment_processor_fees', False) or
+                transaction.get('fines_penalties_gst', False) or
+                transaction.get('donations_gst', False) or
+                transaction.get('property_gst_withholding', False) or
+                transaction.get('livestock_gst', False) or
+                transaction.get('asset_disposal_gst', False) or
+                transaction.get('export_gst_error', False) or
+                transaction.get('borrowing_expenses_error', False)
             )
 
             # Skip flagging for correctly coded Telstra transactions
