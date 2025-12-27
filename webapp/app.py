@@ -1310,12 +1310,21 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     filtered_transactions = []
     txns_by_account_date = {}
 
+    print(f"DEBUG DEDUP: Starting with {len(transactions)} transactions")
+
     # Group all transactions by account_code and date
     for txn in transactions:
         key = (txn['account_code'], txn['date'])
         if key not in txns_by_account_date:
             txns_by_account_date[key] = []
         txns_by_account_date[key].append(txn)
+
+    # Debug: show groups with account code 200 (Sales)
+    for key, txns in txns_by_account_date.items():
+        if key[0] == '200' and len(txns) > 1:
+            print(f"DEBUG DEDUP: Account 200 on {key[1]} has {len(txns)} transactions:")
+            for t in txns:
+                print(f"  - journal={t.get('journal_number')} gross={t['gross']} desc={t.get('description', '')[:30]}")
 
     # Remove offsetting pairs (same amount, opposite signs) - these are reversals from edits
     for key, txns in txns_by_account_date.items():
@@ -1336,6 +1345,8 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     # Check if they're offsetting (same amount, opposite signs)
                     if abs(txn1['gross'] + txn2['gross']) < 0.01:
                         # Found an offsetting pair - skip both
+                        if key[0] == '200':
+                            print(f"DEBUG DEDUP: Removing offsetting pair for account 200: {txn1['gross']} + {txn2['gross']}")
                         used.add(i)
                         used.add(j)
                         found_offset = True
@@ -1343,6 +1354,8 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 if not found_offset and i not in used:
                     filtered_transactions.append(txn1)
+
+    print(f"DEBUG DEDUP: After dedup, {len(filtered_transactions)} transactions remain")
 
     # Re-number the transactions
     for i, txn in enumerate(filtered_transactions):
