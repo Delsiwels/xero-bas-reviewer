@@ -405,7 +405,7 @@ def refresh_token_if_needed():
     return True
 
 
-def xero_api_request(endpoint, params=None, max_retries=3):
+def xero_api_request(endpoint, params=None, max_retries=3, extra_headers=None):
     """Make authenticated request to Xero API with retry for rate limiting"""
     import time
 
@@ -419,6 +419,10 @@ def xero_api_request(endpoint, params=None, max_retries=3):
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
+
+    # Add any extra headers (e.g., If-Modified-Since)
+    if extra_headers:
+        headers.update(extra_headers)
 
     url = f"{XERO_API_URL}/{endpoint}"
 
@@ -1047,16 +1051,24 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
+    # Use If-Modified-Since header to only fetch journals from around our date range
+    # This dramatically reduces the number of API calls for companies with many journals
+    # Set it to 30 days before from_date to capture any journals that might be relevant
+    modified_since = from_date - timedelta(days=30)
+    modified_since_header = modified_since.strftime('%a, %d %b %Y 00:00:00 GMT')
+    extra_headers = {'If-Modified-Since': modified_since_header}
+    print(f"DEBUG fetch_xero_manual_journals: Using If-Modified-Since: {modified_since_header}")
+
     # Xero Journals API uses offset-based pagination
     offset = 0
     last_journal_number = 0
-    max_iterations = 50  # Limit API calls to prevent rate limiting (50 pages x 100 = 5000 journals max)
+    max_iterations = 100  # Increased limit since If-Modified-Since reduces results
     iterations = 0
 
     while iterations < max_iterations:
         iterations += 1
         params = {'offset': offset}
-        data = xero_api_request('Journals', params=params)
+        data = xero_api_request('Journals', params=params, extra_headers=extra_headers)
 
         if not data or 'Journals' not in data:
             break
@@ -1741,18 +1753,25 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
     from_date = datetime.strptime(from_date_str, '%Y-%m-%d')
     to_date = datetime.strptime(to_date_str, '%Y-%m-%d')
 
+    # Use If-Modified-Since header to only fetch journals from around our date range
+    # This dramatically reduces the number of API calls for companies with many journals
+    modified_since = from_date - timedelta(days=30)
+    modified_since_header = modified_since.strftime('%a, %d %b %Y 00:00:00 GMT')
+    extra_headers = {'If-Modified-Since': modified_since_header}
+    debug_info.append(f"Using If-Modified-Since: {modified_since_header}")
+
     # Xero Journals API uses offset-based pagination
     offset = 0
     last_journal_number = 0
     total_journals_fetched = 0
-    max_iterations = 50  # Limit API calls to prevent rate limiting (50 pages x 100 = 5000 journals max)
+    max_iterations = 100  # Increased limit since If-Modified-Since reduces results
     iterations = 0
 
     while iterations < max_iterations:
         iterations += 1
         params = {'offset': offset}
         debug_info.append(f"Calling Journals API with offset={offset}")
-        data = xero_api_request('Journals', params=params)
+        data = xero_api_request('Journals', params=params, extra_headers=extra_headers)
         debug_info.append(f"API returned data={data is not None}")
 
         if not data or 'Journals' not in data:
