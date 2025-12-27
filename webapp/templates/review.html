@@ -1692,11 +1692,11 @@
                         <tr>
                             <th style="width: 75px;">Date</th>
                             <th style="width: 100px;">Account</th>
+                            <th style="width: 100px;">Reference</th>
                             <th style="width: 180px;">Description</th>
                             <th style="width: 80px;">Gross</th>
                             <th style="width: 60px;">GST</th>
                             <th style="width: 80px;">Net</th>
-                            <th style="width: 100px;">GST Rate</th>
                             <th style="width: 80px;">Source</th>
                             <th style="width: 60px;">Status</th>
                         </tr>
@@ -1734,11 +1734,11 @@
                         <tr style="${isFlagged ? 'background: #fff5f5;' : ''}">
                             <td>${formatDateAU(txn.date)}</td>
                             <td>${escapeHtml(txn.account || '')} <small style="color:#666;">(${escapeHtml(txn.account_code || '')})</small></td>
+                            <td><small>${escapeHtml(txn.reference || '-')}</small></td>
                             <td>${escapeHtml(txn.description || '')}</td>
                             <td style="text-align:right;">$${parseFloat(txn.gross || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(txn.gst || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
                             <td style="text-align:right;">$${parseFloat(txn.net || 0).toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
-                            <td><small>${escapeHtml(txn.gst_rate_name || '-')}</small></td>
                             <td><small>${escapeHtml(txn.source || '-')}</small></td>
                             <td>${statusBadge}</td>
                         </tr>
