@@ -1126,7 +1126,9 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
                 # Skip GST control accounts and balance sheet accounts by name
                 account_name_lower = account_name.lower()
-                skip_keywords = ['gst', 'accounts payable', 'accounts receivable', 'bank', 'petty cash',
+                # Note: 'bank' removed - was incorrectly skipping "Bank Fees" expense account
+                # Balance sheet bank accounts are already filtered by account_type above
+                skip_keywords = ['gst', 'accounts payable', 'accounts receivable', 'petty cash',
                                 'clearing', 'suspense', 'control', 'payg', 'superannuation liability',
                                 'rounding', 'historical adjustment', 'retained earnings', 'current year earnings']
                 if any(x in account_name_lower for x in skip_keywords):
@@ -1167,18 +1169,33 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 source_name = source_name_map.get(source_type, source_type or 'Journal')
 
                 # Map tax type to GST rate name
+                # Xero tax types: OUTPUT, OUTPUT2, INPUT, INPUT2, EXEMPTINPUT, EXEMPTOUTPUT,
+                # EXEMPTEXPENSES, EXEMPTCAPITAL, INPUTTAXED, BASEXCLUDED, NONE, etc.
                 tax_type = line.get('TaxType', '')
+                tax_upper = tax_type.upper()
                 gst_rate_name = ''
-                if 'OUTPUT' in tax_type.upper():
+
+                if 'OUTPUT' in tax_upper and 'EXEMPT' not in tax_upper:
                     gst_rate_name = 'GST on Income'
-                elif 'INPUT' in tax_type.upper():
-                    gst_rate_name = 'GST on Expenses'
-                elif 'NONE' in tax_type.upper() or 'EXEMPT' in tax_type.upper():
-                    gst_rate_name = 'GST Free'
-                elif 'BASEXCLUDED' in tax_type.upper():
+                elif 'INPUT' in tax_upper and 'EXEMPT' not in tax_upper and 'TAXED' not in tax_upper:
+                    # INPUT, INPUT2 = GST on Expenses (but not EXEMPTINPUT or INPUTTAXED)
+                    if 'CAPITAL' in tax_upper or tax_upper == 'INPUT2':
+                        gst_rate_name = 'GST on Capital'
+                    else:
+                        gst_rate_name = 'GST on Expenses'
+                elif 'INPUTTAXED' in tax_upper:
+                    gst_rate_name = 'Input Taxed'
+                elif 'EXEMPT' in tax_upper:
+                    # EXEMPTINPUT, EXEMPTOUTPUT, EXEMPTEXPENSES, EXEMPTCAPITAL = GST Free
+                    if 'OUTPUT' in tax_upper or 'INCOME' in tax_upper:
+                        gst_rate_name = 'GST Free Income'
+                    else:
+                        gst_rate_name = 'GST Free Expenses'
+                elif 'BASEXCLUDED' in tax_upper or tax_upper == 'NONE' or tax_upper == '':
+                    # BASEXCLUDED and NONE = BAS Excluded
                     gst_rate_name = 'BAS Excluded'
                 else:
-                    gst_rate_name = tax_type or 'Unknown'
+                    gst_rate_name = tax_type or 'BAS Excluded'
 
                 transactions.append({
                     'row_number': len(transactions) + 1,
