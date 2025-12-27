@@ -1706,19 +1706,17 @@
 
             // Render grouped by GST rate (using custom sort order)
             sortedGroups.forEach(([rate, txns]) => {
-                // Group header
+                // Calculate totals for this group
                 const totalGross = txns.reduce((sum, t) => sum + (parseFloat(t.gross) || 0), 0);
                 const totalGst = txns.reduce((sum, t) => sum + (parseFloat(t.gst) || 0), 0);
+
+                // Group header
                 tableHtml += `
-                    <tr style="background: #f8f9fa; cursor: pointer;" onclick="toggleAllTxnGroup('${escapeHtml(rate.replace(/'/g, "\\'"))}')">
-                        <td colspan="9" style="padding: 12px 15px; border-bottom: 2px solid #dee2e6;">
+                    <tr style="background: #e8f4f8; cursor: pointer;" onclick="toggleAllTxnGroup('${escapeHtml(rate.replace(/'/g, "\\'"))}')">
+                        <td colspan="9" style="padding: 12px 15px; border-bottom: 1px solid #dee2e6;">
                             <span id="all-txn-icon-${escapeHtml(rate)}" style="margin-right: 8px;">▼</span>
                             <strong>${escapeHtml(rate)}</strong>
                             <span style="margin-left: 10px; background: #13B5EA; color: white; padding: 2px 8px; border-radius: 10px; font-size: 12px;">${txns.length}</span>
-                            <span style="float: right; color: #666;">
-                                Gross: $${totalGross.toLocaleString('en-AU', {minimumFractionDigits: 2})} |
-                                GST: $${totalGst.toLocaleString('en-AU', {minimumFractionDigits: 2})}
-                            </span>
                         </td>
                     </tr>
                 `;
@@ -1744,6 +1742,18 @@
                         </tr>
                     `;
                 });
+
+                // Add total row for this GST rate group
+                const totalNet = txns.reduce((sum, t) => sum + (parseFloat(t.net) || 0), 0);
+                tableHtml += `
+                    <tr style="background: #f8f9fa; border-top: 2px solid #dee2e6; font-weight: 600;">
+                        <td colspan="4" style="text-align: left; padding: 10px 12px;">Total ${escapeHtml(rate)}</td>
+                        <td style="text-align: right; padding: 10px 12px;">$${totalGross.toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                        <td style="text-align: right; padding: 10px 12px;">$${totalGst.toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                        <td style="text-align: right; padding: 10px 12px;">$${totalNet.toLocaleString('en-AU', {minimumFractionDigits: 2})}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                `;
                 tableHtml += `</tbody>`;
             });
 
