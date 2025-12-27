@@ -1327,18 +1327,21 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             for t in txns:
                 print(f"  - journal={t.get('journal_number')} gross={t['gross']} desc={t.get('description', '')[:30]}")
 
-    # Smart deduplication: Keep only the LATEST journal entries per source
-    # When invoices/bills are edited, Xero creates reversal entries (old journals) and new entries (new journals)
-    # All entries for the same invoice have the same source_id, so we group by source_id and keep highest journal
+    # Smart deduplication with two strategies:
+    # 1. For invoices/bills: Group by source_id, keep only highest journal number
+    # 2. For manual journals: Remove offsetting pairs (positive + negative same description/amount)
 
     for key, txns in txns_by_account_date.items():
         if len(txns) == 1:
             filtered_transactions.append(txns[0])
         else:
-            # Group by source_id to find all entries for the same invoice/bill
+            # Separate manual journals from other transactions
+            manual_journals = [t for t in txns if t.get('source_type') == 'MANJOURNAL']
+            other_txns = [t for t in txns if t.get('source_type') != 'MANJOURNAL']
+
+            # Process non-manual-journal transactions: group by source_id
             by_source = {}
-            for txn in txns:
-                # Use source_id if available, otherwise use description+amount as fallback
+            for txn in other_txns:
                 source_key = txn.get('source_id') or f"{txn.get('description', '')[:30]}_{abs(txn['gross'])}"
                 if source_key not in by_source:
                     by_source[source_key] = []
@@ -1348,12 +1351,36 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 if len(source_txns) == 1:
                     filtered_transactions.append(source_txns[0])
                 else:
-                    # Multiple entries for same source - keep only from highest journal number
-                    # This handles edited invoices where reversal and new entry have same source_id
                     max_journal = max(t.get('journal_number', 0) for t in source_txns)
-                    # Keep all entries from the highest journal number (an invoice can have multiple lines)
                     for txn in source_txns:
                         if txn.get('journal_number', 0) == max_journal:
+                            filtered_transactions.append(txn)
+
+            # Process manual journals: remove offsetting pairs
+            if manual_journals:
+                # Group by description and absolute amount
+                mj_by_desc = {}
+                for txn in manual_journals:
+                    desc_key = (txn.get('description', '')[:50], abs(txn['gross']))
+                    if desc_key not in mj_by_desc:
+                        mj_by_desc[desc_key] = []
+                    mj_by_desc[desc_key].append(txn)
+
+                for desc_key, mj_txns in mj_by_desc.items():
+                    if len(mj_txns) == 1:
+                        filtered_transactions.append(mj_txns[0])
+                    else:
+                        # Check for offsetting pairs
+                        pos_txns = [t for t in mj_txns if t['gross'] > 0]
+                        neg_txns = [t for t in mj_txns if t['gross'] < 0]
+
+                        # Remove matching pairs (reversal entries)
+                        while pos_txns and neg_txns:
+                            pos_txns.pop()
+                            neg_txns.pop()
+
+                        # Keep remaining unpaired transactions
+                        for txn in pos_txns + neg_txns:
                             filtered_transactions.append(txn)
 
     print(f"DEBUG DEDUP: After dedup, {len(filtered_transactions)} transactions remain")
