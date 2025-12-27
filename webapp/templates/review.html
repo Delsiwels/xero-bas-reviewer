@@ -1742,7 +1742,7 @@
                             <td style="text-align:right;">${formatAmount(txn.gross)}</td>
                             <td style="text-align:right;">${formatAmount(txn.gst)}</td>
                             <td style="text-align:right;">${formatAmount(txn.net)}</td>
-                            <td><small>${escapeHtml(txn.source || '-')}</small></td>
+                            <td><small>${escapeHtml(txn.source || '-')}</small>${txn.xero_url ? `<br><a href="${escapeHtml(txn.xero_url)}" target="_blank" style="font-size: 11px; color: #13B5EA;">View</a>` : ''}</td>
                             <td>${statusBadge}</td>
                         </tr>
                     `;
