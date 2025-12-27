@@ -1336,22 +1336,37 @@ def debug_invoice(invoice_number):
         'total_journals_scanned': 0
     }
 
-    # Search for the invoice using Invoices API
-    invoice_data = xero_api_request('Invoices', params={'InvoiceNumber': invoice_number})
+    # Search for the invoice using Invoices API with exact match
+    invoice_data = xero_api_request('Invoices', params={'where': f'InvoiceNumber=="{invoice_number}"'})
+
+    # If exact match fails, try fetching recent invoices
+    if not invoice_data or not invoice_data.get('Invoices'):
+        results['search_method'] = 'fallback_recent'
+        # Get invoices from last 90 days
+        invoice_data = xero_api_request('Invoices', params={
+            'where': 'Type=="ACCREC"',
+            'order': 'Date DESC'
+        })
+    else:
+        results['search_method'] = 'exact_match'
+
     if invoice_data and 'Invoices' in invoice_data:
         for inv in invoice_data['Invoices']:
-            results['invoices_found'].append({
-                'InvoiceID': inv.get('InvoiceID'),
-                'InvoiceNumber': inv.get('InvoiceNumber'),
-                'Type': inv.get('Type'),
-                'Status': inv.get('Status'),
-                'Date': inv.get('Date'),
-                'DueDate': inv.get('DueDate'),
-                'Total': inv.get('Total'),
-                'TotalTax': inv.get('TotalTax'),
-                'Contact': inv.get('Contact', {}).get('Name'),
-                'LineItems': len(inv.get('LineItems', []))
-            })
+            inv_number = inv.get('InvoiceNumber', '')
+            # For fallback, only include if it matches
+            if results.get('search_method') == 'exact_match' or invoice_number.lower() in inv_number.lower():
+                results['invoices_found'].append({
+                    'InvoiceID': inv.get('InvoiceID'),
+                    'InvoiceNumber': inv.get('InvoiceNumber'),
+                    'Type': inv.get('Type'),
+                    'Status': inv.get('Status'),
+                    'Date': inv.get('Date'),
+                    'DueDate': inv.get('DueDate'),
+                    'Total': inv.get('Total'),
+                    'TotalTax': inv.get('TotalTax'),
+                    'Contact': inv.get('Contact', {}).get('Name'),
+                    'LineItems': len(inv.get('LineItems', []))
+                })
 
     # Search journals for this invoice reference
     offset = 0
