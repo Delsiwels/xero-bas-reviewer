@@ -1373,24 +1373,42 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
 
 @app.route('/debug/gst-report')
 def debug_gst_report():
-    """Debug endpoint to test the GST Report API"""
+    """Debug endpoint to test various GST Report API endpoints"""
     if 'access_token' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
 
     from_date = request.args.get('from', '2025-10-01')
     to_date = request.args.get('to', '2025-12-31')
 
-    # Try the GST Report API
-    data = xero_api_request('Reports/GSTReport', params={
-        'fromDate': from_date,
-        'toDate': to_date
-    })
-
-    return jsonify({
+    results = {
         'from_date': from_date,
         'to_date': to_date,
-        'response': data
-    })
+        'endpoints_tried': {}
+    }
+
+    # Try different endpoint variations
+    endpoints = [
+        ('Reports/GSTReport', {'fromDate': from_date, 'toDate': to_date}),
+        ('Reports/GST103', {'fromDate': from_date, 'toDate': to_date}),
+        ('Reports/AustralianBASReport', {}),
+        ('Reports/ExecutiveSummary', {'fromDate': from_date, 'toDate': to_date}),
+        ('Reports/TrialBalance', {'date': to_date}),
+    ]
+
+    for endpoint, params in endpoints:
+        print(f"DEBUG: Trying endpoint {endpoint} with params {params}")
+        data = xero_api_request(endpoint, params=params)
+        results['endpoints_tried'][endpoint] = {
+            'params': params,
+            'success': data is not None,
+            'has_reports': 'Reports' in data if data else False,
+            'keys': list(data.keys()) if data else None
+        }
+        # Include full response for first successful one
+        if data and 'Reports' in data and 'full_response' not in results:
+            results['full_response'] = data
+
+    return jsonify(results)
 
 
 @app.route('/debug/invoice/<invoice_number>')
