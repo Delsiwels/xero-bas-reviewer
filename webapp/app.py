@@ -1326,34 +1326,12 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             for t in txns:
                 print(f"  - journal={t.get('journal_number')} gross={t['gross']} desc={t.get('description', '')[:30]}")
 
-    # Remove offsetting pairs (same amount, opposite signs) - these are reversals from edits
+    # Keep all transactions - deduplication was too aggressive and removing valid transactions
+    # The previous logic removed offsetting pairs across different journals, which incorrectly
+    # removed transactions from edited invoices. Now we just keep everything.
     for key, txns in txns_by_account_date.items():
-        if len(txns) == 1:
-            filtered_transactions.append(txns[0])
-        else:
-            # Find and remove offsetting pairs
-            remaining = txns.copy()
-            used = set()
-
-            for i, txn1 in enumerate(remaining):
-                if i in used:
-                    continue
-                found_offset = False
-                for j, txn2 in enumerate(remaining):
-                    if j in used or i == j:
-                        continue
-                    # Check if they're offsetting (same amount, opposite signs)
-                    if abs(txn1['gross'] + txn2['gross']) < 0.01:
-                        # Found an offsetting pair - skip both
-                        if key[0] == '200':
-                            print(f"DEBUG DEDUP: Removing offsetting pair for account 200: {txn1['gross']} + {txn2['gross']}")
-                        used.add(i)
-                        used.add(j)
-                        found_offset = True
-                        break
-
-                if not found_offset and i not in used:
-                    filtered_transactions.append(txn1)
+        for txn in txns:
+            filtered_transactions.append(txn)
 
     print(f"DEBUG DEDUP: After dedup, {len(filtered_transactions)} transactions remain")
 
