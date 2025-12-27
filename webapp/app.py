@@ -1036,9 +1036,10 @@ def fetch_xero_bills(from_date_str, to_date_str):
 
 
 def fetch_xero_manual_journals(from_date_str, to_date_str):
-    """Fetch only MANUAL journals from Xero API (excludes auto-generated journals from invoices/bills)
+    """Fetch ALL journals from Xero API for Activity Statement matching
 
-    Manual journals are identified by SourceType = "MANJOURNAL"
+    Includes all source types: invoices, bills, credit notes, bank transactions, manual journals
+    This matches the data shown in Xero's Activity Statement / Transactions by Tax Rate report
     Only includes POSTED journals (excludes DRAFT, VOIDED, DELETED)
     """
     transactions = []
@@ -1065,10 +1066,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             break
 
         for journal in journals:
-            # Only include MANUAL journals (SourceType = "MANJOURNAL")
             source_type = journal.get('SourceType', '')
-            if source_type != 'MANJOURNAL':
-                continue
 
             # Skip draft and voided journals - only include posted journals
             journal_status = journal.get('Status', 'POSTED')
@@ -1137,6 +1135,21 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 is_expense = gross < 0 or account_type in ['EXPENSE', 'OVERHEADS', 'DIRECTCOSTS']
                 date_str = journal_date.strftime('%Y-%m-%d') if journal_date else 'NO DATE'
 
+                # Map source type to readable name
+                source_name_map = {
+                    'ACCREC': 'Invoice',
+                    'ACCPAY': 'Bill',
+                    'ACCRECCREDIT': 'Credit Note',
+                    'ACCPAYCREDIT': 'Supplier Credit',
+                    'ACCRECPAYMENT': 'Payment',
+                    'ACCPAYPAYMENT': 'Payment',
+                    'CASHREC': 'Receive Money',
+                    'CASHPAID': 'Spend Money',
+                    'MANJOURNAL': 'Manual Journal',
+                    'TRANSFER': 'Transfer',
+                }
+                source_name = source_name_map.get(source_type, source_type or 'Journal')
+
                 # Map tax type to GST rate name
                 tax_type = line.get('TaxType', '')
                 gst_rate_name = ''
@@ -1162,7 +1175,7 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     'gst': gst,      # Keep original sign for correct totals
                     'net': net,      # Keep original sign for correct totals
                     'gst_rate_name': gst_rate_name,
-                    'source': 'Manual Journal',
+                    'source': source_name,
                     'source_type': source_type,
                     'reference': reference,
                     'journal_number': journal_number,
@@ -2955,33 +2968,13 @@ def run_review():
             # Quick mode - clear any previous patterns
             set_allocation_patterns({})
 
-        # Fetch transactions using Bills and Bank Transactions APIs
-        # These return the CURRENT state of transactions, not audit trail like Journals
-        # This avoids phantom entries from edited bills
-
-        debug_info.append(f"Fetching bills from {from_date_str} to {to_date_str}")
-        bills = fetch_xero_invoices(from_date_str, to_date_str, 'ACCPAY')
-        debug_info.append(f"Got {len(bills) if bills else 0} bill line items")
-        if bills:
-            transactions.extend(bills)
-
-        debug_info.append(f"Fetching sales invoices from {from_date_str} to {to_date_str}")
-        sales = fetch_xero_invoices(from_date_str, to_date_str, 'ACCREC')
-        debug_info.append(f"Got {len(sales) if sales else 0} sales invoice line items")
-        if sales:
-            transactions.extend(sales)
-
-        debug_info.append(f"Fetching bank transactions from {from_date_str} to {to_date_str}")
-        bank_txns = fetch_xero_bank_transactions(from_date_str, to_date_str)
-        debug_info.append(f"Got {len(bank_txns) if bank_txns else 0} bank transactions")
-        if bank_txns:
-            transactions.extend(bank_txns)
-
-        debug_info.append(f"Fetching manual journals from {from_date_str} to {to_date_str}")
-        manual_journals = fetch_xero_manual_journals(from_date_str, to_date_str)
-        debug_info.append(f"Got {len(manual_journals) if manual_journals else 0} manual journal lines")
-        if manual_journals:
-            transactions.extend(manual_journals)
+        # Fetch ALL journals from Journals API
+        # This includes invoices, bills, bank transactions, manual journals - matching Activity Statement
+        debug_info.append(f"Fetching all journals from {from_date_str} to {to_date_str}")
+        all_journals = fetch_xero_manual_journals(from_date_str, to_date_str)
+        debug_info.append(f"Got {len(all_journals) if all_journals else 0} journal lines")
+        if all_journals:
+            transactions.extend(all_journals)
 
         # Enrich transactions with account names from Chart of Accounts
         if transactions:
