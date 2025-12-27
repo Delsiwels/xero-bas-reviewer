@@ -1145,9 +1145,11 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 is_conversion = ('conversion' in description_lower or 'conversion' in narration_lower or
                                 'opening balance' in description_lower or 'opening balance' in narration_lower)
 
-                # Skip BANK accounts unless it's a conversion balance or manual journal
+                # Skip BANK accounts unless it's a conversion balance, manual journal, or no source type
+                # (conversion balances from Settings may have empty/null source type)
                 is_manual_journal = source_type == 'MANJOURNAL'
-                if account_type == 'BANK' and not is_conversion and not is_manual_journal:
+                is_conversion_source = source_type in ['', None, 'CONVBAL', 'OPENBAL']
+                if account_type == 'BANK' and not is_conversion and not is_manual_journal and not is_conversion_source:
                     continue
 
                 # Skip Historical Adjustment (it's the offsetting entry for other BAS Excluded items)
