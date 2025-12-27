@@ -1158,9 +1158,9 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                     'account_code': account_code,
                     'account': account_name,
                     'description': description,
-                    'gross': abs(gross),
-                    'gst': abs(gst),
-                    'net': abs(net),
+                    'gross': gross,  # Keep original sign for correct totals
+                    'gst': gst,      # Keep original sign for correct totals
+                    'net': net,      # Keep original sign for correct totals
                     'gst_rate_name': gst_rate_name,
                     'source': 'Manual Journal',
                     'source_type': source_type,
