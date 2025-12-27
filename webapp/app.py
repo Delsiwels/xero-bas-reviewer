@@ -1142,15 +1142,18 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
                 # Check if this is a conversion balance journal
                 description_lower = description.lower()
                 narration_lower = (narration or '').lower()
-                is_conversion = 'conversion' in description_lower or 'conversion' in narration_lower
+                is_conversion = ('conversion' in description_lower or 'conversion' in narration_lower or
+                                'opening balance' in description_lower or 'opening balance' in narration_lower)
 
-                # Skip BANK accounts unless it's a conversion balance
-                if account_type == 'BANK' and not is_conversion:
+                # Skip BANK accounts unless it's a conversion balance or manual journal
+                # (conversion balances are typically manual journals)
+                is_manual_journal = source_type == 'MANJOURNAL'
+                if account_type == 'BANK' and not is_conversion and not is_manual_journal:
                     continue
 
                 # Skip Historical Adjustment when it's the offset of a conversion balance
                 # (the bank account entry is what we want to show, not the offset)
-                if 'historical adjustment' in account_name_lower and is_conversion:
+                if 'historical adjustment' in account_name_lower and (is_conversion or is_manual_journal):
                     continue
 
                 # Adjust signs to match Activity Statement display:
