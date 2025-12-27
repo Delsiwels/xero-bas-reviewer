@@ -1326,12 +1326,41 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
             for t in txns:
                 print(f"  - journal={t.get('journal_number')} gross={t['gross']} desc={t.get('description', '')[:30]}")
 
-    # Keep all transactions - deduplication was too aggressive and removing valid transactions
-    # The previous logic removed offsetting pairs across different journals, which incorrectly
-    # removed transactions from edited invoices. Now we just keep everything.
+    # Smart deduplication: Keep only the LATEST journal entries per source
+    # When invoices/bills are edited, Xero creates reversal entries (old journals) and new entries (new journals)
+    # We want to keep only the entries from the highest journal number for each unique source+description
+
     for key, txns in txns_by_account_date.items():
-        for txn in txns:
-            filtered_transactions.append(txn)
+        if len(txns) == 1:
+            filtered_transactions.append(txns[0])
+        else:
+            # Group by description to find related transactions
+            by_desc = {}
+            for txn in txns:
+                desc_key = (txn.get('description', '')[:50], abs(txn['gross']))  # Group by description prefix and amount
+                if desc_key not in by_desc:
+                    by_desc[desc_key] = []
+                by_desc[desc_key].append(txn)
+
+            for desc_key, desc_txns in by_desc.items():
+                if len(desc_txns) == 1:
+                    filtered_transactions.append(desc_txns[0])
+                else:
+                    # Multiple transactions with same description and amount
+                    # Check if they're offsetting pairs (one positive, one negative)
+                    pos_txns = [t for t in desc_txns if t['gross'] > 0]
+                    neg_txns = [t for t in desc_txns if t['gross'] < 0]
+
+                    if len(pos_txns) > 0 and len(neg_txns) > 0:
+                        # Has both positive and negative - keep only from highest journal number
+                        # Sort by journal number descending
+                        sorted_txns = sorted(desc_txns, key=lambda t: t.get('journal_number', 0), reverse=True)
+                        # Keep the first one (highest journal number)
+                        filtered_transactions.append(sorted_txns[0])
+                    else:
+                        # All same sign - might be legitimate duplicates, keep all
+                        for txn in desc_txns:
+                            filtered_transactions.append(txn)
 
     print(f"DEBUG DEDUP: After dedup, {len(filtered_transactions)} transactions remain")
 
