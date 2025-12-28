@@ -1074,16 +1074,14 @@ def fetch_xero_manual_journals(from_date_str, to_date_str):
         for journal in journals:
             source_type = journal.get('SourceType', '')
 
+            # Skip journals with empty source_type - these are often voided/deleted transactions
+            if not source_type:
+                continue
+
             # Skip draft and voided journals - only include posted journals
             journal_status = journal.get('Status') or 'POSTED'  # Handle null status
 
-            # Debug: log all journal statuses to find voided ones
-            jnum = journal.get('JournalNumber')
-            if jnum and jnum > 400:  # Only log recent journals to reduce noise
-                print(f"DEBUG STATUS: Journal {jnum} status='{journal.get('Status')}' source_type={source_type} ref={journal.get('Reference', '')[:20]}")
-
             if journal_status.upper() in ['DRAFT', 'VOIDED', 'DELETED', 'ARCHIVED']:
-                print(f"DEBUG: SKIPPING voided/draft journal {jnum}")
                 continue
 
             raw_date = journal.get('JournalDate', '')
@@ -2053,6 +2051,11 @@ def fetch_xero_journals_debug(from_date_str, to_date_str):
 
             journal_number = journal.get('JournalNumber', '')
             source_type = journal.get('SourceType', '')
+
+            # Skip journals with empty source_type - these are often voided/deleted transactions
+            if not source_type:
+                continue
+
             reference = journal.get('Reference', '')
             narration = journal.get('Narration', '')  # Journal-level description (often contains vendor name)
 
